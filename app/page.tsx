@@ -4,29 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { products } from "../data/products";
-import ProductSkeleton from "../components/ProductSkeleton";
 
 export default function Home() {
 
-  const [search,setSearch] = useState("");
-  const [category,setCategory] = useState("All");
-  const [loading,setLoading] = useState(false);
+const [search,setSearch] = useState("");
 
-  const categories = ["All","T-Shirts","Shirts","Hoodies","Jeans","Jackets"];
+const categories = ["T-Shirts","Shirts","Hoodies","Jeans","Jackets"];
 
-  const filteredProducts = products.filter((product)=>{
+const filteredProducts = products.filter((product)=>
+product.name.toLowerCase().includes(search.toLowerCase())
+);
 
-    const matchSearch =
-      product.name.toLowerCase().includes(search.toLowerCase());
+const getCategoryProducts = (category:string)=>
+products.filter((p)=>p.category===category).slice(0,6);
 
-    const matchCategory =
-      category === "All" || product.category === category;
-
-    return matchSearch && matchCategory;
-
-  });
-
-  return (
+return (
 
 <main className="min-h-screen bg-gray-50 text-black">
 
@@ -49,7 +41,7 @@ className="object-cover"
 New Streetwear Collection
 </h1>
 
-<p className="mb-6">
+<p>
 Discover modern fashion with 05Mart
 </p>
 
@@ -73,43 +65,111 @@ className="border px-5 py-3 w-full max-w-md rounded-lg"
 </section>
 
 
-{/* CATEGORY FILTER */}
+{/* TRENDING */}
 
-<section className="flex justify-center gap-4 flex-wrap mb-12">
+<section className="px-6 mb-14">
 
-{categories.map((cat)=>(
-<button
-key={cat}
-onClick={()=>setCategory(cat)}
-className={`px-6 py-2 border rounded-full transition
-${category===cat ? "bg-black text-white":"bg-white"}`}
->
-{cat}
-</button>
+<h2 className="text-2xl font-semibold mb-6">
+Trending
+</h2>
+
+<div className="flex gap-6 overflow-x-auto">
+
+{products.slice(0,6).map((product)=>(
+<Link key={product.id} href={`/product/${product.id}`} className="min-w-[220px]">
+
+<div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-lg transition">
+
+<Image
+src={product.images[0]}
+alt={product.name}
+width={400}
+height={400}
+className="w-full h-48 object-cover rounded-lg mb-3"
+/>
+
+<h3 className="text-sm font-medium">
+{product.name}
+</h3>
+
+<p className="text-gray-500 text-sm">
+₹{product.price}
+</p>
+
+</div>
+
+</Link>
 ))}
+
+</div>
 
 </section>
 
 
-{/* PRODUCTS */}
+{/* CATEGORY SECTIONS */}
+
+{categories.map((cat)=>{
+
+const items = getCategoryProducts(cat);
+
+if(items.length===0) return null;
+
+return (
+
+<section key={cat} className="px-6 mb-14">
+
+<h2 className="text-2xl font-semibold mb-6">
+{cat}
+</h2>
+
+<div className="flex gap-6 overflow-x-auto">
+
+{items.map((product)=>(
+<Link key={product.id} href={`/product/${product.id}`} className="min-w-[220px]">
+
+<div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-lg transition">
+
+<Image
+src={product.images[0]}
+alt={product.name}
+width={400}
+height={400}
+className="w-full h-48 object-cover rounded-lg mb-3"
+/>
+
+<h3 className="text-sm font-medium">
+{product.name}
+</h3>
+
+<p className="text-gray-500 text-sm">
+₹{product.price}
+</p>
+
+</div>
+
+</Link>
+))}
+
+</div>
+
+</section>
+
+);
+
+})}
+
+
+{/* ALL PRODUCTS */}
 
 <section className="px-6 pb-20">
 
 <h2 className="text-2xl font-semibold mb-6">
-Products
+All Products
 </h2>
 
 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-{loading ? (
-
-Array.from({length:8}).map((_,i)=>(
-<ProductSkeleton key={i}/>
-))
-
-) : (
-
-filteredProducts.slice(0,8).map((product)=>(
+{filteredProducts.map((product)=>(
 
 <Link key={product.id} href={`/product/${product.id}`}>
 
@@ -120,7 +180,6 @@ src={product.images[0]}
 alt={product.name}
 width={400}
 height={400}
-loading="lazy"
 className="w-full h-52 object-cover rounded-lg mb-3"
 />
 
@@ -136,9 +195,7 @@ className="w-full h-52 object-cover rounded-lg mb-3"
 
 </Link>
 
-))
-
-)}
+))}
 
 </div>
 
