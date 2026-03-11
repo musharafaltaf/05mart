@@ -1,54 +1,55 @@
 "use client";
-
+import RelatedProducts from "../../../components/RelatedProducts";
+import ReviewSection from "../../../components/ReviewSection";
 import { useParams } from "next/navigation";
-import { products } from "../../../data/products";
 import { useState } from "react";
-import Link from "next/link";
+import { products } from "../../../data/products";
+import { useCart } from "../../context/CartContext";
 
 export default function ProductPage(){
 
 const params = useParams();
+const { addToCart } = useCart();
 
 const product = products.find(
 (p)=>p.id === Number(params.id)
 );
 
-const [size,setSize] = useState("M");
-const [quantity,setQuantity] = useState(1);
-const [activeImage,setActiveImage] = useState(0);
-
-if(!product){
-return <div className="p-10">Product not found</div>
-}
-
-const relatedProducts = products.filter(
-(p)=>p.category === product.category && p.id !== product.id
+const [selectedImage,setSelectedImage] = useState(
+product?.images?.[0]
 );
 
-return (
+const [size,setSize] = useState("");
 
-<div className="max-w-6xl mx-auto px-6 py-12">
+if(!product){
+return <p className="p-10">Product not found</p>
+}
 
-<div className="grid md:grid-cols-2 gap-10">
+return(
 
-{/* IMAGE */}
+<main className="max-w-6xl mx-auto px-6 py-16">
+
+<div className="grid md:grid-cols-2 gap-12">
+
+{/* IMAGE GALLERY */}
 
 <div>
 
 <img
-src={product.images[activeImage]}
+src={selectedImage}
 className="w-full h-[450px] object-cover rounded-xl mb-4"
 />
 
 <div className="flex gap-3">
 
-{product.images.map((img,index)=>(
+{product.images.map((img)=>(
 <img
-key={index}
+key={img}
 src={img}
-onClick={()=>setActiveImage(index)}
-className={`w-20 h-20 object-cover rounded cursor-pointer border
-${activeImage===index ? "border-black":"border-gray-200"}`}
+onClick={()=>setSelectedImage(img)}
+className={`w-20 h-20 object-cover rounded cursor-pointer border ${
+selectedImage===img ? "border-black" : ""
+}`}
 />
 ))}
 
@@ -56,8 +57,7 @@ ${activeImage===index ? "border-black":"border-gray-200"}`}
 
 </div>
 
-
-{/* PRODUCT DETAILS */}
+{/* PRODUCT INFO */}
 
 <div>
 
@@ -65,34 +65,27 @@ ${activeImage===index ? "border-black":"border-gray-200"}`}
 {product.name}
 </h1>
 
-<div className="text-yellow-500 mb-3">
+<p className="text-yellow-500 mb-3">
 ⭐⭐⭐⭐☆
-</div>
+</p>
 
-<p className="text-xl font-medium mb-4">
+<p className="text-2xl font-medium mb-6">
 ₹{product.price}
 </p>
 
-<p className="text-gray-600 mb-6">
-Premium quality clothing designed for comfort and modern style.
+<p className="font-medium mb-3">
+Select Size
 </p>
 
-{/* SIZE */}
+<div className="flex gap-3 mb-6">
 
-<div className="mb-6">
-
-<p className="mb-2 font-medium">
-Size
-</p>
-
-<div className="flex gap-3">
-
-{["S","M","L","XL"].map((s)=>(
+{product.sizes.map((s)=>(
 <button
 key={s}
 onClick={()=>setSize(s)}
-className={`px-4 py-2 border rounded
-${size===s ? "bg-black text-white":"bg-white"}`}
+className={`border px-4 py-2 rounded ${
+size===s ? "bg-black text-white" : ""
+}`}
 >
 {s}
 </button>
@@ -100,81 +93,36 @@ ${size===s ? "bg-black text-white":"bg-white"}`}
 
 </div>
 
-</div>
-
-{/* QUANTITY */}
-
-<div className="flex items-center gap-4 mb-6">
-
 <button
-onClick={()=>setQuantity(q=>Math.max(1,q-1))}
-className="border px-3 py-1"
+onClick={()=>{
+
+if(!size){
+alert("Please select size");
+return;
+}
+
+addToCart({...product,size});
+
+}}
+className="bg-black text-white px-6 py-3 rounded-lg"
 >
--
-</button>
 
-<span>
-{quantity}
-</span>
-
-<button
-onClick={()=>setQuantity(q=>q+1)}
-className="border px-3 py-1"
->
-+
-</button>
-
-</div>
-
-{/* ADD TO CART */}
-
-<button className="bg-black text-white px-6 py-3 rounded-lg">
 Add to Cart
+
 </button>
 
 </div>
 
 </div>
 
-
-{/* RELATED PRODUCTS */}
-
-<div className="mt-16">
-
-<h2 className="text-2xl font-semibold mb-6">
-You May Also Like
-</h2>
-
-<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-
-{relatedProducts.map((item)=>(
-<Link key={item.id} href={`/product/${item.id}`}>
-
-<div className="bg-white p-4 rounded-xl shadow-sm hover:shadow-lg transition">
-
-<img
-src={item.images[0]}
-className="w-full h-48 object-cover rounded-lg mb-3"
+<ReviewSection />
+<RelatedProducts
+category={product.category}
+currentId={product.id}
 />
 
-<h3 className="text-sm font-medium">
-{item.name}
-</h3>
+</main>
 
-<p className="text-gray-500 text-sm">
-₹{item.price}
-</p>
+)
 
-</div>
-
-</Link>
-))}
-
-</div>
-
-</div>
-
-</div>
-
-);
 }

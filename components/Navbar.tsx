@@ -7,23 +7,26 @@ export default function Navbar() {
   const { cart } = useCart();
 
   return (
-    <nav className="flex items-center justify-between px-12 py-6 border-b bg-white text-black">
+    <nav className="flex items-center justify-between px-10 py-5 border-b bg-white sticky top-0 z-50">
 
-      <Link href="/" className="text-2xl font-semibold tracking-wide">
-        05Mart
+      <Link href="/">
+        <h1 className="text-2xl font-bold">05Mart</h1>
       </Link>
 
-      <div className="hidden md:flex gap-10 text-sm uppercase tracking-wider">
+      <div className="flex gap-8 text-sm font-medium">
         <Link href="/">Home</Link>
         <Link href="/cart">Cart</Link>
         <Link href="/admin">Admin</Link>
+        <Link href="/wishlist">Wishlist</Link>
+
+
+
       </div>
 
-      <Link
-        href="/cart"
-        className="border px-6 py-2 rounded-full hover:bg-black hover:text-white transition"
-      >
-        Cart ({cart.length})
+      <Link href="/cart">
+        <button className="border px-5 py-2 rounded-full">
+          Cart ({cart.length})
+        </button>
       </Link>
 
     </nav>
