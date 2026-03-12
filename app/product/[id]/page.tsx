@@ -1,128 +1,82 @@
 "use client";
-import RelatedProducts from "../../../components/RelatedProducts";
-import ReviewSection from "../../../components/ReviewSection";
+
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-import { products } from "../../../data/products";
-import { useCart } from "../../context/CartContext";
 
-export default function ProductPage(){
+export default function ProductPage() {
 
-const params = useParams();
-const { addToCart } = useCart();
+  const { id } = useParams();
 
-const product = products.find(
-(p)=>p.id === Number(params.id)
-);
+  const [product, setProduct] = useState<any>(null);
 
-const [selectedImage,setSelectedImage] = useState(
-product?.images?.[0]
-);
+  useEffect(() => {
 
-const [size,setSize] = useState("");
+    const fetchProduct = async () => {
 
-if(!product){
-return <p className="p-10">Product not found</p>
-}
+      const res = await fetch(`/api/products/${id}`);
 
-return(
+      const data = await res.json();
 
-<main className="max-w-6xl mx-auto px-6 py-16">
+      setProduct(data);
 
-<div className="grid md:grid-cols-2 gap-12">
+    };
 
-{/* IMAGE GALLERY */}
+    fetchProduct();
 
-<div>
+  }, [id]);
 
-<img
-src={selectedImage}
-className="w-full h-[450px] object-cover rounded-xl mb-4"
-/>
+  if (!product) return <p className="p-10">Loading...</p>;
 
-<div className="flex gap-3">
+  const finalPrice =
+    product.price - (product.price * product.discount) / 100;
 
-{product.images.map((img)=>(
-<img
-key={img}
-src={img}
-onClick={()=>setSelectedImage(img)}
-className={`w-20 h-20 object-cover rounded cursor-pointer border ${
-selectedImage===img ? "border-black" : ""
-}`}
-/>
-))}
+  return (
 
-</div>
+    <div className="max-w-6xl mx-auto p-8 grid md:grid-cols-2 gap-10">
 
-</div>
+      <img
+        src={product.image || "https://via.placeholder.com/500"}
+        alt={product.name}
+        className="w-full rounded"
+      />
 
-{/* PRODUCT INFO */}
+      <div>
 
-<div>
+        <h1 className="text-3xl font-bold mb-4">
+          {product.name}
+        </h1>
 
-<h1 className="text-3xl font-semibold mb-2">
-{product.name}
-</h1>
+        <p className="text-gray-600 mb-4">
+          {product.description}
+        </p>
 
-<p className="text-yellow-500 mb-3">
-⭐⭐⭐⭐☆
-</p>
+        <div className="flex items-center gap-3 mb-6">
 
-<p className="text-2xl font-medium mb-6">
-₹{product.price}
-</p>
+          <span className="text-2xl font-bold text-green-600">
+            ₹{Math.round(finalPrice)}
+          </span>
 
-<p className="font-medium mb-3">
-Select Size
-</p>
+          {product.discount > 0 && (
+            <>
+              <span className="line-through text-gray-400">
+                ₹{product.price}
+              </span>
 
-<div className="flex gap-3 mb-6">
+              <span className="text-red-500">
+                {product.discount}% OFF
+              </span>
+            </>
+          )}
 
-{product.sizes.map((s)=>(
-<button
-key={s}
-onClick={()=>setSize(s)}
-className={`border px-4 py-2 rounded ${
-size===s ? "bg-black text-white" : ""
-}`}
->
-{s}
-</button>
-))}
+        </div>
 
-</div>
+        <button className="bg-black text-white px-6 py-3 rounded">
+          Add to Cart
+        </button>
 
-<button
-onClick={()=>{
+      </div>
 
-if(!size){
-alert("Please select size");
-return;
-}
+    </div>
 
-addToCart({...product,size});
-
-}}
-className="bg-black text-white px-6 py-3 rounded-lg"
->
-
-Add to Cart
-
-</button>
-
-</div>
-
-</div>
-
-<ReviewSection />
-<RelatedProducts
-category={product.category}
-currentId={product.id}
-/>
-
-</main>
-
-)
-
+  );
 }

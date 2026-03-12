@@ -4,6 +4,8 @@ export const products = [
 id:1,
 name:"Oversized Black T-Shirt",
 price:899,
+oldPrice:1199,
+badge:"SALE",
 category:"tshirt",
 images:[
 "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600",
@@ -17,6 +19,8 @@ sizes:["S","M","L","XL"]
 id:2,
 name:"Classic White T-Shirt",
 price:799,
+oldPrice:1299,
+badge:"SALE",
 category:"tshirt",
 images:[
 "https://images.unsplash.com/photo-1520975922203-b2b7f35d8a2c?w=600",

@@ -6,59 +6,79 @@ import { useWishlist } from "../app/context/WishlistContext";
 
 export default function ProductCard({ product }: any) {
 
-  const { addToCart } = useCart();
-  const { wishlist, addToWishlist } = useWishlist();
+const { addToCart } = useCart();
+const { wishlist = [], addToWishlist } = useWishlist() || {};
 
-  if (!product) return null;
+if (!product || !product.id) return null;
 
-  const liked = wishlist?.some((item: any) => item && item.id === product.id);
+const liked = wishlist.some((item:any)=>item?.id===product.id);
 
-  return (
+return(
 
-    <div className="bg-white rounded-xl border hover:shadow-lg transition overflow-hidden relative">
+<div className="bg-white rounded-xl border hover:shadow-lg transition overflow-hidden relative">
 
-      <button
-        onClick={() => addToWishlist(product)}
-        className="absolute top-3 right-3 text-xl"
-      >
-        {liked ? "❤️" : "🤍"}
-      </button>
+{/* BADGE */}
 
-      <Link href={`/product/${product.id}`}>
+{product.badge && (
+<div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded">
+{product.badge}
+</div>
+)}
 
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-60 object-cover"
-        />
+{/* WISHLIST */}
 
-      </Link>
+<button
+onClick={()=>addToWishlist(product)}
+className="absolute top-3 right-3 text-xl"
+>
+{liked ? "❤️" : "🤍"}
+</button>
 
-      <div className="p-4">
+<Link href={`/product/${product.id}`}>
 
-        <p className="text-yellow-500 text-sm mb-1">
-          ⭐⭐⭐⭐☆
-        </p>
+<img
+  src={product.image || "https://via.placeholder.com/300"}
+  alt={product.name}
+  className="w-full h-60 object-cover rounded"
+/>
 
-        <h3 className="font-medium mb-1">
-          {product.name}
-        </h3>
+</Link>
 
-        <p className="text-gray-700 font-semibold mb-3">
-          ₹{product.price}
-        </p>
+<div className="p-4">
 
-        <button
-          onClick={() => addToCart(product)}
-          className="w-full bg-black text-white py-2 rounded-lg"
-        >
-          Add to Cart
-        </button>
+<p className="text-yellow-500 text-sm mb-1">
+⭐⭐⭐⭐☆
+</p>
 
-      </div>
+<h3 className="font-medium mb-1">
+{product.name}
+</h3>
 
-    </div>
+<div className="flex gap-2 items-center mb-3">
 
-  );
+<p className="font-semibold">
+₹{product.price}
+</p>
+
+{product.oldPrice && (
+<p className="text-gray-400 line-through text-sm">
+₹{product.oldPrice}
+</p>
+)}
+
+</div>
+
+<button
+onClick={()=>addToCart(product)}
+className="w-full bg-black text-white py-2 rounded-lg"
+>
+Add to Cart
+</button>
+
+</div>
+
+</div>
+
+)
 
 }

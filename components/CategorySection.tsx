@@ -1,41 +1,43 @@
-"use client";
+import Link from "next/link";
 
-import { useParams } from "next/navigation";
-import { products } from "../data/products";
-import ProductCard from "../components/ProductCard";
+export default function CategorySection(){
 
-export default function CategoryPage() {
+const categories = [
+{ name:"T-Shirts", slug:"tshirt" },
+{ name:"Shirts", slug:"shirt" },
+{ name:"Hoodies", slug:"hoodie" },
+{ name:"Jeans", slug:"jeans" },
+{ name:"Jackets", slug:"jacket" }
+];
 
-  const params = useParams();
+return(
 
-  const category = params.name;
+<section className="px-10 py-16">
 
-  const filteredProducts = products.filter(
-    (p) => p.category === category
-  );
+<h2 className="text-3xl font-semibold text-center mb-12">
+Shop by Category
+</h2>
 
-  return (
+<div className="grid grid-cols-2 md:grid-cols-5 gap-6">
 
-    <main className="max-w-6xl mx-auto px-6 py-16">
+{categories.map((cat)=>(
+<Link
+key={cat.slug}
+href={`/category/${cat.slug}`}
+className="bg-white border rounded-xl p-10 text-center hover:shadow-lg transition"
+>
 
-      <h1 className="text-3xl font-semibold mb-10 capitalize">
-        {category}
-      </h1>
+<p className="font-medium text-lg">
+{cat.name}
+</p>
 
-      {filteredProducts.length === 0 && (
-        <p>No products found</p>
-      )}
+</Link>
+))}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+</div>
 
-        {filteredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+</section>
 
-      </div>
-
-    </main>
-
-  );
+)
 
 }

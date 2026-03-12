@@ -1,28 +1,84 @@
 "use client";
 
-import Hero from "../components/Hero";
-import CategorySection from "../components/CategorySection";
-import ProductRow from "../components/ProductRow";
-import { products } from "../data/products";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
-export default function Home(){
+export default function HomePage() {
 
-return(
+  const [products, setProducts] = useState([]);
 
-<main className="bg-gray-50">
+  useEffect(() => {
 
-<Hero />
+  const fetchProducts = async () => {
 
-<CategorySection />
+    try {
 
-<ProductRow title="Trending" products={products.slice(0,6)} />
+      const res = await fetch("/api/products");
 
-<ProductRow title="New Arrivals" products={products.slice(6,12)} />
+      if (!res.ok) {
+        console.error("API error");
+        return;
+      }
 
-<ProductRow title="Best Sellers" products={products.slice(12,18)} />
+      const text = await res.text();
 
-</main>
+      if (!text) {
+        console.log("Empty response");
+        return;
+      }
 
-)
+      const data = JSON.parse(text);
 
+      setProducts(data);
+
+    } catch (error) {
+      console.error("Fetch error:", error);
+    }
+
+  };
+
+  fetchProducts();
+
+}, []);
+  return (
+
+    <main className="max-w-7xl mx-auto p-8">
+
+      <h1 className="text-3xl font-bold mb-8">
+        Products
+      </h1>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        {products.map((product: any) => (
+
+          <Link key={product._id} href={`/product/${product._id}`}>
+
+            <div className="border p-4 rounded hover:shadow-lg">
+
+              <img
+                src={product.image || "https://via.placeholder.com/300"}
+                alt={product.name}
+                className="w-full h-60 object-cover rounded"
+              />
+
+              <h2 className="mt-3 font-semibold">
+                {product.name}
+              </h2>
+
+              <p className="text-gray-500">
+                ₹{product.price}
+              </p>
+
+            </div>
+
+          </Link>
+
+        ))}
+
+      </div>
+
+    </main>
+
+  );
 }
