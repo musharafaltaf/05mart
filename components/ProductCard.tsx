@@ -1,84 +1,82 @@
 "use client";
 
 import Link from "next/link";
-import { useCart } from "../app/context/CartContext";
-import { useWishlist } from "../app/context/WishlistContext";
+import { useCart } from "@/app/context/CartContext";
+import { useWishlist } from "@/app/context/WishlistContext";
 
 export default function ProductCard({ product }: any) {
 
 const { addToCart } = useCart();
-const { wishlist = [], addToWishlist } = useWishlist() || {};
+const { addToWishlist } = useWishlist();
 
-if (!product || !product.id) return null;
+const handleAddToCart = () => {
 
-const liked = wishlist.some((item:any)=>item?.id===product.id);
+addToCart({
+...product,
+quantity: 1
+});
+
+};
+
+const handleWishlist = () => {
+addToWishlist(product);
+};
 
 return(
 
-<div className="bg-white rounded-xl border hover:shadow-lg transition overflow-hidden relative">
+<div className="bg-white rounded-xl border hover:shadow-lg transition overflow-hidden">
 
-{/* BADGE */}
+{/* IMAGE */}
 
-{product.badge && (
-<div className="absolute top-3 left-3 bg-red-500 text-white text-xs px-3 py-1 rounded">
-{product.badge}
-</div>
-)}
-
-{/* WISHLIST */}
-
-<button
-onClick={()=>addToWishlist(product)}
-className="absolute top-3 right-3 text-xl"
->
-{liked ? "❤️" : "🤍"}
-</button>
-
-<Link href={`/product/${product.id}`}>
+<Link href={`/product/${product._id}`}>
 
 <img
-  src={product.image || "https://via.placeholder.com/300"}
-  alt={product.name}
-  className="w-full h-60 object-cover rounded"
+src={product.image}
+className="w-full h-48 md:h-60 object-cover cursor-pointer"
 />
 
 </Link>
 
-<div className="p-4">
+<div className="p-3">
 
-<p className="text-yellow-500 text-sm mb-1">
-⭐⭐⭐⭐☆
-</p>
+{/* NAME */}
 
-<h3 className="font-medium mb-1">
+<Link href={`/product/${product._id}`}>
+
+<h3 className="text-sm md:text-base font-medium hover:underline cursor-pointer">
 {product.name}
 </h3>
 
-<div className="flex gap-2 items-center mb-3">
+</Link>
 
-<p className="font-semibold">
+<p className="text-gray-600 text-sm">
 ₹{product.price}
 </p>
 
-{product.oldPrice && (
-<p className="text-gray-400 line-through text-sm">
-₹{product.oldPrice}
-</p>
-)}
+{/* BUTTONS */}
 
-</div>
+<div className="flex gap-2 mt-3">
 
 <button
-onClick={()=>addToCart(product)}
-className="w-full bg-black text-white py-2 rounded-lg"
+onClick={handleAddToCart}
+className="flex-1 bg-black text-white py-2 rounded-lg text-sm md:text-base hover:bg-gray-800"
 >
 Add to Cart
+</button>
+
+<button
+onClick={handleWishlist}
+className="px-3 border rounded-lg hover:bg-gray-100"
+>
+❤
 </button>
 
 </div>
 
 </div>
 
-)
+</div>
+
+);
 
 }

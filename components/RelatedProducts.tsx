@@ -1,26 +1,48 @@
-import ProductCard from "./ProductCard";
-import { products } from "../data/products";
+"use client";
 
-export default function RelatedProducts({ category, currentId }: any) {
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
-  const related = products
-    .filter((p) => p.category === category && p.id !== currentId)
-    .slice(0,4);
+export default function RelatedProducts({ category }: any) {
 
-  if (related.length === 0) return null;
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+
+    fetch(`/api/products/related?category=${category}`)
+      .then(res => res.json())
+      .then(setProducts);
+
+  }, [category]);
 
   return (
 
-    <div className="mt-20">
+    <div className="mt-16">
 
-      <h2 className="text-2xl font-semibold mb-8">
-        You may also like
+      <h2 className="text-2xl font-bold mb-6">
+        Related Products
       </h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-        {related.map((product) => (
-          <ProductCard key={product.id} product={product} />
+        {products.map((p: any) => (
+
+          <Link key={p._id} href={`/product/${p._id}`}>
+
+            <div className="border p-4 rounded">
+
+              <img
+                src={p.image}
+                className="h-40 w-full object-cover"
+              />
+
+              <p className="mt-2">{p.name}</p>
+              <p>₹{p.price}</p>
+
+            </div>
+
+          </Link>
+
         ))}
 
       </div>
@@ -28,5 +50,4 @@ export default function RelatedProducts({ category, currentId }: any) {
     </div>
 
   );
-
 }

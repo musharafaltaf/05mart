@@ -1,32 +1,57 @@
 "use client";
 
-import { useWishlist } from "../context/WishlistContext";
-import ProductCard from "../../components/ProductCard";
+import { useEffect, useState } from "react";
+import ProductCard from "@/components/ProductCard";
 
 export default function WishlistPage(){
 
-const { wishlist } = useWishlist();
+const [items,setItems] = useState<any[]>([]);
+
+useEffect(()=>{
+
+const loadWishlist = async()=>{
+
+try{
+
+const res = await fetch("/api/wishlist");
+
+if(!res.ok){
+setItems([]);
+return;
+}
+
+const data = await res.json();
+
+// ensure array
+setItems(Array.isArray(data.items) ? data.items : []);
+
+}catch(err){
+console.log("Wishlist error:",err);
+setItems([]);
+}
+
+}
+
+loadWishlist();
+
+},[]);
 
 return(
 
-<main className="max-w-6xl mx-auto px-6 py-16">
+<main className="max-w-7xl mx-auto px-4 py-10">
 
-<h1 className="text-3xl font-semibold mb-10">
-Your Wishlist
+<h1 className="text-2xl font-bold mb-6">
+My Wishlist
 </h1>
 
-{wishlist.length === 0 && (
-
-<p className="text-gray-500">
-No products saved yet
-</p>
-
+{items.length === 0 && (
+<p>No items in wishlist</p>
 )}
 
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
-{wishlist.map((product:any)=>(
-<ProductCard key={product.id} product={product}/>
+{items.map((product:any)=>(
+<ProductCard key={product._id} product={product}/>
 ))}
 
 </div>

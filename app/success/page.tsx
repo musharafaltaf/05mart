@@ -1,47 +1,39 @@
 "use client";
 
-export default function CheckoutPage(){
+import Link from "next/link";
 
-return(
+export default function SuccessPage() {
 
-<main className="max-w-4xl mx-auto px-6 py-16">
+  return (
 
-<h1 className="text-3xl font-semibold mb-10">
-Checkout
-</h1>
+    <main className="max-w-4xl mx-auto p-10 text-center">
 
-<form className="space-y-6">
+      <h1 className="text-4xl font-bold mb-6">
+        🎉 Order Placed Successfully
+      </h1>
 
-<input
-placeholder="Full Name"
-className="border p-4 w-full rounded"
-/>
+      <p className="text-gray-600 mb-8">
+        Thank you for your purchase. Your order is being processed.
+      </p>
 
-<input
-placeholder="Address"
-className="border p-4 w-full rounded"
-/>
+      <div className="flex gap-4 justify-center">
 
-<input
-placeholder="Phone"
-className="border p-4 w-full rounded"
-/>
+        <Link href="/orders">
+          <button className="bg-black text-white px-6 py-3 rounded">
+            View Orders
+          </button>
+        </Link>
 
-<a href="/success">
+        <Link href="/">
+          <button className="border px-6 py-3 rounded">
+            Continue Shopping
+          </button>
+        </Link>
 
-<button
-type="button"
-className="bg-black text-white px-6 py-3 rounded-lg"
->
-Place Order
-</button>
+      </div>
 
-</a>
+    </main>
 
-</form>
-
-</main>
-
-)
+  );
 
 }

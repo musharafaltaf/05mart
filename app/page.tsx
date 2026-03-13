@@ -1,84 +1,173 @@
-"use client";
+// "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import Link from "next/link";
+// import FlashSale from "@/components/FlashSale";
+// import ProductRating from "@/components/ProductRating";
 
-export default function HomePage() {
+// export default function HomePage() {
 
-  const [products, setProducts] = useState([]);
+//   const [products, setProducts] = useState<any[]>([]);
 
-  useEffect(() => {
+//   useEffect(() => {
 
-  const fetchProducts = async () => {
+//     const fetchProducts = async () => {
 
-    try {
+//       try {
 
-      const res = await fetch("/api/products");
+//         const res = await fetch("/api/products");
 
-      if (!res.ok) {
-        console.error("API error");
-        return;
-      }
+//         if (!res.ok) {
+//           console.error("API error");
+//           return;
+//         }
 
-      const text = await res.text();
+//         const data = await res.json();
 
-      if (!text) {
-        console.log("Empty response");
-        return;
-      }
+//         setProducts(data);
 
-      const data = JSON.parse(text);
+//       } catch (error) {
+//         console.error("Fetch error:", error);
+//       }
 
-      setProducts(data);
+//     };
 
-    } catch (error) {
-      console.error("Fetch error:", error);
-    }
+//     fetchProducts();
 
-  };
+//   }, []);
 
-  fetchProducts();
+//   return (
 
-}, []);
-  return (
+//     <main className="max-w-7xl mx-auto p-8">
 
-    <main className="max-w-7xl mx-auto p-8">
+//       <h1 className="text-3xl font-bold mb-8">
+//         Products
+//       </h1>
 
-      <h1 className="text-3xl font-bold mb-8">
-        Products
-      </h1>
+//       {/* ⚡ Flash Sale Section */}
+//       <FlashSale />
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+//       {/* Product Grid */}
 
-        {products.map((product: any) => (
+//       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-10">
 
-          <Link key={product._id} href={`/product/${product._id}`}>
+//         {products.map((product: any) => (
 
-            <div className="border p-4 rounded hover:shadow-lg">
+//           <Link key={product._id} href={`/product/${product._id}`}>
 
-              <img
-                src={product.image || "https://via.placeholder.com/300"}
-                alt={product.name}
-                className="w-full h-60 object-cover rounded"
-              />
+//             <div className="border p-4 rounded hover:shadow-lg transition">
 
-              <h2 className="mt-3 font-semibold">
-                {product.name}
-              </h2>
+//               <img
+//                 src={product.image || "https://via.placeholder.com/300"}
+//                 alt={product.name}
+//                 className="w-full h-60 object-cover rounded"
+//               />
 
-              <p className="text-gray-500">
-                ₹{product.price}
-              </p>
+//               <h2 className="mt-3 font-semibold">
+//                 {product.name}
+//               </h2>
 
-            </div>
+//               <p className="text-gray-500">
+//                 ₹{product.price}
+//               </p>
 
-          </Link>
+//             </div>
 
-        ))}
+//           </Link>
 
-      </div>
+//         ))}
 
-    </main>
+//       </div>
 
-  );
+//     </main>
+
+//   );
+// }
+
+
+// "use client";
+
+// import { useEffect, useState } from "react";
+// import ProductCard from "@/components/ProductCard";
+
+// export default function HomePage(){
+
+// const [products,setProducts] = useState<any[]>([]);
+
+// useEffect(()=>{
+
+// const loadProducts = async()=>{
+
+// const res = await fetch("/api/products");
+// const data = await res.json();
+
+// setProducts(data);
+
+// };
+
+// loadProducts();
+
+// },[]);
+
+// return(
+
+// <main className="max-w-7xl mx-auto px-4 py-10">
+
+// <h1 className="text-2xl md:text-3xl font-bold mb-8">
+// Featured Products
+// </h1>
+
+// <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+
+// {products.map((product:any)=>(
+// <ProductCard key={product._id} product={product}/>
+// ))}
+
+// </div>
+
+// </main>
+
+// );
+
+// }
+
+
+import HeroSlider from "@/components/HeroSlider"
+import Categories from "@/components/Categories"
+import StoreBenefits from "@/components/StoreBenefits"
+import ProductCard from "@/components/ProductCard"
+import TrendingProducts from "@/components/TrendingProducts"
+import FlashSale from "@/components/FlashSale";
+import PromoBanner from "@/components/PromoBanner";
+import RecentlyViewed from "@/components/RecentlyViewed";
+
+export default function Home(){
+
+return(
+
+<main className="relative z-10">
+
+<HeroSlider/>
+
+<Categories/>
+
+<TrendingProducts/>
+<FlashSale/>
+<PromoBanner/>
+<RecentlyViewed/>
+
+<section className="max-w-7xl mx-auto px-4 py-10">
+
+<h2 className="text-2xl font-bold mb-6">
+Featured Products
+</h2>
+
+</section>
+
+<StoreBenefits/>
+
+</main>
+
+)
+
 }

@@ -12,21 +12,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body className="relative">
 
         <CartProvider>
+          <WishlistProvider>
 
-<WishlistProvider>
+            <Navbar />
 
-<Navbar />
+            {/* PAGE CONTENT */}
+            <main className="relative z-10">
+              {children}
+            </main>
 
-{children}
+            <Footer />
 
-<Footer />
-
-</WishlistProvider>
-
-</CartProvider>
+          </WishlistProvider>
+        </CartProvider>
 
       </body>
     </html>

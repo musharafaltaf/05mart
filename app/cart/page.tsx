@@ -1,34 +1,53 @@
 "use client";
 
-import { useCart } from "../context/CartContext";
+import { useCart } from "@/app/context/CartContext";
+import { useRouter } from "next/navigation";
 
 export default function CartPage() {
 
-  const { cart, removeFromCart, increaseQty, decreaseQty } = useCart();
+const { cart, removeFromCart, updateQuantity } = useCart();
+const router = useRouter();
 
-  const total = cart.reduce((sum:any,item:any)=>sum + item.price * item.qty,0);
+const subtotal = cart.reduce(
+(sum:any,item:any)=> sum + item.price * item.quantity,
+0
+);
 
-  if(cart.length===0){
-    return(
-      <div className="min-h-screen flex items-center justify-center">
-        <h1 className="text-2xl">Your cart is empty</h1>
-      </div>
-    )
-  }
+return(
 
-  return(
+<main className="max-w-7xl mx-auto px-4 py-10">
 
-<main className="max-w-6xl mx-auto px-6 py-16">
+<h1 className="text-3xl font-bold mb-8">
+Your Cart
+</h1>
 
-<h1 className="text-3xl font-semibold mb-10">Your Cart</h1>
+{cart.length === 0 && (
+<div className="text-center py-20">
+
+<p className="text-gray-500 mb-6">
+Your cart is empty
+</p>
+
+<button
+onClick={()=>router.push("/")}
+className="bg-black text-white px-6 py-3 rounded"
+>
+Continue Shopping
+</button>
+
+</div>
+)}
+
+{cart.length > 0 && (
 
 <div className="grid md:grid-cols-3 gap-10">
+
+{/* CART ITEMS */}
 
 <div className="md:col-span-2 space-y-6">
 
 {cart.map((item:any)=>(
-
-<div key={item.id} className="flex gap-6 bg-white p-6 rounded-xl border">
+<div key={item._id} className="flex gap-4 border-b pb-6">
 
 <img
 src={item.image}
@@ -37,69 +56,96 @@ className="w-24 h-24 object-cover rounded"
 
 <div className="flex-1">
 
-<h3 className="font-semibold">{item.name}</h3>
+<h2 className="font-semibold">
+{item.name}
+</h2>
 
-<p className="text-gray-500">₹{item.price}</p>
+<p className="text-gray-500">
+₹{item.price}
+</p>
+
+<p className="text-sm text-gray-400 mt-1">
+Size: {item.size || "Standard"}
+</p>
+
+{/* QUANTITY */}
 
 <div className="flex items-center gap-3 mt-3">
 
 <button
-onClick={()=>decreaseQty(item.id)}
-className="border px-3"
+onClick={()=>updateQuantity(item._id,item.quantity-1)}
+className="border px-2"
 >
 -
 </button>
 
-<p>{item.qty}</p>
+<span>{item.quantity}</span>
 
 <button
-onClick={()=>increaseQty(item.id)}
-className="border px-3"
+onClick={()=>updateQuantity(item._id,item.quantity+1)}
+className="border px-2"
 >
 +
 </button>
 
 </div>
 
+</div>
+
+{/* REMOVE */}
+
 <button
-onClick={()=>removeFromCart(item.id)}
-className="text-red-500 text-sm mt-3"
+onClick={()=>removeFromCart(item._id)}
+className="text-red-500 text-sm"
 >
 Remove
 </button>
 
 </div>
-
-</div>
-
 ))}
 
 </div>
 
-<div className="bg-white p-6 rounded-xl border h-fit">
+{/* PRICE SUMMARY */}
 
-<h2 className="text-xl font-semibold mb-6">
-Order Summary
+<div className="border p-6 rounded h-fit">
+
+<h2 className="font-semibold mb-4">
+Price Details
 </h2>
 
-<div className="flex justify-between mb-4">
-<p>Total</p>
-<p className="font-semibold">₹{total}</p>
+<div className="flex justify-between mb-2">
+<span>Subtotal</span>
+<span>₹{subtotal}</span>
 </div>
 
-<a href="/checkout">
+<div className="flex justify-between mb-2">
+<span>Delivery</span>
+<span className="text-green-600">FREE</span>
+</div>
 
-<button className="w-full bg-black text-white py-3 rounded-lg">
-Checkout
+<hr className="my-4"/>
+
+<div className="flex justify-between font-bold text-lg">
+<span>Total</span>
+<span>₹{subtotal}</span>
+</div>
+
+<button
+onClick={()=>router.push("/checkout/address")}
+className="mt-6 bg-black text-white w-full py-3 rounded"
+>
+Proceed to Checkout
 </button>
 
-</a>
-
 </div>
 
 </div>
+
+)}
 
 </main>
 
-  )
+);
+
 }

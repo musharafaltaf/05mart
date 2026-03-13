@@ -10,11 +10,10 @@ category:"tshirt",
 images:[
 "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600",
 "https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?w=600",
-"https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=600"
+""
 ],
 sizes:["S","M","L","XL"]
 },
-
 {
 id:2,
 name:"Classic White T-Shirt",

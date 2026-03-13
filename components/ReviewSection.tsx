@@ -1,104 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function ReviewSection(){
+export default function ReviewSection({ productId }: { productId: string }) {
 
-const [reviews,setReviews] = useState<any[]>([]);
-const [rating,setRating] = useState(0);
-const [text,setText] = useState("");
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(5);
+  const [comment, setComment] = useState("");
 
-const submitReview = ()=>{
+  const fetchReviews = async () => {
 
-if(!text){
-alert("Write review first");
-return;
-}
+    const res = await fetch(`/api/reviews?productId=${productId}`);
+    const data = await res.json();
 
-const newReview = {
-rating,
-text
-};
+    if (Array.isArray(data)) {
+      setReviews(data);
+    }
 
-setReviews([newReview,...reviews]);
+  };
 
-setText("");
-setRating(0);
+  useEffect(() => {
+    fetchReviews();
+  }, [productId]);
 
-};
+  const submitReview = async () => {
 
-return(
+    await fetch("/api/reviews", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        productId,
+        name,
+        rating,
+        comment
+      })
+    });
 
-<div className="mt-16">
+    setName("");
+    setComment("");
 
-<h2 className="text-2xl font-semibold mb-6">
-Customer Reviews
-</h2>
+    fetchReviews();
 
-{/* WRITE REVIEW */}
+  };
 
-<div className="mb-10">
+  return (
 
-<p className="mb-2 font-medium">
-Your Rating
-</p>
+    <section className="mt-16">
 
-<div className="flex gap-2 mb-4">
+      <h2 className="text-2xl font-semibold mb-6">
+        Reviews
+      </h2>
 
-{[1,2,3,4,5].map((star)=>(
-<button
-key={star}
-onClick={()=>setRating(star)}
-className="text-2xl"
->
-{rating>=star ? "⭐" : "☆"}
-</button>
-))}
+      {/* Add Review */}
 
-</div>
+      <div className="space-y-3 mb-10">
 
-<textarea
-placeholder="Write your review..."
-value={text}
-onChange={(e)=>setText(e.target.value)}
-className="border p-3 w-full rounded mb-3"
-/>
+        <input
+          placeholder="Your name"
+          value={name}
+          onChange={(e)=>setName(e.target.value)}
+          className="border p-2 w-full"
+        />
 
-<button
-onClick={submitReview}
-className="bg-black text-white px-6 py-2 rounded"
->
-Submit Review
-</button>
+        <select
+          value={rating}
+          onChange={(e)=>setRating(Number(e.target.value))}
+          className="border p-2"
+        >
+          <option value="5">⭐⭐⭐⭐⭐</option>
+          <option value="4">⭐⭐⭐⭐</option>
+          <option value="3">⭐⭐⭐</option>
+          <option value="2">⭐⭐</option>
+          <option value="1">⭐</option>
+        </select>
 
-</div>
+        <textarea
+          placeholder="Write review"
+          value={comment}
+          onChange={(e)=>setComment(e.target.value)}
+          className="border p-2 w-full"
+        />
 
-{/* REVIEWS LIST */}
+        <button
+          onClick={submitReview}
+          className="bg-black text-white px-4 py-2 rounded"
+        >
+          Submit Review
+        </button>
 
-<div className="space-y-6">
+      </div>
 
-{reviews.length===0 && (
-<p className="text-gray-500">
-No reviews yet
-</p>
-)}
+      {/* Reviews List */}
 
-{reviews.map((r,index)=>(
-<div key={index} className="border p-4 rounded">
+      <div className="space-y-4">
 
-<p className="text-yellow-500 mb-2">
-{"⭐".repeat(r.rating)}
-</p>
+        {reviews.map((review)=>(
+          <div key={review._id} className="border p-4 rounded">
 
-<p>{r.text}</p>
+            <p className="font-semibold">
+              {review.name}
+            </p>
 
-</div>
-))}
+            <p>
+              {"⭐".repeat(review.rating)}
+            </p>
 
-</div>
+            <p className="text-gray-600">
+              {review.comment}
+            </p>
 
-</div>
+          </div>
+        ))}
 
-)
+      </div>
+
+    </section>
+
+  );
 
 }

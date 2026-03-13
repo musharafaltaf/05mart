@@ -10,3 +10,24 @@ html, body {
 * {
   box-sizing: border-box;
 }
+
+.swiper {
+  position: relative;
+  z-index: 0;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  z-index: 10;
+}
+@keyframes cartShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-3px); }
+  100% { transform: translateX(0); }
+}
+
+.cart-shake {
+  animation: cartShake 0.4s ease;
+}

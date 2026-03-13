@@ -12,43 +12,43 @@ const addToCart = (product:any)=>{
 
 setCart((prev)=>{
 
-const exists = prev.find((item)=>item.id===product.id);
+const exists = prev.find((item)=>item._id === product._id);
 
 if(exists){
 
 return prev.map((item)=>
-item.id===product.id
-? {...item,qty:item.qty+1}
+item._id === product._id
+? {...item, qty: item.qty + 1}
 : item
 )
 
 }
 
-return [...prev,{...product,qty:1}]
+return [...prev,{...product, qty:1}]
 
 })
 
 };
 
-const removeFromCart = (id:number)=>{
-setCart((prev)=>prev.filter((item)=>item.id!==id))
+const removeFromCart = (_id:string)=>{
+setCart((prev)=>prev.filter((item)=>item._id !== _id))
 }
 
-const increaseQty = (id:number)=>{
+const increaseQty = (_id:string)=>{
 setCart((prev)=>
 prev.map((item)=>
-item.id===id
-? {...item,qty:item.qty+1}
+item._id === _id
+? {...item, qty:item.qty+1}
 : item
 )
 )
 }
 
-const decreaseQty = (id:number)=>{
+const decreaseQty = (_id:string)=>{
 setCart((prev)=>
 prev.map((item)=>
-item.id===id && item.qty>1
-? {...item,qty:item.qty-1}
+item._id === _id && item.qty>1
+? {...item, qty:item.qty-1}
 : item
 )
 )
@@ -57,7 +57,13 @@ item.id===id && item.qty>1
 return(
 
 <CartContext.Provider
-value={{cart,addToCart,removeFromCart,increaseQty,decreaseQty}}
+value={{
+cart,
+addToCart,
+removeFromCart,
+increaseQty,
+decreaseQty
+}}
 >
 
 {children}

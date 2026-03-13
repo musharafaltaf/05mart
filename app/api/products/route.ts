@@ -14,12 +14,9 @@ export async function GET() {
 
   } catch (error) {
 
-    console.error(error);
+    console.error("GET PRODUCTS ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Failed to fetch products" },
-      { status: 500 }
-    );
+    return NextResponse.json([], { status: 200 });
 
   }
 
@@ -29,26 +26,17 @@ export async function POST(req: Request) {
 
   try {
 
-    const { name, price, discount, image, description, category, stock } =
-      await req.json();
-
     await connectDB();
 
-    const product = await Product.create({
-      name,
-      price,
-      discount,
-      image,
-      description,
-      category,
-      stock
-    });
+    const body = await req.json();
+
+    const product = await Product.create(body);
 
     return NextResponse.json(product);
 
   } catch (error) {
 
-    console.error(error);
+    console.error("CREATE PRODUCT ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to create product" },
