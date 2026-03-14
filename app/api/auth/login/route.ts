@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/lib/models/Users";
 import { createAdmin } from "@/app/lib/createAdmin";
+export const dynamic = "force-dynamic";
 
 const JWT_SECRET = "mysecretkey";
 
