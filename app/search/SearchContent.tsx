@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SearchContent() {
 
@@ -42,10 +43,14 @@ export default function SearchContent() {
 
             <div className="border p-4 rounded">
 
-              <img
-                src={product.image}
-                className="h-40 w-full object-cover"
-              />
+
+<Image
+  src={product.image}
+  alt={product.name}
+  width={400}
+  height={300}
+  className="h-40 w-full object-cover"
+/>
 
               <p className="mt-2">{product.name}</p>
 
