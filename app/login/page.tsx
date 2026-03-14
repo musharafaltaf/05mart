@@ -1,76 +1,93 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const redirect = searchParams.get("redirect");
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [form,setForm] = useState({
+    email:"",
+    password:""
+  });
 
-    const res = await fetch("/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+  const handleChange = (e:any)=>{
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const login = async () => {
+
+    const res = await fetch("/api/auth/login",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify(form)
     });
 
     const data = await res.json();
 
-    if (data.token) {
-      localStorage.setItem("token", data.token);
-      alert("Login successful");
-      router.push("/");
-    } else {
+    if(res.ok){
+
+      localStorage.setItem("user",JSON.stringify(data.user));
+
+      /* IMPORTANT REDIRECT */
+
+      if(redirect){
+        router.push(redirect);
+      }else{
+        router.push("/");
+      }
+
+    }else{
       alert(data.error || "Login failed");
     }
+
   };
 
-  return (
-    <div className="flex justify-center items-center min-h-screen">
+  return(
 
-      <form
-        onSubmit={handleLogin}
-        className="bg-white shadow-lg p-8 rounded-lg w-96 space-y-4"
-      >
+    <main className="max-w-md mx-auto py-20 px-4">
 
-        <h1 className="text-2xl font-bold text-center">
-          Login
-        </h1>
+      <h1 className="text-2xl font-bold mb-6">
+        Login
+      </h1>
+
+      <div className="space-y-4">
 
         <input
-          type="email"
+          name="email"
           placeholder="Email"
           className="border p-3 w-full rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
+          onChange={handleChange}
         />
 
         <input
+          name="password"
           type="password"
           placeholder="Password"
           className="border p-3 w-full rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
+          onChange={handleChange}
         />
 
         <button
-          type="submit"
+          onClick={login}
           className="bg-black text-white w-full py-3 rounded"
         >
           Login
         </button>
 
-      </form>
+      </div>
 
-    </div>
+    </main>
+
   );
+
 }

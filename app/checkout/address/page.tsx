@@ -75,7 +75,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutSteps from "@/components/CheckoutSteps";
 
@@ -92,6 +92,17 @@ city:"",
 house:"",
 area:"",
 });
+
+useEffect(()=>{
+
+const user = localStorage.getItem("user");
+
+if(!user){
+alert("Please login to continue checkout");
+router.push("/login");
+}
+
+},[]);
 
 const handleChange = (e:any)=>{
 setForm({...form,[e.target.name]:e.target.value});
@@ -114,7 +125,7 @@ return(
 
 <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
 
-    <CheckoutSteps step={1} />
+<CheckoutSteps step={1} />
 
 <h1 className="text-xl md:text-2xl font-bold mb-6">
 Add Delivery Address
@@ -125,32 +136,30 @@ Add Delivery Address
 <input
 name="name"
 placeholder="Full Name"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
 <input
 name="phone"
 placeholder="Phone Number"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
-
-{/* PINCODE + CITY */}
 
 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
 <input
 name="pincode"
 placeholder="Pincode"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
 <input
 name="city"
 placeholder="City"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
@@ -159,27 +168,27 @@ onChange={handleChange}
 <input
 name="state"
 placeholder="State"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
 <input
 name="house"
 placeholder="House / Building"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
 <input
 name="area"
 placeholder="Area / Road / Colony"
-className="border p-3 rounded w-full text-sm md:text-base"
+className="border p-3 rounded w-full"
 onChange={handleChange}
 />
 
 <button
 onClick={saveAddress}
-className="bg-orange-500 hover:bg-orange-600 text-white py-3 rounded mt-4 w-full md:w-auto px-6"
+className="bg-orange-500 hover:bg-orange-600 text-white py-3 rounded mt-4"
 >
 Continue
 </button>

@@ -1,85 +1,105 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function RegisterPage() {
+export default function RegisterPage(){
 
-  const router = useRouter();
+const router = useRouter();
+const searchParams = useSearchParams();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+/* redirect target */
+const redirect = searchParams.get("redirect");
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+const [form,setForm] = useState({
+name:"",
+email:"",
+password:""
+});
 
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email, password }),
-    });
+const handleChange = (e:any)=>{
+setForm({...form,[e.target.name]:e.target.value});
+};
 
-    const data = await res.json();
+const handleRegister = async()=>{
 
-    if (data.message) {
-      alert("Registration successful");
-      router.push("/login");
-    } else {
-      alert(data.error || "Registration failed");
-    }
-  };
+if(!form.name || !form.email || !form.password){
+alert("Fill all fields");
+return;
+}
 
-  return (
-    <div className="flex justify-center items-center min-h-screen">
+const res = await fetch("/api/auth/register",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body: JSON.stringify(form)
+});
 
-      <form
-        onSubmit={handleRegister}
-        className="bg-white shadow-lg p-8 rounded-lg w-96 space-y-4"
-      >
+const data = await res.json();
 
-        <h1 className="text-2xl font-bold text-center">
-          Register
-        </h1>
+if(!res.ok){
+alert(data.error || "Registration failed");
+return;
+}
 
-        <input
-          type="text"
-          placeholder="Name"
-          className="border p-3 w-full rounded"
-          value={name}
-          onChange={(e)=>setName(e.target.value)}
-          required
-        />
+/* AUTO LOGIN */
 
-        <input
-          type="email"
-          placeholder="Email"
-          className="border p-3 w-full rounded"
-          value={email}
-          onChange={(e)=>setEmail(e.target.value)}
-          required
-        />
+localStorage.setItem("user",JSON.stringify(data.user));
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="border p-3 w-full rounded"
-          value={password}
-          onChange={(e)=>setPassword(e.target.value)}
-          required
-        />
+/* REDIRECT */
 
-        <button
-          type="submit"
-          className="bg-black text-white w-full py-3 rounded"
-        >
-          Register
-        </button>
+if(redirect){
+router.push(redirect);
+}else{
+router.push("/");
+}
 
-      </form>
+};
 
-    </div>
-  );
+return(
+
+<main className="max-w-md mx-auto px-4 py-10">
+
+<h1 className="text-2xl font-bold mb-6">
+Create Account
+</h1>
+
+<div className="grid gap-4">
+
+<input
+name="name"
+placeholder="Full Name"
+className="border p-3 rounded"
+onChange={handleChange}
+/>
+
+<input
+name="email"
+placeholder="Email"
+className="border p-3 rounded"
+onChange={handleChange}
+/>
+
+<input
+name="password"
+type="password"
+placeholder="Password"
+className="border p-3 rounded"
+onChange={handleChange}
+/>
+
+<button
+onClick={handleRegister}
+className="bg-black text-white py-3 rounded mt-2"
+>
+Register
+</button>
+
+</div>
+
+</main>
+
+);
+
 }

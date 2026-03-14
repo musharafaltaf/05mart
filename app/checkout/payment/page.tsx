@@ -174,7 +174,6 @@
 // }
 
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -191,6 +190,18 @@ const [loading,setLoading] = useState(false);
 
 useEffect(()=>{
 
+/* LOGIN PROTECTION */
+
+const user = localStorage.getItem("user");
+
+if(!user){
+alert("Please login to continue checkout");
+router.push("/login");
+return;
+}
+
+/* LOAD CART */
+
 const loadCart = async()=>{
 
 const res = await fetch("/api/cart");
@@ -203,6 +214,8 @@ setCart(data.items || []);
 loadCart();
 
 },[]);
+
+/* PRICE CALCULATIONS */
 
 const subtotal = cart.reduce(
 (sum,item)=> sum + item.price * item.quantity,
@@ -217,6 +230,8 @@ const mrpTotal = cart.reduce(
 const discount = mrpTotal - subtotal;
 
 const total = subtotal;
+
+/* PLACE ORDER */
 
 const placeOrder = async()=>{
 
@@ -245,7 +260,7 @@ return(
 
 <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
 
-    <CheckoutSteps step={3} />
+<CheckoutSteps step={3} />
 
 {/* STEP BAR */}
 
@@ -267,11 +282,9 @@ return(
 
 </div>
 
-
 <h1 className="text-xl md:text-2xl font-bold mb-6">
 Payment
 </h1>
-
 
 <div className="grid md:grid-cols-2 gap-8 md:gap-10">
 
@@ -324,7 +337,6 @@ Credit / Debit Card
 </div>
 
 </div>
-
 
 {/* PRICE DETAILS */}
 

@@ -20,6 +20,14 @@ html, body {
 .swiper-button-prev {
   z-index: 10;
 }
+.swiper {
+  position: relative;
+  z-index: 0;
+}
+
+.swiper-slide {
+  pointer-events: auto;
+}
 @keyframes cartShake {
   0% { transform: translateX(0); }
   25% { transform: translateX(-3px); }
@@ -30,4 +38,30 @@ html, body {
 
 .cart-shake {
   animation: cartShake 0.4s ease;
+}
+
+.swiper {
+  position: relative;
+  z-index: 0;
+}
+
+.swiper-wrapper {
+  pointer-events: auto;
+}
+
+.swiper-slide {
+  pointer-events: auto;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+  z-index: 20;
+}
+.swiper {
+  position: relative;
+  z-index: 0;
+}
+
+.swiper-slide {
+  pointer-events: auto;
 }

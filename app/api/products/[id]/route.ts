@@ -69,20 +69,41 @@
 // }
 
 
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
-export async function DELETE(
-req:Request,
-{ params }: { params: { id: string } }
-){
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
 
-await connectDB();
+  try {
 
-await Product.findByIdAndDelete(params.id);
+    const { id } = await context.params;
 
-return NextResponse.json({success:true});
+    await connectDB();
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(product);
+
+  } catch (error) {
+
+    console.error("GET PRODUCT ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Server error" },
+      { status: 500 }
+    );
+
+  }
 
 }

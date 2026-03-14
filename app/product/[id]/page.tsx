@@ -88,11 +88,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
+import RelatedProducts from "@/components/RelatedProducts";
 
 export default function ProductPage(){
 
 const params = useParams();
-const id = params.id;
+const id = params?.id as string;
 
 const { addToCart } = useCart();
 const { addToWishlist } = useWishlist();
@@ -100,28 +101,38 @@ const { addToWishlist } = useWishlist();
 const [product,setProduct] = useState<any>(null);
 const [selectedImage,setSelectedImage] = useState("");
 const [selectedSize,setSelectedSize] = useState("");
-
 const [reviews,setReviews] = useState<any[]>([]);
 
+const [loading,setLoading] = useState(true);
+
 useEffect(()=>{
+
+if(!id) return;
 
 const loadProduct = async()=>{
 
 try{
 
-const res = await fetch(`/api/products/${id}`);
+const res = await fetch(`/api/products/${id}`,{
+cache:"no-store"
+});
 
-if(!res.ok) return;
+if(!res.ok){
+console.log("Product not found");
+setLoading(false);
+return;
+}
 
 const data = await res.json();
 
 setProduct(data);
-
 setSelectedImage(data.image);
 
 }catch(err){
 console.log(err);
 }
+
+setLoading(false);
 
 };
 
@@ -129,7 +140,11 @@ loadProduct();
 
 },[id]);
 
+/* LOAD REVIEWS */
+
 useEffect(()=>{
+
+if(!id) return;
 
 const loadReviews = async()=>{
 
@@ -153,7 +168,7 @@ loadReviews();
 
 },[id]);
 
-/* recently viewed */
+/* RECENTLY VIEWED */
 
 useEffect(()=>{
 
@@ -171,9 +186,25 @@ localStorage.setItem("recentlyViewed", JSON.stringify(viewed));
 
 },[product]);
 
-if(!product) return <p className="p-10">Loading...</p>;
+if(loading){
+return(
+<p className="p-10 text-center">
+Loading product...
+</p>
+)
+}
 
-const images = product.images?.length ? product.images : [product.image];
+if(!product){
+return(
+<p className="p-10 text-center">
+Product not found
+</p>
+)
+}
+
+const images = product.images?.length
+? product.images
+: [product.image];
 
 return(
 
@@ -238,7 +269,7 @@ Select Size
 key={size}
 onClick={()=>setSelectedSize(size)}
 className={`border px-3 py-1 rounded ${
-selectedSize===size ? "bg-black text-white":""
+selectedSize===size ? "bg-black text-white": ""
 }`}
 >
 {size}
@@ -302,6 +333,18 @@ Customer Reviews
 ))}
 
 </div>
+{/* REVIEWS */}
+
+<div className="mt-12">
+...
+</div>
+
+{/* RELATED PRODUCTS */}
+
+<RelatedProducts
+category={product.category}
+currentId={product._id}
+/>
 
 </main>
 

@@ -140,6 +140,9 @@ import TrendingProducts from "@/components/TrendingProducts"
 import FlashSale from "@/components/FlashSale";
 import PromoBanner from "@/components/PromoBanner";
 import RecentlyViewed from "@/components/RecentlyViewed";
+import FeaturedProducts from "@/components/FeaturedProducts";
+import ShopByCategory from "@/components/ShopByCategory";
+import Hero from "@/components/Hero";
 
 export default function Home(){
 
@@ -155,6 +158,9 @@ return(
 <FlashSale/>
 <PromoBanner/>
 <RecentlyViewed/>
+<FeaturedProducts/>
+<ShopByCategory/>
+<Hero/>
 
 <section className="max-w-7xl mx-auto px-4 py-10">
 

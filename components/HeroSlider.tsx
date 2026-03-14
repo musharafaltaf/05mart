@@ -31,11 +31,11 @@ return(
 <div className="max-w-7xl mx-auto px-4 py-6">
 
 <Swiper
+className="relative z-0"
 modules={[Autoplay,Pagination]}
 autoplay={{ delay:3000 }}
 pagination={{ clickable:true }}
 loop
-className="z-0"
 >
 
 {banners.map((banner,index)=>(

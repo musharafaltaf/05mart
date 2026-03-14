@@ -1,11 +1,32 @@
+"use client";
+
+import Link from "next/link";
+
 export default function Categories(){
 
 const categories = [
-{ name:"T-Shirts", image:"/cat/tshirt.jpg" },
-{ name:"Shirts", image:"/cat/shirt.jpg" },
-{ name:"Hoodies", image:"/cat/hoodie.jpg" },
-{ name:"Jackets", image:"/cat/jacket.jpg" }
-]
+
+{
+name:"Anime",
+image:"/categories/anime.jpg"
+},
+
+{
+name:"Tshirts",
+image:"/categories/tshirt.jpg"
+},
+
+{
+name:"Hoodies",
+image:"/categories/hoodie.jpg"
+},
+
+{
+name:"Accessories",
+image:"/categories/accessories.jpg"
+}
+
+];
 
 return(
 
@@ -18,31 +39,32 @@ Shop by Category
 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
 
 {categories.map((cat)=>(
-<div
+<Link
 key={cat.name}
-className="group cursor-pointer"
+href={`/category/${cat.name}`}
+className="relative rounded-xl overflow-hidden"
 >
-
-<div className="overflow-hidden rounded-xl">
 
 <img
 src={cat.image}
-className="w-full h-40 md:h-56 object-cover group-hover:scale-110 transition"
+className="w-full h-36 md:h-48 object-cover"
 />
 
-</div>
+<div className="absolute inset-0 bg-black/40 flex items-center justify-center">
 
-<p className="mt-3 text-center font-medium">
+<p className="text-white font-semibold text-lg">
 {cat.name}
 </p>
 
 </div>
+
+</Link>
 ))}
 
 </div>
 
 </section>
 
-)
+);
 
 }

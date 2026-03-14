@@ -5,13 +5,26 @@ import { useRouter } from "next/navigation";
 
 export default function CartPage() {
 
-const { cart, removeFromCart, updateQuantity } = useCart();
+const { cart, removeFromCart, increaseQty, decreaseQty } = useCart();
 const router = useRouter();
 
 const subtotal = cart.reduce(
-(sum:any,item:any)=> sum + item.price * item.quantity,
+(sum:any,item:any)=> sum + item.price * item.qty,
 0
 );
+
+const handleCheckout = () => {
+
+const user = localStorage.getItem("user");
+
+if(!user){
+router.push("/login?redirect=/checkout/address");
+return;
+}
+
+router.push("/checkout/address");
+
+};
 
 return(
 
@@ -47,6 +60,7 @@ Continue Shopping
 <div className="md:col-span-2 space-y-6">
 
 {cart.map((item:any)=>(
+
 <div key={item._id} className="flex gap-4 border-b pb-6">
 
 <img
@@ -68,21 +82,19 @@ className="w-24 h-24 object-cover rounded"
 Size: {item.size || "Standard"}
 </p>
 
-{/* QUANTITY */}
-
 <div className="flex items-center gap-3 mt-3">
 
 <button
-onClick={()=>updateQuantity(item._id,item.quantity-1)}
+onClick={()=> decreaseQty(item.id)}
 className="border px-2"
 >
 -
 </button>
 
-<span>{item.quantity}</span>
+<span>{item.qty}</span>
 
 <button
-onClick={()=>updateQuantity(item._id,item.quantity+1)}
+onClick={()=> increaseQty(item.id)}
 className="border px-2"
 >
 +
@@ -92,8 +104,6 @@ className="border px-2"
 
 </div>
 
-{/* REMOVE */}
-
 <button
 onClick={()=>removeFromCart(item._id)}
 className="text-red-500 text-sm"
@@ -102,6 +112,7 @@ Remove
 </button>
 
 </div>
+
 ))}
 
 </div>
@@ -132,7 +143,7 @@ Price Details
 </div>
 
 <button
-onClick={()=>router.push("/checkout/address")}
+onClick={handleCheckout}
 className="mt-6 bg-black text-white w-full py-3 rounded"
 >
 Proceed to Checkout

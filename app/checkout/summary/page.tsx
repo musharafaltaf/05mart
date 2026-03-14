@@ -229,6 +229,13 @@ const [address,setAddress] = useState<any>(null);
 
 useEffect(()=>{
 
+const user = localStorage.getItem("user");
+
+if(!user){
+router.push("/login");
+return;
+}
+
 const loadCart = async()=>{
 
 const res = await fetch("/api/cart");
@@ -278,33 +285,11 @@ return(
 
 <main className="max-w-7xl mx-auto px-4 py-8 md:py-12">
 
-    <CheckoutSteps step={2} />
-
-{/* STEP PROGRESS */}
-
-<div className="flex justify-center mb-10 text-sm md:text-base font-medium">
-
-<div className="flex items-center gap-3 text-gray-400">
-<span>① Address</span>
-<span>→</span>
-</div>
-
-<div className="flex items-center gap-3 text-blue-600 font-semibold">
-<span>② Order Summary</span>
-<span>→</span>
-</div>
-
-<div className="text-gray-400">
-③ Payment
-</div>
-
-</div>
-
+<CheckoutSteps step={2} />
 
 <h1 className="text-xl md:text-2xl font-bold mb-6">
 Order Summary
 </h1>
-
 
 <div className="grid md:grid-cols-2 gap-8 md:gap-10">
 
@@ -346,7 +331,6 @@ Change Address
 </button>
 
 </div>
-
 
 {/* PRODUCTS */}
 
@@ -404,7 +388,6 @@ Delivery by {getDeliveryDate()}
 ))}
 
 </div>
-
 
 {/* RIGHT SIDE */}
 

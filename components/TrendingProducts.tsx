@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { useCart } from "@/app/context/CartContext";
@@ -64,20 +65,34 @@ breakpoints={{
 
 <div className="bg-white border rounded-xl overflow-hidden hover:shadow-lg transition">
 
+{/* IMAGE */}
+
+<Link href={`/product/${p._id}`}>
+
 <img
 src={p.image}
-className="w-full h-40 md:h-56 object-cover"
+className="w-full h-40 md:h-56 object-cover cursor-pointer"
 />
+
+</Link>
 
 <div className="p-3">
 
-<p className="font-medium text-sm md:text-base line-clamp-2">
+{/* PRODUCT NAME */}
+
+<Link href={`/product/${p._id}`}>
+
+<p className="font-medium text-sm md:text-base line-clamp-2 cursor-pointer hover:underline">
 {p.name}
 </p>
+
+</Link>
 
 <p className="text-gray-600 mt-1">
 ₹{p.price}
 </p>
+
+{/* ADD TO CART */}
 
 <button
 onClick={()=>addToCart({...p, qty:1})}
