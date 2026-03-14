@@ -10,10 +10,9 @@ export async function GET(req: Request) {
 
   const category = searchParams.get("category");
 
-  const products = await Product.find({
-    category
-  }).limit(4);
-
+ const products = await (Product as any)
+  .find({ category })
+  .limit(4);
   return NextResponse.json(products);
 
 }

@@ -10,8 +10,7 @@ export async function POST(req: Request) {
 
   const { productId, name, price, oldPrice, image } = body;
 
-  let cart = await Cart.findOne({ userId: "guest" });
-
+  let cart = await Cart.findOne({ userId: "guest" } as any);
   if (!cart) {
     cart = await Cart.create({
       userId: "guest",

@@ -9,7 +9,7 @@ export async function GET() {
     await connectDB();
 
     // fetch only flash sale products
-    const products = await Product.find({ flashSale: true });
+    const products = await (Product as any).find({ flashSale: true });
 
     return NextResponse.json(products);
 

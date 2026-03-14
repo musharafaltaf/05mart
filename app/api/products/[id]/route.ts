@@ -84,7 +84,7 @@ export async function GET(
 
     await connectDB();
 
-    const product = await Product.findById(id);
+    const product = await (Product as any).findById(id);
 
     if (!product) {
       return NextResponse.json(

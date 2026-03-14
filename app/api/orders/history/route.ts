@@ -6,9 +6,9 @@ export async function GET() {
 
   await connectDB();
 
-  const orders = await Order.find({
-    userId: "guest"
-  }).sort({ createdAt: -1 });
+  const orders = await (Order as any)
+  .find({ userId: "guest" })
+  .sort({ createdAt: -1 });
 
   return NextResponse.json(orders);
 

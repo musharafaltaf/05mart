@@ -16,7 +16,7 @@ let reviews;
 
 if(productId){
 
-reviews = await Review.find({productId});
+reviews = await (Review as any).find({ productId });
 
 }else{
 

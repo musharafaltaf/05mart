@@ -6,7 +6,7 @@ export async function GET() {
 
   await connectDB();
 
-  const wishlist = await Wishlist.findOne({ userId: "guest" });
+  const wishlist = await (Wishlist as any).findOne({ userId: "guest" });
 
   return NextResponse.json(wishlist || { items: [] });
 

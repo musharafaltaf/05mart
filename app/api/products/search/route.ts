@@ -13,10 +13,9 @@ export async function GET(req: Request) {
     return NextResponse.json([]);
   }
 
-  const products = await Product.find({
-    name: { $regex: query, $options: "i" }
-  });
-
+  const products = await (Product as any).find({
+  name: { $regex: query, $options: "i" }
+});
   return NextResponse.json(products);
 
 }

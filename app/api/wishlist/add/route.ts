@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   const { productId, name, price, image } = body;
 
-  let wishlist = await Wishlist.findOne({ userId: "guest" });
+  let wishlist = await (Wishlist as any).findOne({ userId: "guest" });
 
   if (!wishlist) {
 

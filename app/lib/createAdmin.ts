@@ -6,9 +6,9 @@ export async function createAdmin() {
 
   await connectDB();
 
-  const existing = await User.findOne({
-    email: "admin@05mart.com"
-  });
+  const existing = await (User as any).findOne({
+  email: "admin@05mart.com"
+});
 
   if (!existing) {
 

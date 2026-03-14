@@ -11,7 +11,7 @@ export async function GET(
 
     await connectDB();
 
-    const order = await Order.findById(id);
+    const order = await (Order as any).findById(id);
 
     if (!order) {
       return NextResponse.json(
@@ -40,7 +40,7 @@ export async function DELETE(
 
     await connectDB();
 
-    await Order.findByIdAndDelete(id);
+    await (Order as any).findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,

@@ -1,21 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function LoginPage() {
+function LoginContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const redirect = searchParams.get("redirect");
 
-  const [form,setForm] = useState({
-    email:"",
-    password:""
+  const [form, setForm] = useState({
+    email: "",
+    password: ""
   });
 
-  const handleChange = (e:any)=>{
+  const handleChange = (e: any) => {
     setForm({
       ...form,
       [e.target.name]: e.target.value
@@ -24,35 +23,33 @@ export default function LoginPage() {
 
   const login = async () => {
 
-    const res = await fetch("/api/auth/login",{
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
       },
       body: JSON.stringify(form)
     });
 
     const data = await res.json();
 
-    if(res.ok){
+    if (res.ok) {
 
-      localStorage.setItem("user",JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      /* IMPORTANT REDIRECT */
-
-      if(redirect){
+      if (redirect) {
         router.push(redirect);
-      }else{
+      } else {
         router.push("/");
       }
 
-    }else{
+    } else {
       alert(data.error || "Login failed");
     }
 
   };
 
-  return(
+  return (
 
     <main className="max-w-md mx-auto py-20 px-4">
 
@@ -89,5 +86,12 @@ export default function LoginPage() {
     </main>
 
   );
+}
 
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="text-center p-10">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
 }

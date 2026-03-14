@@ -8,7 +8,7 @@ export async function GET() {
 
     await connectDB();
 
-    const cart = await Cart.findOne({ userId: "guest" });
+    const cart = await Cart.findOne({ userId: "guest" } as any);
 
     if (!cart) {
       return NextResponse.json({
