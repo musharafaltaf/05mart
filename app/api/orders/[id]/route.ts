@@ -21,7 +21,6 @@ export async function GET(
     }
 
     return NextResponse.json(order);
-
   } catch (error) {
     console.error("GET ORDER ERROR:", error);
 
@@ -47,7 +46,6 @@ export async function DELETE(
       success: true,
       message: "Order deleted",
     });
-
   } catch (error) {
     console.error("DELETE ORDER ERROR:", error);
 
