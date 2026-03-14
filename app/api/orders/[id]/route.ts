@@ -3,7 +3,7 @@ import { connectDB } from "../../../lib/mongodb";
 import Order from "../../../lib/models/Order";
 
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -33,7 +33,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
