@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectDB } from "../../../lib/mongodb";
-import Order from "../../../lib/models/Order";
+import { connectDB } from "@/app/lib/mongodb";
+import Order from "@/app/lib/models/Order";
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: any
 ) {
   try {
     const { id } = await context.params;
@@ -33,7 +33,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  context: any
 ) {
   try {
     const { id } = await context.params;
