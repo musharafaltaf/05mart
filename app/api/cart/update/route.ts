@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/app/lib/mongodb";
+import  { connectDB }   from "@/app/lib/mongodb";
 import Cart from "@/app/lib/models/Cart";
 
 export async function POST(req: Request) {

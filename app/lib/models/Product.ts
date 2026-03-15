@@ -1,53 +1,82 @@
 import mongoose from "mongoose";
 
-const ProductSchema = new mongoose.Schema(
-{
-  name: {
-    type: String,
-    required: true
-  },
+const ProductSchema = new mongoose.Schema({
 
-  price: {
-    type: Number,
-    required: true
-  },
-
-  image: {
-    type: String,
-    required: true
-  },
-
-  images: {
-    type: [String],
-    default: []
-  },
-
-  description: {
-    type: String,
-    default: ""
-  },
-
-  category: {
-    type: String,
-    default: ""
-  },
-
-  stock: {
-    type: Number,
-    default: 0
-  },
-
-  sizes: {
-    type: [String],
-    default: []
-  }
-
+name:{
+type:String,
+required:true
 },
-{ timestamps: true }
-);
 
-const Product =
-mongoose.models.Product ||
-mongoose.model("Product", ProductSchema);
+description:{
+type:String
+},
 
-export default Product;
+category:{
+type:String
+},
+
+/* ORIGINAL PRICE */
+
+mrp:{
+type:Number,
+required:true
+},
+
+/* SELLING PRICE */
+
+price:{
+type:Number,
+required:true
+},
+
+/* MAIN IMAGE */
+
+image:{
+type:String,
+required:true
+},
+
+/* GALLERY IMAGES */
+
+images:{
+type:[String],
+default:[]
+},
+
+/* SIZES */
+
+sizes:{
+type:[String],
+default:[]
+},
+
+/* STOCK */
+
+stock:{
+type:Number,
+default:0
+},
+
+/* FEATURED PRODUCT */
+
+featured:{
+type:Boolean,
+default:false
+},
+
+/* FLASH SALE */
+
+flashSale:{
+type:Boolean,
+default:false
+},
+
+flashPrice:{
+type:Number,
+default:0
+}
+
+},{timestamps:true});
+
+export default mongoose.models.Product ||
+mongoose.model("Product",ProductSchema);

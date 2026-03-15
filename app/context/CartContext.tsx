@@ -6,104 +6,90 @@ const CartContext = createContext<any>(null);
 
 export function CartProvider({ children }: any) {
 
-const [cart, setCart] = useState<any[]>([]);
+const [cart,setCart] = useState<any[]>([]);
 
+/* LOAD CART */
 
-// LOAD CART FROM LOCAL STORAGE
 useEffect(()=>{
 
-const savedCart = localStorage.getItem("cart");
+const stored = localStorage.getItem("cart");
 
-if(savedCart){
-setCart(JSON.parse(savedCart));
+if(stored){
+setCart(JSON.parse(stored));
 }
 
 },[]);
 
+/* SAVE CART */
 
-// SAVE CART TO LOCAL STORAGE
 useEffect(()=>{
-
-localStorage.setItem("cart", JSON.stringify(cart));
-
+localStorage.setItem("cart",JSON.stringify(cart));
 },[cart]);
-
-
 
 const addToCart = (product:any)=>{
 
-setCart((prev)=>{
+setCart(prev=>{
 
-const exists = prev.find((item)=>item._id === product._id);
+const exists = prev.find(i=>i._id === product._id && i.size === product.size);
 
 if(exists){
 
-return prev.map((item)=>
-item._id === product._id
-? {...item, qty: item.qty + 1}
-: item
-)
+return prev.map(i =>
+i._id === product._id && i.size === product.size
+? {...i, quantity: i.quantity + 1}
+: i
+);
 
 }
 
-return [...prev, {...product, qty:1}]
+return [...prev,{...product,quantity:1}];
 
-})
+});
 
 };
-
 
 const removeFromCart = (id:string)=>{
 
-setCart((prev)=>prev.filter((item)=>item._id !== id))
+setCart(prev=>prev.filter(i=>i._id !== id));
 
 };
-
 
 const increaseQty = (id:string)=>{
 
-setCart((prev)=>
-prev.map((item)=>
-item._id === id
-? {...item, qty: item.qty + 1}
-: item
+setCart(prev =>
+prev.map(i =>
+i._id === id
+? {...i,quantity:i.quantity+1}
+: i
 )
-)
+);
 
 };
-
 
 const decreaseQty = (id:string)=>{
 
-setCart((prev)=>
-prev.map((item)=>
-item._id === id && item.qty > 1
-? {...item, qty: item.qty - 1}
-: item
+setCart(prev =>
+prev.map(i =>
+i._id === id && i.quantity > 1
+? {...i,quantity:i.quantity-1}
+: i
 )
-)
+);
 
 };
-
 
 return(
 
 <CartContext.Provider
-value={{
-cart,
-addToCart,
-removeFromCart,
-increaseQty,
-decreaseQty
-}}
+value={{cart,addToCart,removeFromCart,increaseQty,decreaseQty}}
 >
 
 {children}
 
 </CartContext.Provider>
 
-)
+);
 
 }
 
-export const useCart = ()=> useContext(CartContext);
+export const useCart = ()=>useContext(CartContext);

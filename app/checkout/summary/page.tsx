@@ -213,7 +213,6 @@
 // }
 
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -232,20 +231,25 @@ useEffect(()=>{
 const user = localStorage.getItem("user");
 
 if(!user){
-router.push("/login");
+router.push("/login?redirect=/checkout/summary");
 return;
 }
 
-const loadCart = async()=>{
+/* LOAD CART FROM LOCAL STORAGE */
 
-const res = await fetch("/api/cart");
-const data = await res.json();
+const storedCart = localStorage.getItem("cart");
 
-setCart(data.items || []);
+/* BUY NOW SUPPORT */
 
-};
+const buyNow = localStorage.getItem("buyNow");
 
-loadCart();
+if(buyNow){
+setCart([JSON.parse(buyNow)]);
+}else if(storedCart){
+setCart(JSON.parse(storedCart));
+}
+
+/* LOAD ADDRESS */
 
 const savedAddress = localStorage.getItem("address");
 
@@ -255,13 +259,15 @@ setAddress(JSON.parse(savedAddress));
 
 },[]);
 
+/* CALCULATIONS */
+
 const subtotal = cart.reduce(
 (sum,item)=> sum + item.price * item.quantity,
 0
 );
 
 const mrpTotal = cart.reduce(
-(sum,item)=> sum + (item.oldPrice || item.price) * item.quantity,
+(sum,item)=> sum + ((item.oldPrice || item.mrp || item.price) * item.quantity),
 0
 );
 
@@ -271,6 +277,8 @@ const discountPercent =
 mrpTotal > 0 ? Math.round((discount / mrpTotal) * 100) : 0;
 
 const total = subtotal;
+
+/* DELIVERY DATE */
 
 const getDeliveryDate = ()=>{
 
@@ -333,6 +341,10 @@ Change Address
 </div>
 
 {/* PRODUCTS */}
+
+{cart.length === 0 && (
+<p className="text-gray-500">No items in cart</p>
+)}
 
 {cart.map((item:any,index:number)=>(
 

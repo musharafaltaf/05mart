@@ -10,10 +10,31 @@ useEffect(()=>{
 
 const loadBanner = async()=>{
 
-const res = await fetch("/api/banners");
-const data = await res.json();
+try{
 
+const res = await fetch("/api/banners");
+
+if(!res.ok){
+console.log("Banner API error");
+return;
+}
+
+const text = await res.text();
+
+if(!text){
+console.log("No banner found");
+return;
+}
+
+const data = JSON.parse(text);
+
+if(data && data.length){
 setBanner(data[0]);
+}
+
+}catch(err){
+console.log("Banner error:",err);
+}
 
 };
 

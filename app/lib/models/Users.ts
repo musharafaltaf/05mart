@@ -21,9 +21,14 @@ required:true
 role:{
 type:String,
 default:"user"
+},
+
+createdAt:{
+type:Date,
+default:Date.now
 }
 
-},{timestamps:true});
+});
 
-export default mongoose.models.User ||
-mongoose.model("User",UserSchema);
+export default mongoose.models.Users ||
+mongoose.model("Users",UserSchema);

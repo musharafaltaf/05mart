@@ -9,6 +9,13 @@ export default function ProductCard({ product }: any) {
 const { addToCart } = useCart();
 const { addToWishlist } = useWishlist();
 
+/* DISCOUNT CALCULATION */
+
+const discount =
+product.mrp
+? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+: 0;
+
 const handleAddToCart = () => {
 
 addToCart({
@@ -49,9 +56,41 @@ className="w-full h-48 md:h-60 object-cover cursor-pointer"
 
 </Link>
 
-<p className="text-gray-600 text-sm">
+{/* PRICE SECTION */}
+
+<div className="flex items-center gap-2 mt-1">
+
+<p className="font-semibold text-lg">
 ₹{product.price}
 </p>
+
+{product.mrp && (
+
+<p className="text-gray-400 line-through text-sm">
+₹{product.mrp}
+</p>
+
+)}
+
+{discount > 0 && (
+
+<p className="text-green-600 text-sm font-medium">
+{discount}% OFF
+</p>
+
+)}
+
+</div>
+
+{/* SIZES */}
+
+{product.sizes && product.sizes.length > 0 && (
+
+<p className="text-xs text-gray-500 mt-1">
+Sizes: {product.sizes.join(" • ")}
+</p>
+
+)}
 
 {/* BUTTONS */}
 

@@ -1,146 +1,73 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter,useParams } from "next/navigation";
 
-export default function ProductPage() {
+export default function ReviewPage(){
 
+const router = useRouter();
 const params = useParams();
 
-const [product,setProduct] = useState<any>(null);
-const [reviews,setReviews] = useState<any[]>([]);
+const productId = params.productId;
 
+const [rating,setRating] = useState(5);
+const [comment,setComment] = useState("");
 
-// FETCH PRODUCT
-useEffect(()=>{
+const submitReview = async()=>{
 
-const loadProduct = async()=>{
+await fetch("/api/reviews",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+productId,
+rating,
+comment
+})
+});
 
-const res = await fetch(`/api/products/${params.id}`);
-const data = await res.json();
+alert("Review submitted");
 
-setProduct(data);
-
-};
-
-if(params?.id) loadProduct();
-
-},[params]);
-
-
-// FETCH REVIEWS
-useEffect(()=>{
-
-const loadReviews = async()=>{
-
-try{
-
-const res = await fetch(`/api/reviews?productId=${product._id}`);
-
-if(!res.ok) return;
-
-const data = await res.json();
-
-setReviews(data);
-
-}catch(err){
-console.log(err);
-}
+router.push(`/product/${productId}`);
 
 };
-
-if(product?._id) loadReviews();
-
-},[product]);
-
-
-if(!product){
-return <p className="p-10">Loading product...</p>;
-}
-
 
 return(
 
-<main className="max-w-6xl mx-auto p-10">
+<main className="max-w-4xl mx-auto p-10">
 
-{/* PRODUCT SECTION */}
-
-<div className="grid md:grid-cols-2 gap-10">
-
-<img
-src={product.image}
-className="w-full rounded"
-/>
-
-<div>
-
-<h1 className="text-3xl font-semibold mb-3">
-{product.name}
+<h1 className="text-2xl font-bold mb-6">
+Write Review
 </h1>
 
-<p className="text-xl font-bold mb-4">
-₹{product.price}
-</p>
-
-<p className="text-gray-600 mb-6">
-{product.description}
-</p>
-
-<button className="bg-black text-white px-6 py-3 rounded">
-Add to Cart
-</button>
-
-</div>
-
-</div>
-
-
-{/* REVIEWS SECTION */}
-
-<div className="mt-14">
-
-<h2 className="text-2xl font-semibold mb-6">
-Customer Reviews
-</h2>
-
-
-{reviews.length === 0 && (
-<p className="text-gray-500">
-No reviews yet
-</p>
-)}
-
-
-{reviews.map((r:any)=>(
-<div key={r._id} className="border p-5 mb-4 rounded">
-
-<p className="text-yellow-500 text-lg">
-{"★".repeat(r.rating)}
-</p>
-
-<p className="text-gray-700 mt-2">
-{r.comment}
-</p>
-
-<p className="text-xs text-gray-400 mt-2">
-{new Date(r.createdAt).toLocaleDateString()}
-</p>
-
-</div>
-))}
-
-
-{/* WRITE REVIEW */}
-
-<Link
-href={`/review/${product._id}`}
-className="text-blue-600 text-sm"
+<select
+value={rating}
+onChange={(e)=>setRating(Number(e.target.value))}
+className="border p-3 rounded w-full"
 >
-Write a review
-</Link>
 
-</div>
+<option value="5">⭐⭐⭐⭐⭐</option>
+<option value="4">⭐⭐⭐⭐</option>
+<option value="3">⭐⭐⭐</option>
+<option value="2">⭐⭐</option>
+<option value="1">⭐</option>
+
+</select>
+
+<textarea
+placeholder="Write your review"
+className="border p-3 rounded w-full mt-4"
+value={comment}
+onChange={(e)=>setComment(e.target.value)}
+/>
+
+<button
+onClick={submitReview}
+className="mt-6 bg-black text-white px-6 py-2 rounded"
+>
+Submit Review
+</button>
 
 </main>
 

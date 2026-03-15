@@ -349,6 +349,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function AdminPage() {
 
@@ -360,6 +361,7 @@ const [loading,setLoading] = useState(true);
 
 const [form,setForm] = useState({
 name:"",
+mrp:"",
 price:"",
 image:"",
 images:"",
@@ -444,6 +446,7 @@ const addProduct = async()=>{
 const body = {
 
 name:form.name,
+mrp:Number(form.mrp),
 price:Number(form.price),
 image:form.image,
 
@@ -479,6 +482,7 @@ body:JSON.stringify(body)
 
 setForm({
 name:"",
+mrp:"",
 price:"",
 image:"",
 images:"",
@@ -542,12 +546,12 @@ className="border p-4 rounded hover:shadow"
 Products
 </button>
 
-<button
-onClick={()=>router.push("/orders")}
-className="border p-4 rounded hover:shadow"
+<Link
+href="/admin/orders"
+className="border p-4 rounded hover:shadow text-center flex items-center justify-center"
 >
 Orders
-</button>
+</Link>
 
 </div>
 
@@ -569,15 +573,23 @@ Add Product
 name="name"
 placeholder="Product Name"
 className="border p-2 rounded"
-value={form.name || ""}
+value={form.name}
+onChange={handleChange}
+/>
+
+<input
+name="mrp"
+placeholder="MRP (Original Price)"
+className="border p-2 rounded"
+value={form.mrp}
 onChange={handleChange}
 />
 
 <input
 name="price"
-placeholder="Price"
+placeholder="Selling Price"
 className="border p-2 rounded"
-value={form.price || ""}
+value={form.price}
 onChange={handleChange}
 />
 
@@ -625,7 +637,7 @@ images: urls.join(",")
 name="category"
 placeholder="Category"
 className="border p-2 rounded"
-value={form.category || ""}
+value={form.category}
 onChange={handleChange}
 />
 
@@ -633,7 +645,7 @@ onChange={handleChange}
 name="stock"
 placeholder="Stock"
 className="border p-2 rounded"
-value={form.stock || ""}
+value={form.stock}
 onChange={handleChange}
 />
 
@@ -641,7 +653,7 @@ onChange={handleChange}
 name="sizes"
 placeholder="Sizes (S,M,L,XL)"
 className="border p-2 rounded"
-value={form.sizes || ""}
+value={form.sizes}
 onChange={handleChange}
 />
 
@@ -649,7 +661,7 @@ onChange={handleChange}
 name="flashPrice"
 placeholder="Flash Price"
 className="border p-2 rounded"
-value={form.flashPrice || ""}
+value={form.flashPrice}
 onChange={handleChange}
 />
 
@@ -657,7 +669,7 @@ onChange={handleChange}
 name="description"
 placeholder="Description"
 className="border p-2 rounded md:col-span-2"
-value={form.description || ""}
+value={form.description}
 onChange={handleChange}
 />
 
@@ -702,6 +714,7 @@ className="mt-6 bg-black text-white px-6 py-2 rounded"
 Add Product
 </button>
 
+
 </div>
 
 {/* PRODUCT LIST */}
@@ -734,6 +747,9 @@ className="w-16 h-16 object-cover rounded"
 
 <p className="text-sm text-gray-500">
 ₹{p.price}
+<span className="line-through ml-2 text-gray-400">
+₹{p.mrp}
+</span>
 </p>
 
 <div className="text-xs text-gray-400 mt-1">

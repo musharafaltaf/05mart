@@ -1,28 +1,23 @@
 import mongoose from "mongoose";
 
-const ReviewSchema = new mongoose.Schema(
-{
-productId:{
-type:String,
-required:true
-},
+const ReviewSchema = new mongoose.Schema({
 
-rating:{
-type:Number,
-required:true
-},
+productId:String,
 
-comment:{
-type:String,
-required:true
+userId:String,
+
+orderId:String,
+
+rating:Number,
+
+comment:String,
+
+images:{
+type:[String],
+default:[]
 }
 
-},
-{ timestamps:true }
-);
+},{timestamps:true});
 
-const Review =
-mongoose.models.Review ||
+export default mongoose.models.Review ||
 mongoose.model("Review",ReviewSchema);
-
-export default Review;

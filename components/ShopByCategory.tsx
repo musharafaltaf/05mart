@@ -1,21 +1,41 @@
 "use client";
 
-import { useEffect,useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function ShopByCategory(){
 
 const [categories,setCategories] = useState<any[]>([]);
-const router = useRouter();
 
 useEffect(()=>{
 
 const loadCategories = async()=>{
 
+try{
+
 const res = await fetch("/api/categories");
-const data = await res.json();
+
+if(!res.ok){
+console.log("Categories API failed");
+return;
+}
+
+const text = await res.text();
+
+if(!text){
+setCategories([]);
+return;
+}
+
+const data = JSON.parse(text);
 
 setCategories(data);
+
+}catch(err){
+
+console.log("Categories error:",err);
+setCategories([]);
+
+}
 
 };
 
@@ -27,8 +47,8 @@ return(
 
 <section className="max-w-7xl mx-auto px-4 py-10">
 
-<h2 className="text-2xl font-bold mb-6">
-Popular Categories
+<h2 className="text-xl font-bold mb-6">
+Shop by Category
 </h2>
 
 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -37,16 +57,15 @@ Popular Categories
 
 <div
 key={cat._id}
-onClick={()=>router.push(`/category/${cat.name}`)}
-className="cursor-pointer border rounded-xl overflow-hidden hover:shadow-lg"
+className="border rounded p-4 text-center hover:shadow"
 >
 
 <img
 src={cat.image}
-className="w-full h-32 object-cover"
+className="w-full h-28 object-cover rounded mb-3"
 />
 
-<p className="text-center font-medium py-3">
+<p className="font-medium">
 {cat.name}
 </p>
 

@@ -1,57 +1,74 @@
-import { NextRequest, NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
+// import { connectDB } from "@/app/lib/mongodb";
+// import Order from "@/app/lib/models/Order";
+
+// export async function GET(req: Request, { params }: any) {
+
+//   try {
+
+//     await connectDB();
+
+//     const order = await Order.findById(params.id);
+
+//     if (!order) {
+//       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+//     }
+
+//     return NextResponse.json(order);
+
+//   } catch (error) {
+
+//     console.log("ORDER FETCH ERROR:", error);
+
+//     return NextResponse.json({ error: "Server error" }, { status: 500 });
+
+//   }
+
+// }
+
+
+import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Order from "@/app/lib/models/Order";
 
-export async function GET(
-  request: NextRequest,
-  context: any
+/* UPDATE ORDER STATUS */
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
 ) {
+
   try {
-    const { id } = await context.params;
 
     await connectDB();
 
-    const order = await (Order as any).findById(id);
+    const body = await req.json();
 
-    if (!order) {
-      return NextResponse.json(
-        { error: "Order not found" },
-        { status: 404 }
-      );
-    }
+    const order = await Order.findByIdAndUpdate(
+      params.id as any,
+      {
+        status: body.status,
+        $push: {
+          tracking: {
+            status: body.status,
+            date: new Date()
+          }
+        }
+      },
+      { new: true } as any
+    );
 
     return NextResponse.json(order);
+
   } catch (error) {
-    console.error("GET ORDER ERROR:", error);
+
+    console.log("STATUS UPDATE ERROR:", error);
 
     return NextResponse.json(
-      { error: "Failed to fetch order" },
+      { error: "Failed to update status" },
       { status: 500 }
     );
+
   }
-}
 
-export async function DELETE(
-  request: NextRequest,
-  context: any
-) {
-  try {
-    const { id } = await context.params;
-
-    await connectDB();
-
-    await (Order as any).findByIdAndDelete(id);
-
-    return NextResponse.json({
-      success: true,
-      message: "Order deleted",
-    });
-  } catch (error) {
-    console.error("DELETE ORDER ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Failed to delete order" },
-      { status: 500 }
-    );
-  }
 }

@@ -22,11 +22,18 @@ try{
 
 const res = await fetch("/api/products")
 
-if(!res.ok) return
+if(!res.ok){
+console.log("Failed to load products")
+return
+}
 
 const data = await res.json()
 
-setProducts(data)
+/* SHOW ONLY FEATURED PRODUCTS */
+
+const trending = data.filter((p:any)=>p.featured === true)
+
+setProducts(trending)
 
 }catch(err){
 console.log(err)
@@ -37,6 +44,12 @@ console.log(err)
 loadProducts()
 
 },[])
+
+/* IF NO PRODUCTS */
+
+if(products.length === 0){
+return null
+}
 
 return(
 
@@ -65,8 +78,6 @@ breakpoints={{
 
 <div className="bg-white border rounded-xl overflow-hidden hover:shadow-lg transition">
 
-{/* IMAGE */}
-
 <Link href={`/product/${p._id}`}>
 
 <img
@@ -78,8 +89,6 @@ className="w-full h-40 md:h-56 object-cover cursor-pointer"
 
 <div className="p-3">
 
-{/* PRODUCT NAME */}
-
 <Link href={`/product/${p._id}`}>
 
 <p className="font-medium text-sm md:text-base line-clamp-2 cursor-pointer hover:underline">
@@ -88,14 +97,26 @@ className="w-full h-40 md:h-56 object-cover cursor-pointer"
 
 </Link>
 
-<p className="text-gray-600 mt-1">
+{/* PRICE + MRP */}
+
+<div className="flex items-center gap-2 mt-1">
+
+<p className="font-semibold">
 ₹{p.price}
 </p>
 
-{/* ADD TO CART */}
+{p.mrp && (
+
+<p className="text-gray-400 line-through text-sm">
+₹{p.mrp}
+</p>
+
+)}
+
+</div>
 
 <button
-onClick={()=>addToCart({...p, qty:1})}
+onClick={()=>addToCart({...p, quantity:1})}
 className="mt-3 w-full bg-black text-white py-2 rounded text-sm hover:bg-gray-800"
 >
 Add to Cart

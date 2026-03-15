@@ -67,43 +67,33 @@
 //   }
 
 // }
-
-
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
 export async function GET(
-  req: Request,
-  context: { params: Promise<{ id: string }> }
-) {
+req: Request,
+{ params }: { params: { id: string } }
+){
 
-  try {
+try{
 
-    const { id } = await context.params;
+await connectDB();
 
-    await connectDB();
+const product = await (Product as any).findById(params.id);
+if(!product){
+return NextResponse.json({error:"Product not found"},{status:404});
+}
 
-    const product = await (Product as any).findById(id);
+return NextResponse.json(product);
 
-    if (!product) {
-      return NextResponse.json(
-        { error: "Product not found" },
-        { status: 404 }
-      );
-    }
+}catch(error){
 
-    return NextResponse.json(product);
+console.log("PRODUCT FETCH ERROR:",error);
 
-  } catch (error) {
+return NextResponse.json({error:"Server error"},{status:500});
 
-    console.error("GET PRODUCT ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
-
-  }
+}
 
 }

@@ -80,15 +80,13 @@
 
 //   );
 // }
-
-
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { useParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
-import RelatedProducts from "@/components/RelatedProducts";
+import ProductCard from "@/components/ProductCard";
 
 export default function ProductPage(){
 
@@ -99,9 +97,16 @@ const { addToCart } = useCart();
 const { addToWishlist } = useWishlist();
 
 const [product,setProduct] = useState<any>(null);
+const [related,setRelated] = useState<any[]>([]);
+const [reviews,setReviews] = useState<any[]>([]);
+
 const [selectedImage,setSelectedImage] = useState("");
 const [selectedSize,setSelectedSize] = useState("");
-const [reviews,setReviews] = useState<any[]>([]);
+
+const [showSizePopup,setShowSizePopup] = useState(false);
+const [showSizeChart,setShowSizeChart] = useState(false);
+
+const [pendingAction,setPendingAction] = useState<"cart" | "buy" | null>(null);
 
 const [loading,setLoading] = useState(true);
 
@@ -118,7 +123,6 @@ cache:"no-store"
 });
 
 if(!res.ok){
-console.log("Product not found");
 setLoading(false);
 return;
 }
@@ -127,6 +131,17 @@ const data = await res.json();
 
 setProduct(data);
 setSelectedImage(data.image);
+
+/* RELATED PRODUCTS */
+
+const res2 = await fetch(`/api/products`);
+const all = await res2.json();
+
+const rel = all.filter((p:any)=>
+p.category === data.category && p._id !== data._id
+);
+
+setRelated(rel.slice(0,4));
 
 }catch(err){
 console.log(err);
@@ -143,8 +158,6 @@ loadProduct();
 /* LOAD REVIEWS */
 
 useEffect(()=>{
-
-if(!id) return;
 
 const loadReviews = async()=>{
 
@@ -164,75 +177,66 @@ console.log(err);
 
 };
 
-loadReviews();
+if(id) loadReviews();
 
 },[id]);
 
-/* RECENTLY VIEWED */
-
-useEffect(()=>{
-
-if(!product) return;
-
-let viewed = JSON.parse(localStorage.getItem("recentlyViewed") || "[]");
-
-viewed = viewed.filter((p:any)=>p._id !== product._id);
-
-viewed.unshift(product);
-
-viewed = viewed.slice(0,8);
-
-localStorage.setItem("recentlyViewed", JSON.stringify(viewed));
-
-},[product]);
-
 if(loading){
-return(
-<p className="p-10 text-center">
-Loading product...
-</p>
-)
+return <p className="p-10 text-center">Loading product...</p>
 }
 
 if(!product){
-return(
-<p className="p-10 text-center">
-Product not found
-</p>
-)
+return <p className="p-10 text-center">Product not found</p>
 }
 
+/* IMAGES */
+
 const images = product.images?.length
-? product.images
+? [product.image,...product.images]
 : [product.image];
+
+/* DISCOUNT */
+
+const discount =
+product.mrp
+? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+: 0;
+
+/* RATING */
+
+const rating =
+reviews.length
+? (reviews.reduce((a,b)=>a+b.rating,0)/reviews.length).toFixed(1)
+: null;
 
 return(
 
 <main className="max-w-7xl mx-auto px-4 py-10">
 
-<div className="grid md:grid-cols-2 gap-8">
+<div className="grid md:grid-cols-2 gap-10">
 
 {/* IMAGE GALLERY */}
 
-<div className="grid grid-cols-[70px_1fr] md:grid-cols-[100px_1fr] gap-4">
+<div>
 
-<div className="flex flex-col gap-3">
+<img
+src={selectedImage}
+className="w-full rounded-lg mb-4"
+/>
+
+<div className="flex gap-3">
 
 {images.map((img:any)=>(
 <img
 key={img}
 src={img}
 onClick={()=>setSelectedImage(img)}
-className="w-14 h-14 md:w-20 md:h-20 object-cover border cursor-pointer"
+className={`w-16 h-16 object-cover border rounded cursor-pointer 
+${selectedImage===img ? "border-black" : ""}`}
 />
 ))}
 
 </div>
-
-<img
-src={selectedImage}
-className="w-full rounded"
-/>
 
 </div>
 
@@ -244,15 +248,52 @@ className="w-full rounded"
 {product.name}
 </h1>
 
-<p className="text-xl mt-2">
+{/* BRAND */}
+
+{product.brand && (
+
+<p className="text-gray-600 mt-2">
+Brand: <span className="font-semibold">{product.brand}</span>
+</p>
+
+)}
+
+{/* RATING */}
+
+{rating && (
+<p className="text-yellow-500 mt-2">
+⭐ {rating} ({reviews.length} reviews)
+</p>
+)}
+
+{/* PRICE */}
+
+<div className="mt-4 flex items-center gap-3">
+
+<p className="text-3xl font-bold">
 ₹{product.price}
 </p>
 
-<p className="text-gray-500 mt-3">
-{product.description}
+{product.mrp && (
+<>
+<p className="text-gray-400 line-through text-lg">
+₹{product.mrp}
+</p>
+<p className="text-green-600 font-semibold">
+{discount}% OFF
+</p>
+</>
+)}
+
+</div>
+
+{/* STOCK */}
+
+<p className="text-sm mt-2 text-green-600">
+{product.stock > 0 ? "In Stock" : "Out of Stock"}
 </p>
 
-{/* SIZE SELECT */}
+{/* SIZE SELECTOR */}
 
 {product.sizes?.length > 0 && (
 
@@ -262,14 +303,16 @@ className="w-full rounded"
 Select Size
 </p>
 
-<div className="flex gap-2">
+<div className="flex gap-2 flex-wrap">
 
 {product.sizes.map((size:any)=>(
 <button
 key={size}
 onClick={()=>setSelectedSize(size)}
-className={`border px-3 py-1 rounded ${
-selectedSize===size ? "bg-black text-white": ""
+className={`border px-4 py-1 rounded ${
+selectedSize===size
+? "bg-black text-white"
+: "hover:bg-gray-100"
 }`}
 >
 {size}
@@ -278,26 +321,84 @@ selectedSize===size ? "bg-black text-white": ""
 
 </div>
 
+{/* SELECTED SIZE */}
+
+{selectedSize && (
+
+<p className="text-sm text-gray-600 mt-2">
+Selected Size: <b>{selectedSize}</b>
+</p>
+
+)}
+
+<button
+onClick={()=>setShowSizeChart(true)}
+className="text-blue-600 mt-3 underline text-sm"
+>
+View Size Chart
+</button>
+
 </div>
 
 )}
+
+<p className="text-gray-500 mt-6">
+{product.description}
+</p>
 
 {/* BUTTONS */}
 
 <div className="flex gap-4 mt-6">
 
 <button
-onClick={()=>addToCart({...product,size:selectedSize})}
+onClick={()=>{
+
+if(product.sizes?.length && !selectedSize){
+setPendingAction("cart");
+setShowSizePopup(true);
+return;
+}
+
+addToCart({
+...product,
+size:selectedSize,
+quantity:1
+});
+
+}}
 className="bg-black text-white px-6 py-2 rounded"
 >
 Add to Cart
 </button>
 
 <button
+onClick={()=>{
+
+if(product.sizes?.length && !selectedSize){
+setPendingAction("buy");
+setShowSizePopup(true);
+return;
+}
+
+localStorage.setItem("buyNow",JSON.stringify({
+...product,
+size:selectedSize,
+quantity:1
+}));
+
+window.location.href="/checkout/address";
+
+}}
+className="border px-6 py-2 rounded"
+>
+Buy Now
+</button>
+
+<button
 onClick={()=>addToWishlist(product)}
 className="border px-6 py-2 rounded"
 >
-Wishlist
+❤ Wishlist
 </button>
 
 </div>
@@ -308,24 +409,26 @@ Wishlist
 
 {/* REVIEWS */}
 
-<div className="mt-12">
+<div className="mt-14">
 
-<h2 className="text-xl font-semibold mb-4">
+<h2 className="text-xl font-semibold mb-6">
 Customer Reviews
 </h2>
 
-{reviews.length===0 && (
+{reviews.length === 0 && (
 <p>No reviews yet</p>
 )}
 
+<div className="space-y-4">
+
 {reviews.map((r:any)=>(
-<div key={r._id} className="border p-4 mb-4 rounded">
+<div key={r._id} className="border p-4 rounded">
 
 <p className="text-yellow-500">
 {"★".repeat(r.rating)}
 </p>
 
-<p className="text-gray-600 text-sm mt-1">
+<p className="text-gray-600 text-sm mt-2">
 {r.comment}
 </p>
 
@@ -333,21 +436,166 @@ Customer Reviews
 ))}
 
 </div>
-{/* REVIEWS */}
 
-<div className="mt-12">
-...
 </div>
 
 {/* RELATED PRODUCTS */}
 
-<RelatedProducts
-category={product.category}
-currentId={product._id}
-/>
+{related.length > 0 && (
+
+<div className="mt-16">
+
+<h2 className="text-xl font-semibold mb-6">
+Related Products
+</h2>
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+{related.map((p:any)=>(
+<ProductCard key={p._id} product={p}/>
+))}
+
+</div>
+
+</div>
+
+)}
+
+{/* SIZE POPUP */}
+
+{showSizePopup && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+<div className="bg-white p-6 rounded-lg w-[320px]">
+
+<h3 className="font-semibold mb-4">
+Select Size
+</h3>
+
+<div className="flex gap-2 mb-4">
+
+{product.sizes?.map((size:any)=>(
+<button
+key={size}
+onClick={()=>{
+
+setSelectedSize(size);
+setShowSizePopup(false);
+
+if(pendingAction==="buy"){
+
+localStorage.setItem("buyNow",JSON.stringify({
+...product,
+size:size,
+quantity:1
+}));
+
+window.location.href="/checkout/address";
+
+}
+
+if(pendingAction==="cart"){
+
+addToCart({
+...product,
+size:size,
+quantity:1
+});
+
+}
+
+setPendingAction(null);
+
+}}
+className="border px-4 py-1 rounded hover:bg-black hover:text-white"
+>
+{size}
+</button>
+))}
+
+</div>
+
+<button
+onClick={()=>setShowSizePopup(false)}
+className="border px-4 py-2 rounded w-full"
+>
+Cancel
+</button>
+
+</div>
+
+</div>
+
+)}
+
+{/* SIZE CHART */}
+
+{showSizeChart && (
+
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+<div className="bg-white p-6 rounded-lg w-[350px]">
+
+<h3 className="font-semibold mb-4">
+Size Chart
+</h3>
+
+<table className="w-full text-sm border">
+
+<thead>
+<tr className="border-b">
+<th className="p-2">Size</th>
+<th className="p-2">Chest</th>
+<th className="p-2">Length</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr className="border-b">
+<td className="p-2">S</td>
+<td className="p-2">38"</td>
+<td className="p-2">26"</td>
+</tr>
+
+<tr className="border-b">
+<td className="p-2">M</td>
+<td className="p-2">40"</td>
+<td className="p-2">27"</td>
+</tr>
+
+<tr className="border-b">
+<td className="p-2">L</td>
+<td className="p-2">42"</td>
+<td className="p-2">28"</td>
+</tr>
+
+<tr>
+<td className="p-2">XL</td>
+<td className="p-2">44"</td>
+<td className="p-2">29"</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<button
+onClick={()=>setShowSizeChart(false)}
+className="border px-4 py-2 rounded w-full mt-4"
+>
+Close
+</button>
+
+</div>
+
+</div>
+
+)}
 
 </main>
 
-)
+);
 
 }

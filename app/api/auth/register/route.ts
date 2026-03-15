@@ -1,68 +1,59 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { connectDB } from "@/app/lib/mongodb";
+import  { connectDB }   from "@/app/lib/mongodb";
 import User from "@/app/lib/models/Users";
 
-export async function POST(req: Request) {
+export async function POST(req:Request){
 
-  try {
+try{
 
-    const { name, email, password } = await req.json();
+await connectDB();
 
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
-      );
-    }
+const {name,email,password} = await req.json();
 
-    await connectDB();
+if(!name || !email || !password){
+return NextResponse.json(
+{error:"All fields are required"},
+{status:400}
+);
+}
 
-    /* check if user already exists */
+const existingUser = await User.findOne({email}as any);
 
-    const existingUser = await User.findOne({ email } as any);
+if(existingUser){
+return NextResponse.json(
+{error:"User already registered with this email"},
+{status:400}
+);
+}
 
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "User already exists" },
-        { status: 400 }
-      );
-    }
+const hashedPassword = await bcrypt.hash(password,10);
 
-    /* hash password */
+const user = await User.create({
+name,
+email,
+password:hashedPassword
+});
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+return NextResponse.json({
+message:"Registration successful",
+user:{
+_id:user._id,
+name:user.name,
+email:user.email,
+role:user.role
+}
+});
 
-    /* create user */
+}catch(error){
 
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role: "user"
-    });
+console.log(error);
 
-    /* return user for auto login */
+return NextResponse.json(
+{error:"Server error during registration"},
+{status:500}
+);
 
-    return NextResponse.json({
-      message: "Registered successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-
-  } catch (error) {
-
-    console.error("REGISTER ERROR:", error);
-
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
-
-  }
+}
 
 }

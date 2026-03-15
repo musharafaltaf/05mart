@@ -4,71 +4,78 @@ import jwt from "jsonwebtoken";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/lib/models/Users";
 import { createAdmin } from "@/app/lib/createAdmin";
+
 export const dynamic = "force-dynamic";
 
-const JWT_SECRET = "mysecretkey";
+const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 export async function POST(req: Request) {
 
-  try {
+try {
 
-    await connectDB();
-    await createAdmin();
+await connectDB();
 
-    const body: { email: string; password: string } = await req.json();
+/* CREATE DEFAULT ADMIN IF NOT EXISTS */
+await createAdmin();
 
-    const { email, password } = body;
+const { email, password } = await req.json();
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password required" },
-        { status: 400 }
-      );
-    }
+if (!email || !password) {
 
-    const user = await (User as any).findOne({ email });
+return NextResponse.json(
+{ error: "Email and password required" },
+{ status: 400 }
+);
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
+}
 
-    const match = await bcrypt.compare(password, user.password);
+const user = await User.findOne({ email } as any);
 
-    if (!match) {
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-    }
+if (!user) {
 
-    const token = jwt.sign(
-      { userId: user._id },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+return NextResponse.json(
+{ error: "Invalid credentials" },
+{ status: 401 }
+);
 
-    return NextResponse.json({
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
+}
 
-  } catch (error) {
+const match = await bcrypt.compare(password, user.password);
 
-    console.log("LOGIN ERROR:", error);
+if (!match) {
 
-    return NextResponse.json(
-      { error: "Login failed" },
-      { status: 500 }
-    );
+return NextResponse.json(
+{ error: "Invalid credentials" },
+{ status: 401 }
+);
 
-  }
+}
+
+const token = jwt.sign(
+{ userId: user._id, role: user.role },
+JWT_SECRET,
+{ expiresIn: "7d" }
+);
+
+return NextResponse.json({
+token,
+user:{
+id:user._id,
+name:user.name,
+email:user.email,
+role:user.role
+}
+});
+
+} catch (error) {
+
+console.log("LOGIN ERROR:", error);
+
+return NextResponse.json(
+{ error: "Server error during login" },
+{ status: 500 }
+);
+
+}
 
 }

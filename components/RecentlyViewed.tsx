@@ -1,27 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import ProductCard from "./ProductCard";
 
 export default function RecentlyViewed(){
 
-const [products,setProducts] = useState<any[]>([])
+const [products,setProducts] = useState<any[]>([]);
 
 useEffect(()=>{
 
-const data = JSON.parse(localStorage.getItem("recentlyViewed") || "[]")
+const stored = localStorage.getItem("recentProducts");
 
-setProducts(data)
+if(stored){
+setProducts(JSON.parse(stored));
+}
 
-},[])
+},[]);
 
-if(products.length === 0) return null
+if(products.length === 0) return null;
 
 return(
 
 <section className="max-w-7xl mx-auto px-4 py-10">
 
-<h2 className="text-2xl font-bold mb-6">
+<h2 className="text-xl font-semibold mb-6">
 Recently Viewed
 </h2>
 
@@ -35,6 +37,6 @@ Recently Viewed
 
 </section>
 
-)
+);
 
 }
