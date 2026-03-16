@@ -61,6 +61,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Order from "@/app/lib/models/Order";
+import Product from "@/app/lib/models/Product";
 
 export async function POST(req:Request){
 
@@ -92,6 +93,22 @@ date:new Date()
 ]
 
 });
+
+/* REDUCE STOCK */
+
+for(const item of body.items){
+
+await (Product as any).findByIdAndUpdate(
+item._id,
+{
+$inc:{
+stock:-item.quantity,
+[`sizeStock.${item.size}`]:-item.quantity
+}
+}
+);
+
+}
 
 return NextResponse.json(order);
 

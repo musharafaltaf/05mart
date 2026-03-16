@@ -1,40 +1,36 @@
 export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
-export async function GET(req: Request) {
+export async function GET(req: Request){
 
-try {
+try{
 
 await connectDB();
 
 const { searchParams } = new URL(req.url);
-const query = searchParams.get("q");
+const q = searchParams.get("q");
 
-/* EMPTY QUERY */
-
-if (!query || query.length < 2) {
+if(!q){
 return NextResponse.json([]);
 }
 
-/* SEARCH PRODUCTS */
-
 const products = await Product.find({
-$or: [
-{ name: { $regex: query, $options: "i" } },
-{ category: { $regex: query, $options: "i" } }
-]
-}as any)
-.select("name price mrp image")
-.limit(6)
-.sort({ createdAt: -1 });
+
+name:{
+$regex:q,
+$options:"i"
+}
+
+}as any).limit(8);
 
 return NextResponse.json(products);
 
-} catch (error) {
+}catch(err){
 
-console.error("SEARCH ERROR:", error);
+console.log("Search error:",err);
 
 return NextResponse.json([]);
 

@@ -139,11 +139,14 @@ const [order,setOrder] = useState<any>(null);
 
 useEffect(()=>{
 
+if(!params?.id) return;
+
 const loadOrder = async()=>{
 
 try{
 
 const res = await fetch(`/api/orders/${params.id}`);
+
 const data = await res.json();
 
 setOrder(data);
@@ -156,7 +159,7 @@ console.log(err);
 
 loadOrder();
 
-},[]);
+},[params?.id]);
 
 if(!order){
 return <p className="p-10 text-center">Loading order...</p>

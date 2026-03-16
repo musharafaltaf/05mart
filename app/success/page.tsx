@@ -138,15 +138,74 @@
 
 "use client";
 
-import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import jsPDF from "jspdf";
 
 function SuccessContent(){
 
 const searchParams = useSearchParams();
+const router = useRouter();
+
 const orderId = searchParams.get("orderId");
+
+const [orderValid,setOrderValid] = useState<boolean | null>(null);
+const [paymentFailed,setPaymentFailed] = useState(false);
+
+/* VERIFY ORDER */
+
+useEffect(()=>{
+
+if(!orderId){
+router.push("/");
+return;
+}
+
+const verifyOrder = async()=>{
+
+try{
+
+const res = await fetch(`/api/orders/${orderId}`);
+
+if(!res.ok){
+router.push("/");
+return;
+}
+
+const data = await res.json();
+
+if(!data?._id){
+router.push("/");
+return;
+}
+
+/* NEW PAYMENT CHECK */
+
+if(
+data.paymentMethod !== "cod" &&
+data.status !== "paid" &&
+data.status !== "confirmed"
+){
+setPaymentFailed(true);
+setOrderValid(false);
+return;
+}
+
+setOrderValid(true);
+
+}catch(err){
+
+console.log(err);
+router.push("/");
+
+}
+
+};
+
+verifyOrder();
+
+},[orderId]);
 
 /* DELIVERY DATE */
 
@@ -174,6 +233,58 @@ doc.text("Thank you for shopping with 05Mart!",20,90);
 doc.save(`invoice_${orderId}.pdf`);
 
 };
+
+/* WAIT FOR VALIDATION */
+
+if(orderValid === null){
+return <div className="text-center p-10">Verifying order...</div>
+}
+
+/* PAYMENT FAILED PAGE */
+
+if(paymentFailed){
+
+return(
+
+<main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+
+<div className="bg-white shadow-xl rounded-xl p-10 max-w-xl w-full text-center">
+
+<div className="text-5xl mb-4">❌</div>
+
+<h1 className="text-2xl font-bold text-red-600 mb-4">
+Payment Not Completed
+</h1>
+
+<p className="text-gray-500 mb-6">
+Your payment was not completed or failed.
+</p>
+
+<div className="grid gap-4">
+
+<Link
+href="/cart"
+className="bg-black text-white py-3 rounded-lg"
+>
+Retry Payment
+</Link>
+
+<Link
+href="/"
+className="border py-3 rounded-lg"
+>
+Go to Home
+</Link>
+
+</div>
+
+</div>
+
+</main>
+
+);
+
+}
 
 return(
 
@@ -203,7 +314,7 @@ Order Placed Successfully
 Your order has been confirmed and will be shipped soon.
 </p>
 
-{/* ORDER DETAILS CARD */}
+{/* ORDER DETAILS */}
 
 <div className="border rounded-lg p-6 mb-8 bg-gray-50">
 
@@ -217,9 +328,7 @@ Order ID
 
 <div className="mt-4 text-sm text-gray-600">
 
-<p>
-Estimated Delivery
-</p>
+<p>Estimated Delivery</p>
 
 <p className="font-semibold text-green-600">
 {deliveryDate()}

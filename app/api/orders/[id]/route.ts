@@ -31,44 +31,35 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Order from "@/app/lib/models/Order";
 
-/* UPDATE ORDER STATUS */
+export async function GET(
+req: Request,
+{ params }: { params: { id: string } }
+){
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+try{
 
-  try {
+await connectDB();
 
-    await connectDB();
+const order = await (Order as any).findById(params.id);
 
-    const body = await req.json();
+if(!order){
+return NextResponse.json(
+{ error: "Order not found" },
+{ status:404 }
+);
+}
 
-    const order = await Order.findByIdAndUpdate(
-      params.id as any,
-      {
-        status: body.status,
-        $push: {
-          tracking: {
-            status: body.status,
-            date: new Date()
-          }
-        }
-      },
-      { new: true } as any
-    );
+return NextResponse.json(order);
 
-    return NextResponse.json(order);
+}catch(err){
 
-  } catch (error) {
+console.log("ORDER FETCH ERROR:",err);
 
-    console.log("STATUS UPDATE ERROR:", error);
+return NextResponse.json(
+{ error:"Server error" },
+{ status:500 }
+);
 
-    return NextResponse.json(
-      { error: "Failed to update status" },
-      { status: 500 }
-    );
-
-  }
+}
 
 }

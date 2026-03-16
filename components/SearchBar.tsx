@@ -1,40 +1,120 @@
 "use client";
 
-import { useState } from "react";
-import { products } from "../data/products";
-import ProductCard from "./ProductCard";
+import { useState,useEffect,useRef } from "react";
+import { useRouter } from "next/navigation";
 
-export default function SearchBar() {
+export default function SearchBar(){
 
 const [query,setQuery] = useState("");
+const [results,setResults] = useState<any[]>([]);
+const [show,setShow] = useState(false);
 
-const filtered = products.filter((product)=>
-product.name.toLowerCase().includes(query.toLowerCase()) ||
-product.category.toLowerCase().includes(query.toLowerCase())
-);
+const router = useRouter();
+const boxRef = useRef<HTMLDivElement>(null);
+
+/* LIVE SEARCH */
+
+useEffect(()=>{
+
+if(query.trim().length < 2){
+setResults([]);
+setShow(false);
+return;
+}
+
+const timer = setTimeout(async()=>{
+
+try{
+
+const res = await fetch(`/api/products/search?q=${encodeURIComponent(query)}`);
+
+if(!res.ok) return;
+
+const data = await res.json();
+
+setResults(data || []);
+setShow(true);
+
+}catch(err){
+console.log("Search error:",err);
+}
+
+},300);
+
+return ()=> clearTimeout(timer);
+
+},[query]);
+
+/* CLOSE POPUP WHEN CLICK OUTSIDE */
+
+useEffect(()=>{
+
+const handleClick = (e:any)=>{
+
+if(!boxRef.current?.contains(e.target)){
+setShow(false);
+}
+
+};
+
+document.addEventListener("mousedown",handleClick);
+
+return ()=> document.removeEventListener("mousedown",handleClick);
+
+},[]);
+
+/* OPEN PRODUCT */
+
+const goProduct = (id:string)=>{
+
+setShow(false);
+router.push(`/product/${id}`);
+
+};
 
 return(
 
-<div className="max-w-6xl mx-auto px-6 py-10">
+<div ref={boxRef} className="relative w-full max-w-xl">
 
 <input
 type="text"
 placeholder="Search products..."
 value={query}
 onChange={(e)=>setQuery(e.target.value)}
-className="border w-full p-3 rounded mb-8"
+className="w-full border rounded px-4 py-2 outline-none"
 />
 
-{query && (
+{/* RESULTS POPUP */}
 
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+{show && results.length > 0 && (
 
-{filtered.length===0 && (
-<p>No products found</p>
-)}
+<div className="absolute top-full left-0 w-full bg-white border rounded shadow-lg mt-1 z-50 max-h-80 overflow-y-auto">
 
-{filtered.map((product)=>(
-<ProductCard key={product.id} product={product}/>
+{results.map((p:any)=>(
+<div
+key={p._id}
+onClick={()=>goProduct(p._id)}
+className="flex items-center gap-3 p-3 hover:bg-gray-100 cursor-pointer"
+>
+
+<img
+src={p.image || "/placeholder.png"}
+className="w-10 h-10 object-cover rounded"
+/>
+
+<div className="flex-1">
+
+<p className="text-sm font-medium line-clamp-1">
+{p.name}
+</p>
+
+<p className="text-xs text-gray-500">
+₹{p.price}
+</p>
+
+</div>
+
+</div>
 ))}
 
 </div>
@@ -43,6 +123,6 @@ className="border w-full p-3 rounded mb-8"
 
 </div>
 
-)
+);
 
 }

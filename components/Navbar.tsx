@@ -458,19 +458,20 @@
 // }
 
 
-
 "use client";
 
 import Link from "next/link";
-import { useState,useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
+import SearchBar from "@/components/SearchBar";
 
-export default function Navbar(){
+export default function Navbar() {
 
 const [menuOpen,setMenuOpen] = useState(false);
 const [user,setUser] = useState<any>(null);
-const [query,setQuery] = useState("");
+
+const menuRef = useRef<any>(null); // NEW
 
 const { cart } = useCart();
 const { wishlist } = useWishlist();
@@ -488,86 +489,73 @@ setUser(JSON.parse(storedUser));
 
 },[]);
 
+/* CLOSE MENU WHEN CLICKING OUTSIDE */
+
+useEffect(()=>{
+
+const handleClick = (e:any)=>{
+
+if(menuRef.current && !menuRef.current.contains(e.target)){
+setMenuOpen(false);
+}
+
+};
+
+document.addEventListener("mousedown",handleClick);
+
+return ()=>document.removeEventListener("mousedown",handleClick);
+
+},[]);
+
 const logout = ()=>{
 
 localStorage.removeItem("user");
 localStorage.removeItem("token");
-
 location.reload();
 
 };
 
-return(
+return (
 
 <header className="border-b bg-white sticky top-0 z-50">
 
 <div className="max-w-7xl mx-auto px-4">
 
-<div className="flex items-center justify-between h-16">
-
-{/* LOGO */}
+<div className="flex items-center justify-between h-16 gap-4">
 
 <Link href="/" className="text-2xl font-extrabold tracking-wide">
 05Mart
 </Link>
 
-{/* DESKTOP SEARCH */}
-
-<div className="hidden md:flex flex-1 mx-8">
-
-<input
-type="text"
-placeholder="Search products..."
-value={query}
-onChange={(e)=>setQuery(e.target.value)}
-className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
-/>
-
+<div className="hidden md:flex flex-1 mx-6">
+<SearchBar />
 </div>
 
-{/* ICONS */}
-
-<div className="flex items-center gap-5 text-lg">
-
-{/* SEARCH MOBILE */}
-
-<button className="md:hidden">
-🔍
-</button>
-
-{/* WISHLIST */}
+<div className="flex items-center gap-4">
 
 <Link href="/wishlist" className="relative text-xl">
 
 ❤️
 
 {wishlistCount>0 && (
-
 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
 {wishlistCount}
 </span>
-
 )}
 
 </Link>
-
-{/* CART */}
 
 <Link href="/cart" className="relative text-xl">
 
 🛒
 
 {cartCount>0 && (
-
 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
 {cartCount}
 </span>
-
 )}
 
 </Link>
-
-{/* ADMIN LINKS */}
 
 {user?.role==="admin" && (
 
@@ -577,15 +565,13 @@ className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 fo
 Admin
 </Link>
 
-<Link href="/orders">
+<Link href="/admin/orders">
 Orders
 </Link>
 
 </div>
 
 )}
-
-{/* PROFILE */}
 
 {user ? (
 
@@ -601,8 +587,6 @@ Login
 
 )}
 
-{/* MOBILE MENU */}
-
 <button
 onClick={()=>setMenuOpen(!menuOpen)}
 className="md:hidden text-2xl"
@@ -614,11 +598,15 @@ className="md:hidden text-2xl"
 
 </div>
 
-{/* MOBILE MENU */}
+<div className="md:hidden py-3">
+<SearchBar />
+</div>
+
+{/* ATTACH REF HERE */}
 
 {menuOpen && (
 
-<div className="md:hidden border-t py-4 space-y-4 flex flex-col">
+<div ref={menuRef} className="md:hidden border-t py-4 space-y-4 flex flex-col">
 
 <Link href="/" onClick={()=>setMenuOpen(false)}>
 Home
@@ -635,14 +623,9 @@ Wishlist
 {user?.role==="admin" && (
 
 <>
-
 <Link href="/admin" onClick={()=>setMenuOpen(false)}>
 Admin
 </Link>
-
-{/* <Link href="/admin/orders" onClick={()=>setMenuOpen(false)}>
-Orders
-</Link> */}
 
 <Link
 href="/admin/orders"
@@ -650,7 +633,6 @@ className="border p-4 rounded hover:shadow text-center block"
 >
 Orders
 </Link>
-
 </>
 
 )}
@@ -658,7 +640,6 @@ Orders
 {user ? (
 
 <>
-
 <Link href="/profile" onClick={()=>setMenuOpen(false)}>
 Profile
 </Link>
@@ -669,7 +650,6 @@ className="text-red-500 text-left"
 >
 Logout
 </button>
-
 </>
 
 ) : (

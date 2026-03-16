@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
-import  { connectDB }   from "@/app/lib/mongodb";
+import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
 export async function GET(req: Request) {
@@ -12,16 +13,24 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q");
 
-    if (!query) {
+    if (!query || query.trim() === "") {
       return NextResponse.json([]);
     }
 
+    /* ESCAPE REGEX (prevents errors in live search) */
+
+    const safeQuery = query
+      .trim()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
     const products = await Product.find({
       $or: [
-        { name: { $regex: query, $options: "i" } },
-        { category: { $regex: query, $options: "i" } }
+        { name: { $regex: safeQuery, $options: "i" } },
+        { category: { $regex: safeQuery, $options: "i" } }
       ]
-    }as any).limit(6);
+    } as any)
+      .limit(8)
+      .sort({ createdAt: -1 });
 
     return NextResponse.json(products);
 

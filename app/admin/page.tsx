@@ -643,7 +643,7 @@ onChange={handleChange}
 
 <input
 name="stock"
-placeholder="Stock"
+placeholder="Stock Quantity"
 className="border p-2 rounded"
 value={form.stock}
 onChange={handleChange}
@@ -714,7 +714,6 @@ className="mt-6 bg-black text-white px-6 py-2 rounded"
 Add Product
 </button>
 
-
 </div>
 
 {/* PRODUCT LIST */}
@@ -750,6 +749,22 @@ className="w-16 h-16 object-cover rounded"
 <span className="line-through ml-2 text-gray-400">
 ₹{p.mrp}
 </span>
+</p>
+
+{/* STOCK DISPLAY (ADDED) */}
+
+<p className="text-xs mt-1">
+
+Stock: {p.stock}
+
+{p.stock === 0 && (
+<span className="text-red-500 ml-2">❌ Out of Stock</span>
+)}
+
+{p.stock > 0 && p.stock <= 5 && (
+<span className="text-orange-500 ml-2">⚠ Low Stock</span>
+)}
+
 </p>
 
 <div className="text-xs text-gray-400 mt-1">

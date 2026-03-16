@@ -1241,6 +1241,10 @@ const [cardCvv,setCardCvv] = useState("");
 
 const [paymentProof,setPaymentProof] = useState("");
 
+/* STORE MANUAL PAYMENT DETAILS (NEW FEATURE) */
+
+const STORE_UPI = "05mart@upi";
+
 /* LOAD RAZORPAY SCRIPT */
 
 useEffect(()=>{
@@ -1295,12 +1299,12 @@ loadCart();
 /* PRICE */
 
 const subtotal = cart.reduce(
-(sum,item)=> sum + item.price * item.quantity,
+(sum,item)=> sum + Number(item.price) * Number(item.quantity || item.qty || 1),
 0
 );
 
 const mrpTotal = cart.reduce(
-(sum,item)=> sum + (item.mrp || item.price) * item.quantity,
+(sum,item)=> sum + Number(item.mrp || item.price) * Number(item.quantity || item.qty || 1),
 0
 );
 
@@ -1311,6 +1315,11 @@ const total = subtotal;
 /* RAZORPAY */
 
 const payWithRazorpay = async () => {
+
+if(total <= 0){
+alert("Invalid payment amount");
+return;
+}
 
 try{
 
@@ -1459,6 +1468,18 @@ alert("Cart is empty");
 return;
 }
 
+if(total <= 0){
+alert("Invalid order amount");
+return;
+}
+
+/* NEW: Require screenshot for manual payment */
+
+if(payment==="upi" && !paymentProof){
+alert("Please upload payment screenshot");
+return;
+}
+
 if(payment==="upi" && !validateUPI()) return;
 if(payment==="card" && !validateCard()) return;
 
@@ -1481,6 +1502,12 @@ setShowConfirm(false);
 setLoading(true);
 
 const address = JSON.parse(localStorage.getItem("address") || "{}");
+
+if(!address || !address.name){
+alert("Address missing. Please enter address first.");
+router.push("/checkout/address");
+return;
+}
 
 try{
 
@@ -1506,7 +1533,7 @@ const order = await res.json();
 
 localStorage.removeItem("buyNow");
 
-if(payment==="cod"){
+if(payment==="cod" && order?._id){
 router.push(`/success?orderId=${order._id}`);
 return;
 }
@@ -1560,8 +1587,6 @@ return(
 
 <CheckoutSteps step={3} />
 
-{/* SECURITY BADGES */}
-
 <div className="flex items-center gap-2 mb-6 text-green-600 text-sm">
 <span>🔒</span>
 <span>Secure Payment • 256-bit SSL encrypted</span>
@@ -1593,67 +1618,41 @@ Cash on Delivery
 Razorpay (UPI / Card / NetBanking)
 </label>
 
-{/* PAYMENT ICONS */}
-
-<div className="flex gap-3 text-xs text-gray-500 ml-6">
-<span>GPay</span>
-<span>PhonePe</span>
-<span>Paytm</span>
-<span>Cards</span>
-</div>
-
 <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment==="upi"?"border-black":""}`}>
 <input type="radio" checked={payment==="upi"} onChange={()=>setPayment("upi")} />
-UPI
+Manual UPI Payment
 </label>
+
+{/* NEW MANUAL PAYMENT UI */}
 
 {payment==="upi" && (
-<div className="ml-4 mt-3">
+<div className="border p-4 rounded mt-3 bg-gray-50">
 
-<p className="text-sm font-medium mb-2">Choose UPI App</p>
+<p className="font-semibold mb-2">
+Pay using UPI
+</p>
 
-<div className="grid grid-cols-2 sm:flex gap-3 mb-3">
+<p className="text-sm">
+UPI ID : <b>{STORE_UPI}</b>
+</p>
 
-<button onClick={()=>setUpiApp("gpay")} className={`border px-4 py-2 rounded ${upiApp==="gpay"?"bg-black text-white":""}`}>
-Google Pay
-</button>
+<img
+src="/upi-qr.png"
+className="w-40 mt-3 border rounded"
+/>
 
-<button onClick={()=>setUpiApp("paytm")} className={`border px-4 py-2 rounded ${upiApp==="paytm"?"bg-black text-white":""}`}>
-Paytm
-</button>
+<p className="text-xs text-gray-500 mt-2">
+Scan QR → Pay → Upload Screenshot
+</p>
 
-<button onClick={()=>setUpiApp("phonepe")} className={`border px-4 py-2 rounded ${upiApp==="phonepe"?"bg-black text-white":""}`}>
-PhonePe
-</button>
-
-</div>
-
-<input placeholder="username@upi" className="border p-2 rounded w-full mb-3" value={upiId} onChange={(e)=>setUpiId(e.target.value)} />
-
-<input type="file" onChange={(e:any)=>{ const file = e.target.files?.[0]; if(file) uploadProof(file); }} className="border p-2 rounded w-full" />
-
-</div>
-)}
-
-<label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment==="card"?"border-black":""}`}>
-<input type="radio" checked={payment==="card"} onChange={()=>setPayment("card")} />
-Credit / Debit Card
-</label>
-
-{payment==="card" && (
-<div className="ml-4 mt-3 grid gap-3">
-
-<input placeholder="Card Number" maxLength={16} className="border p-2 rounded" value={cardNumber} onChange={(e)=>setCardNumber(e.target.value.replace(/\D/g,''))} />
-
-<input placeholder="Card Holder Name" className="border p-2 rounded" value={cardName} onChange={(e)=>setCardName(e.target.value)} />
-
-<div className="flex flex-col sm:flex-row gap-2">
-
-<input placeholder="MM/YY" className="border p-2 rounded w-full" value={cardExpiry} onChange={(e)=>setCardExpiry(e.target.value)} />
-
-<input placeholder="CVV" type="password" maxLength={3} className="border p-2 rounded w-full" value={cardCvv} onChange={(e)=>setCardCvv(e.target.value.replace(/\D/g,''))} />
-
-</div>
+<input
+type="file"
+onChange={(e:any)=>{
+const file = e.target.files?.[0];
+if(file) uploadProof(file);
+}}
+className="border p-2 rounded w-full mt-3"
+/>
 
 </div>
 )}
@@ -1688,63 +1687,14 @@ Credit / Debit Card
 <button
 onClick={confirmOrder}
 disabled={loading}
-className="mt-6 bg-black text-white w-full py-3 rounded text-sm sm:text-base"
+className="mt-6 bg-black text-white w-full py-3 rounded"
 >
 {loading ? "Processing..." : payment==="cod" ? "Place Order" : `Pay ₹${total}`}
 </button>
 
-{/* TRUST BADGE */}
-
-<p className="text-xs text-gray-500 mt-3 text-center">
-Payments powered by Razorpay • PCI DSS Secure
-</p>
-
 </div>
 
 </div>
-
-{/* CONFIRMATION MODAL */}
-
-{showConfirm && (
-
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
-<div className="bg-white p-6 rounded-lg w-[90%] max-w-[340px] text-center shadow-xl">
-
-<h3 className="font-semibold text-lg mb-3">
-Confirm {payment==="cod" ? "Order" : "Payment"}
-</h3>
-
-<p className="text-sm text-gray-500 mb-4">
-{payment==="cod"
-? "Are you sure you want to place this order?"
-: `Are you sure you want to pay ₹${total}?`
-}
-</p>
-
-<div className="flex gap-3">
-
-<button
-onClick={()=>setShowConfirm(false)}
-className="flex-1 border py-2 rounded hover:bg-gray-100"
->
-Cancel
-</button>
-
-<button
-onClick={placeOrder}
-className="flex-1 bg-black text-white py-2 rounded hover:bg-gray-800"
->
-Confirm
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-)}
 
 </main>
 

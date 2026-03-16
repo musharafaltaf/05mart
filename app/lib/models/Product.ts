@@ -45,16 +45,26 @@ default:[]
 
 /* SIZES */
 
+
+/* STOCK */
+
 sizes:{
 type:[String],
 default:[]
 },
 
-/* STOCK */
+/* TOTAL STOCK */
 
 stock:{
 type:Number,
 default:0
+},
+
+/* SIZE WISE STOCK */
+
+sizeStock:{
+type:Object,
+default:{}
 },
 
 /* FEATURED PRODUCT */

@@ -72,6 +72,8 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
+/* GET PRODUCT */
+
 export async function GET(
 req: Request,
 { params }: { params: { id: string } }
@@ -82,6 +84,7 @@ try{
 await connectDB();
 
 const product = await (Product as any).findById(params.id);
+
 if(!product){
 return NextResponse.json({error:"Product not found"},{status:404});
 }
@@ -93,6 +96,31 @@ return NextResponse.json(product);
 console.log("PRODUCT FETCH ERROR:",error);
 
 return NextResponse.json({error:"Server error"},{status:500});
+
+}
+
+}
+
+/* ADD THIS DELETE FUNCTION */
+
+export async function DELETE(
+req: Request,
+{ params }: { params: { id: string } }
+){
+
+try{
+
+await connectDB();
+
+await (Product as any).findByIdAndDelete(params.id);
+
+return NextResponse.json({success:true});
+
+}catch(error){
+
+console.log("PRODUCT DELETE ERROR:",error);
+
+return NextResponse.json({error:"Delete failed"},{status:500});
 
 }
 

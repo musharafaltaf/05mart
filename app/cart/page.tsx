@@ -8,8 +8,10 @@ export default function CartPage() {
 const { cart, removeFromCart, increaseQty, decreaseQty } = useCart();
 const router = useRouter();
 
+/* FIX NaN ISSUE */
+
 const subtotal = cart.reduce(
-(sum:any,item:any)=> sum + item.price * item.qty,
+(sum:any,item:any)=> sum + Number(item.price) * Number(item.qty),
 0
 );
 
@@ -85,7 +87,7 @@ Size: {item.size || "Standard"}
 <div className="flex items-center gap-3 mt-3">
 
 <button
-onClick={()=> decreaseQty(item.id)}
+onClick={()=> decreaseQty(item._id)}
 className="border px-2"
 >
 -
@@ -94,7 +96,7 @@ className="border px-2"
 <span>{item.qty}</span>
 
 <button
-onClick={()=> increaseQty(item.id)}
+onClick={()=> increaseQty(item._id)}
 className="border px-2"
 >
 +

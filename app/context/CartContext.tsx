@@ -15,7 +15,18 @@ useEffect(()=>{
 const stored = localStorage.getItem("cart");
 
 if(stored){
-setCart(JSON.parse(stored));
+
+const parsed = JSON.parse(stored);
+
+/* FIX OLD CART STRUCTURE */
+
+const fixed = parsed.map((i:any)=>({
+...i,
+qty: i.qty ?? i.quantity ?? 1
+}));
+
+setCart(fixed);
+
 }
 
 },[]);
@@ -25,6 +36,8 @@ setCart(JSON.parse(stored));
 useEffect(()=>{
 localStorage.setItem("cart",JSON.stringify(cart));
 },[cart]);
+
+/* ADD TO CART */
 
 const addToCart = (product:any)=>{
 
@@ -36,17 +49,19 @@ if(exists){
 
 return prev.map(i =>
 i._id === product._id && i.size === product.size
-? {...i, quantity: i.quantity + 1}
+? {...i, qty: Number(i.qty) + 1}
 : i
 );
 
 }
 
-return [...prev,{...product,quantity:1}];
+return [...prev,{...product, qty:1}];
 
 });
 
 };
+
+/* REMOVE */
 
 const removeFromCart = (id:string)=>{
 
@@ -54,24 +69,28 @@ setCart(prev=>prev.filter(i=>i._id !== id));
 
 };
 
+/* INCREASE */
+
 const increaseQty = (id:string)=>{
 
 setCart(prev =>
 prev.map(i =>
 i._id === id
-? {...i,quantity:i.quantity+1}
+? {...i, qty: Number(i.qty) + 1}
 : i
 )
 );
 
 };
 
+/* DECREASE */
+
 const decreaseQty = (id:string)=>{
 
 setCart(prev =>
 prev.map(i =>
-i._id === id && i.quantity > 1
-? {...i,quantity:i.quantity-1}
+i._id === id && Number(i.qty) > 1
+? {...i, qty: Number(i.qty) - 1}
 : i
 )
 );
