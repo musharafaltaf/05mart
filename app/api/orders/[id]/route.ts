@@ -132,99 +132,103 @@ import Order from "@/app/lib/models/Order";
 /* GET SINGLE ORDER */
 /* ========================= */
 
-export async function GET(req: Request, { params }: any){
+export async function GET(req: Request, { params }: any) {
 
-await connectDB();
+  await connectDB();
 
-try{
+  try {
 
-const order = await Order.findById(params.id);
+    const order = await Order.findById(params.id);
 
-if(!order){
-return NextResponse.json({ error:"Order not found" },{ status:404 });
-}
+    if (!order) {
+      return NextResponse.json(
+        { error: "Order not found" },
+        { status: 404 }
+      );
+    }
 
-return NextResponse.json(order);
+    const safeTracking = Array.isArray(order.tracking)
+      ? order.tracking
+      : [];
 
-}catch(err){
+    const safeOrder = {
+      ...order.toObject(),
+      tracking: safeTracking
+    };
 
-console.log("GET ORDER ERROR:", err);
-return NextResponse.json({ error:"Failed" },{ status:500 });
+    return NextResponse.json(safeOrder);
 
-}
+  } catch (err) {
 
-}
+    console.log("GET ORDER ERROR:", err);
 
-/* ========================= */
-/* UPDATE ORDER (USER CANCEL) */
-/* ========================= */
-
-export async function PUT(req: Request,{ params }: any){
-
-await connectDB();
-
-try{
-
-const body = await req.json();
-
-const order = await Order.findByIdAndUpdate(
-params.id,
-{
-status: body.status || "cancelled"
-},
-{ new: true }
-);
-
-return NextResponse.json(order);
-
-}catch(err){
-
-console.log("PUT ERROR:", err);
-return NextResponse.json({ error:"Update failed" },{ status:500 });
-
-}
-
+    return NextResponse.json(
+      { error: "Failed" },
+      { status: 500 }
+    );
+  }
 }
 
 /* ========================= */
-/* ADMIN STATUS UPDATE */
+/* UPDATE ORDER */
 /* ========================= */
 
-export async function PATCH(req: Request,{ params }: any){
+export async function PATCH(req: Request, { params }: any){
 
-await connectDB();
+  await connectDB();
 
-try{
+  try{
 
-const body = await req.json();
+    const body = await req.json();
 
-if(!body.status){
-return NextResponse.json({ error:"Status required" },{ status:400 });
-}
+    const updateData:any = {};
 
-const order = await Order.findByIdAndUpdate(
-params.id,
-{
-status: body.status,
+    /* ========================= */
+    /* EXISTING STATUS */
+    /* ========================= */
 
-/* tracking update */
-$push:{
-tracking:{
-status: body.status,
-date: new Date()
-}
-}
-},
-{ new: true }
-);
+    if(body.status){
+      updateData.status = body.status;
 
-return NextResponse.json(order);
+      updateData.$push = {
+        tracking:{
+          status: body.status,
+          date: new Date()
+        }
+      };
+    }
 
-}catch(err){
+    /* ========================= */
+    /* ✅ NEW RETURN APPROVAL */
+    /* ========================= */
 
-console.log("PATCH ERROR:", err);
-return NextResponse.json({ error:"Update failed" },{ status:500 });
+    if(body.returnStatus){
 
-}
+      updateData["returnRequest.status"] = body.returnStatus;
+
+      if(body.returnStatus === "approved"){
+        updateData["returnRequest.approvedAt"] = new Date();
+      }
+
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      params.id,
+      updateData,
+      { new: true }
+    );
+
+    return NextResponse.json(order);
+
+  }catch(err){
+
+    console.log("PATCH ERROR:", err);
+
+    return NextResponse.json(
+      { error:"Update failed" },
+      { status:500 }
+    );
+
+  }
 
 }

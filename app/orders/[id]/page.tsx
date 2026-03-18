@@ -137,6 +137,10 @@ export default function OrderDetails(){
 const params = useParams();
 const [order,setOrder] = useState<any>(null);
 
+/* ✅ NEW STATES */
+const [returnReason,setReturnReason] = useState("");
+const [returnImages,setReturnImages] = useState<any[]>([]);
+
 useEffect(()=>{
 
 if(!params?.id) return;
@@ -164,6 +168,52 @@ loadOrder();
 if(!order){
 return <p className="p-10 text-center">Loading order...</p>
 }
+
+/* ========================= */
+/* RETURN FUNCTION */
+/* ========================= */
+
+const handleReturnRequest = async()=>{
+
+if(!returnReason){
+alert("Select reason");
+return;
+}
+
+try{
+
+const uploaded:any[] = [];
+
+for(const file of returnImages){
+
+const form = new FormData();
+form.append("file",file);
+
+const res = await fetch("/api/upload",{method:"POST",body:form});
+const data = await res.json();
+
+uploaded.push(data.url);
+
+}
+
+await fetch("/api/orders/return",{
+method:"POST",
+headers:{ "Content-Type":"application/json" },
+body: JSON.stringify({
+orderId: order._id,
+reason: returnReason,
+images: uploaded
+})
+});
+
+alert("Return requested successfully");
+
+}catch(err){
+console.log(err);
+alert("Return failed");
+}
+
+};
 
 /* ORDER TRACKING STEPS */
 
@@ -210,7 +260,6 @@ Order Tracking
 
 {steps.map((step,index)=>{
 
-/* ✅ FIXED (CASE SAFE) */
 const completed = order.tracking?.some((t:any)=>
 t.status?.toLowerCase() === step.toLowerCase()
 );
@@ -219,8 +268,6 @@ return(
 
 <div key={index} className="flex items-start gap-4">
 
-{/* ICON */}
-
 <div
 className={`w-6 h-6 rounded-full flex items-center justify-center text-xs
 ${completed ? "bg-green-500 text-white" : "bg-gray-200"}
@@ -228,8 +275,6 @@ ${completed ? "bg-green-500 text-white" : "bg-gray-200"}
 >
 {completed ? "✓" : ""}
 </div>
-
-{/* TEXT */}
 
 <div>
 
@@ -268,6 +313,72 @@ t.status?.toLowerCase() === step.toLowerCase()
 </div>
 
 </div>
+
+{/* ========================= */}
+{/* 🔁 RETURN SYSTEM UI */}
+{/* ========================= */}
+
+{order.tracking?.some((t:any)=>t.status==="Delivered") && (
+
+<div className="border p-4 rounded mb-6">
+
+<h2 className="font-semibold mb-2">Return Product</h2>
+
+<p className="text-sm text-gray-500 mb-3">
+Return within 2 days • ₹40 charge applies
+</p>
+
+<select
+className="border p-2 w-full mb-2"
+onChange={(e)=>setReturnReason(e.target.value)}
+>
+<option>Select Reason</option>
+<option>Damaged product</option>
+<option>Wrong item</option>
+<option>Not satisfied</option>
+</select>
+
+<input
+type="file"
+multiple
+onChange={(e:any)=>setReturnImages([...e.target.files])}
+className="mb-3"
+/>
+
+<button
+onClick={handleReturnRequest}
+className="bg-red-600 text-white w-full py-2 rounded"
+>
+Request Return
+</button>
+
+</div>
+
+)}
+
+{/* ========================= */}
+{/* RETURN STATUS UI (ADDED) */}
+{/* ========================= */}
+
+{order.returnRequest?.requested && (
+
+<div className="border p-4 rounded mb-6">
+
+<p className="font-semibold mb-2">Return Status</p>
+
+<p className={`font-medium ${
+order.returnRequest.status==="approved"
+? "text-green-600"
+: order.returnRequest.status==="rejected"
+? "text-red-600"
+: "text-yellow-600"
+}`}>
+{order.returnRequest.status}
+</p>
+
+</div>
+
+)}
 
 {/* PRODUCTS */}
 

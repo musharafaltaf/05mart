@@ -1206,6 +1206,8 @@
 
 // }
 
+
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -1214,485 +1216,369 @@ import CheckoutSteps from "@/components/CheckoutSteps";
 
 export default function PaymentPage() {
 
-    /* ✅ ALL HOOKS INSIDE */
-    const router = useRouter();
+const router = useRouter();
 
-    const [cart, setCart] = useState<any[]>([]);
-    const [payment, setPayment] = useState("cod");
+const [cart, setCart] = useState<any[]>([]);
+const [payment, setPayment] = useState("cod");
 
-    const [loading, setLoading] = useState(false);
-    const [processing, setProcessing] = useState(false);
-    const [showConfirm, setShowConfirm] = useState(false);
+const [loading, setLoading] = useState(false);
+const [showModal, setShowModal] = useState(false); // ✅ NEW
 
-    /* ========================= */
-    /* EFFECT */
-    /* ========================= */
+/* 🔥 TOAST */
+const [toast, setToast] = useState<string | null>(null);
 
-    useEffect(() => {
-        console.log("Payment page loaded");
-    }, []);
+const [giftCard, setGiftCard] = useState("");
+const [giftPin, setGiftPin] = useState("");
+const [giftDiscount, setGiftDiscount] = useState(0);
 
-    /* UPI */
+const STORE_UPI = "daraamir369369@okhdfcbank";
 
-    const [upiId, setUpiId] = useState("");
-    const [upiApp, setUpiApp] = useState("");
+/* ========================= */
+/* LOAD CART */
+/* ========================= */
 
-    /* CARD */
+useEffect(() => {
 
-    const [cardNumber, setCardNumber] = useState("");
-    const [cardName, setCardName] = useState("");
-    const [cardExpiry, setCardExpiry] = useState("");
-    const [cardCvv, setCardCvv] = useState("");
+const user = localStorage.getItem("user");
 
-    /* PAYMENT PROOF */
+if (!user) {
+router.push("/login");
+return;
+}
 
-    const [paymentProof, setPaymentProof] = useState("");
+const loadCart = async () => {
 
-    /* STORE MANUAL PAYMENT DETAILS (NEW FEATURE) */
+const buyNow = localStorage.getItem("buyNow");
 
-    const STORE_UPI = "daraamir369369@okhdfcbank";
+if (buyNow) {
+setCart([JSON.parse(buyNow)]);
+return;
+}
 
-    /* LOAD RAZORPAY SCRIPT */
+const res = await fetch("/api/cart");
+const data = await res.json();
+setCart(data.items || []);
 
-    useEffect(() => {
+};
 
-        if ((window as any).Razorpay) return;
+loadCart();
 
-        const script = document.createElement("script");
-        script.src = "https://checkout.razorpay.com/v1/checkout.js";
-        script.async = true;
+}, []);
 
-        document.body.appendChild(script);
+/* ========================= */
+/* PRICE */
+/* ========================= */
 
-    }, [])
+const subtotal = cart.reduce(
+(sum, item) => sum + Number(item.price) * Number(item.quantity || 1),
+0
+);
 
-    /* LOAD CART */
+const mrpTotal = cart.reduce(
+(sum, item) => sum + Number(item.mrp || item.price) * Number(item.quantity || 1),
+0
+);
 
-    useEffect(() => {
+const discount = mrpTotal - subtotal;
 
-        const user = localStorage.getItem("user");
+const gst = 0;
+const delivery = 0;
 
-        if (!user) {
-            router.push("/login");
-            return;
-        }
+const totalSavings = discount + giftDiscount;
+const savingsPercent = mrpTotal > 0 
+? Math.round((totalSavings / mrpTotal) * 100)
+: 0;
 
-        const loadCart = async () => {
+const total = subtotal - giftDiscount;
 
-            const buyNow = localStorage.getItem("buyNow");
+/* ========================= */
+/* TOAST FUNCTION */
+/* ========================= */
 
-            if (buyNow) {
-                setCart([JSON.parse(buyNow)]);
-                return;
-            }
+const showToast = (msg:string)=>{
+setToast(msg);
+setTimeout(()=>setToast(null),2500);
+};
 
-            try {
+/* ========================= */
+/* GIFT CARD */
+/* ========================= */
 
-                const res = await fetch("/api/cart");
-                const data = await res.json();
+const applyGiftCard = () => {
 
-                setCart(data.items || []);
+if (giftCard === "FREE100" && giftPin === "1234") {
+setGiftDiscount(100);
+showToast("Gift Card Applied 🎉");
+} else {
+showToast("Invalid Gift Card ❌");
+}
 
-            } catch (err) {
-                console.log(err);
-            }
+};
 
-        };
+/* ========================= */
+/* UPI */
+/* ========================= */
 
-        loadCart();
+const handleUPIPayment = () => {
 
-    }, []);
+const link = `upi://pay?pa=${STORE_UPI}&pn=05Mart&am=${total}&cu=INR`;
 
-    /* PRICE */
+window.location.href = link;
 
-    const subtotal = cart.reduce(
-        (sum, item) => sum + Number(item.price) * Number(item.quantity || item.qty || 1),
-        0
-    );
+setTimeout(()=>{
+showToast("If UPI app didn't open, use QR or Copy UPI ID");
+},1500);
 
-    const mrpTotal = cart.reduce(
-        (sum, item) => sum + Number(item.mrp || item.price) * Number(item.quantity || item.qty || 1),
-        0
-    );
+};
 
-    const discount = mrpTotal - subtotal;
-
-    const total = subtotal;
-
-    /* RAZORPAY */
-
-    const payWithRazorpay = async () => {
-
-        if (total <= 0) {
-            alert("Invalid payment amount");
-            return;
-        }
-
-        try {
-
-            const res = await fetch("/api/razorpay/order", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ amount: total })
-            })
-
-            const data = await res.json()
-
-            const user = JSON.parse(localStorage.getItem("user") || "{}")
-            const address = JSON.parse(localStorage.getItem("address") || "{}")
-
-            const options = {
-
-                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-
-                amount: data.amount,
-
-                currency: "INR",
-
-                name: "05Mart",
-
-                description: "Secure Payment",
-
-                image: "/logo.png",
-
-                order_id: data.id,
-
-                prefill: {
-
-                    name: address?.name || user?.name || "Customer",
-                    email: user?.email || "customer@email.com",
-                    contact: address?.phone || "9999999999"
-
-                },
-
-                notes: {
-
-                    address: address?.city || "India",
-                    store: "05Mart"
-
-                },
-
-                theme: {
-                    color: "#000"
-                },
-
-                modal: {
-                    ondismiss: function () {
-                        console.log("Payment popup closed")
-                    }
-                },
-
-                handler: async function () {
-
-                    await placeOrder("paid");
-
-                }
-
-            }
-
-            const rzp = new (window as any).Razorpay(options)
-
-            rzp.open()
-
-        } catch (err) {
-
-            console.log(err)
-
-        }
-
-    }
-
-    /* VALIDATIONS */
-
-    const validateUPI = () => {
-
-        const upiRegex = /^[\w.-]+@[\w.-]+$/;
-
-        if (!upiApp && !upiId) {
-            alert("Select UPI app or enter UPI ID");
-            return false;
-        }
-
-        if (upiId && !upiRegex.test(upiId)) {
-            alert("Enter valid UPI ID");
-            return false;
-        }
-
-        return true;
-
-    };
-
-    const validateCard = () => {
-
-        if (cardNumber.length !== 16) {
-            alert("Enter valid 16 digit card number");
-            return false;
-        }
-
-        if (!cardName) {
-            alert("Enter card holder name");
-            return false;
-        }
-
-        if (!cardExpiry) {
-            alert("Enter expiry date");
-            return false;
-        }
-
-        if (cardCvv.length !== 3) {
-            alert("Enter valid CVV");
-            return false;
-        }
-
-        return true;
-
-    };
-
-    /* UPLOAD PROOF */
-
-    const uploadProof = async (file: any) => {
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch("/api/upload", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await res.json();
-
-        setPaymentProof(data.url);
-
-    };
-
-    /* CONFIRM ORDER */
-
-    const confirmOrder = () => {
-
-        if (cart.length === 0) {
-            alert("Cart is empty");
-            return;
-        }
-
-        if (total <= 0) {
-            alert("Invalid order amount");
-            return;
-        }
-
-        /* UPI VALIDATION */
-        if (payment === "upi" && !paymentProof) {
-            alert("Please upload payment screenshot");
-            return;
-        }
-
-        if (payment === "upi" && !validateUPI()) return;
-        if (payment === "card" && !validateCard()) return;
-
-        /* ✅ FIX: COD DIRECT ORDER */
-        if (payment === "cod") {
-            placeOrder(); // 🔥 IMPORTANT
-            return;
-        }
-
-        /* RAZORPAY */
-        if (payment === "razorpay") {
-            payWithRazorpay();
-            return;
-        }
-
-        /* OTHER */
-        setShowConfirm(true);
-
-    };
-    /* PLACE ORDER */
-
-    const placeOrder = async (statusParam = "pending") => {
-
-if(loading) return;
-
-setShowConfirm(false);
-setLoading(true);
-
+const copyUPI = async () => {
 try{
+await navigator.clipboard.writeText(STORE_UPI);
+showToast("UPI ID Copied ✅");
+}catch{
+showToast("Copy failed");
+}
+};
+
+/* ========================= */
+/* RAZORPAY */
+/* ========================= */
+
+useEffect(() => {
+
+if ((window as any).Razorpay) return;
+
+const script = document.createElement("script");
+script.src = "https://checkout.razorpay.com/v1/checkout.js";
+document.body.appendChild(script);
+
+}, []);
+
+const payWithRazorpay = async () => {
+
+const res = await fetch("/api/razorpay/order", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({ amount: total })
+});
+
+const data = await res.json();
+
+const rzp = new (window as any).Razorpay({
+key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+amount: data.amount,
+currency: "INR",
+order_id: data.id,
+handler: async () => placeOrder("paid")
+});
+
+rzp.open();
+
+};
+
+/* ========================= */
+/* CONFIRM FLOW */
+/* ========================= */
+
+const confirmOrder = () => {
+setShowModal(true);
+};
+
+const proceedPayment = () => {
+
+setShowModal(false);
+
+if (payment === "cod") return placeOrder();
+if (payment === "upi") return handleUPIPayment();
+if (payment === "razorpay") return payWithRazorpay();
+
+};
+
+/* ========================= */
+/* ORDER */
+/* ========================= */
+
+const placeOrder = async (statusParam = "pending") => {
+
+if (loading) return;
+setLoading(true);
 
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 const address = JSON.parse(localStorage.getItem("address") || "{}");
 
-if(!address || !address.name){
-alert("Address missing. Please enter address first.");
-router.push("/checkout/address");
-setLoading(false);
-return;
-}
-
-const res = await fetch("/api/orders",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+const res = await fetch("/api/orders", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
 body: JSON.stringify({
 items: cart,
 total,
 customer: address,
 paymentMethod: payment,
-paymentProof: payment==="cod" ? null : paymentProof,
 userId: user?._id || "guest",
 status: statusParam
 })
 });
 
-const order = await res.json();  // ✅ ONLY HERE
-
-if(!res.ok){
-console.log("ERROR:", order);
-throw new Error("Order failed");
-}
-
-localStorage.removeItem("buyNow");
-
-if(payment==="cod" && order?._id){
-router.push(`/success?orderId=${order._id}`);
-setLoading(false);
-return;
-}
-
-setProcessing(true);
+const order = await res.json();
 
 setTimeout(()=>{
 router.push(`/success?orderId=${order._id}`);
-},2000);
-
-}catch(err){
-
-console.log(err);
-alert("Payment failed");
-
-}
+},500);
 
 setLoading(false);
 
 };
 
+/* ========================= */
+/* UI */
+/* ========================= */
 
-        return (
+return (
 
-            <main className="max-w-7xl mx-auto px-3 sm:px-4 py-6 md:py-12">
+<main className="max-w-7xl mx-auto px-4 py-8">
 
-                <CheckoutSteps step={3} />
+<CheckoutSteps step={3} />
 
-                <div className="flex items-center gap-2 mb-6 text-green-600 text-sm">
-                    <span>🔒</span>
-                    <span>Secure Payment • 256-bit SSL encrypted</span>
-                </div>
+<h1 className="text-2xl font-bold mb-6">Complete Payment</h1>
 
-                <h1 className="text-xl md:text-2xl font-bold mb-6">
-                    Payment
-                </h1>
+<div className="grid md:grid-cols-2 gap-6">
 
-                <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+{/* LEFT */}
+<div className="space-y-4">
 
-                    {/* PAYMENT METHODS */}
+<div className="shadow-md rounded-xl p-4 space-y-3 bg-white">
 
-                    <div className="border rounded p-4 sm:p-5 md:p-6">
+<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="cod"?"border-2 border-black":"border"}`}>
+<input type="radio" checked={payment==="cod"} onChange={()=>setPayment("cod")} />
+Cash on Delivery
+</label>
 
-                        <h2 className="font-semibold mb-4">
-                            Select Payment Method
-                        </h2>
+<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="razorpay"?"border-2 border-black":"border"}`}>
+<input type="radio" checked={payment==="razorpay"} onChange={()=>setPayment("razorpay")} />
+Gpay_Paytm_Phonepe_Card (Razorpay)
+</label>
 
-                        <div className="grid gap-4">
+<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="upi"?"border-2 border-black":"border"}`}>
+<input type="radio" checked={payment==="upi"} onChange={()=>setPayment("upi")} />
+UPI Payment
+</label>
 
-                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "cod" ? "border-black" : ""}`}>
-                                <input type="radio" checked={payment === "cod"} onChange={() => setPayment("cod")} />
-                                Cash on Delivery
-                            </label>
+</div>
 
-                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "razorpay" ? "border-black" : ""}`}>
-                                <input type="radio" checked={payment === "razorpay"} onChange={() => setPayment("razorpay")} />
-                                Razorpay (UPI / Card / NetBanking)
-                            </label>
+{payment==="upi" && (
+<div className="shadow-md rounded-xl p-4 bg-gray-50">
 
-                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "upi" ? "border-black" : ""}`}>
-                                <input type="radio" checked={payment === "upi"} onChange={() => setPayment("upi")} />
-                                Manual UPI Payment
-                            </label>
+<p className="font-semibold mb-2">Pay via UPI</p>
 
-                            {/* NEW MANUAL PAYMENT UI */}
+<img src="/upi-qr.png" className="w-40 mx-auto mb-3" />
 
-                            {payment === "upi" && (
-                                <div className="border p-4 rounded mt-3 bg-gray-50">
+<button onClick={handleUPIPayment} className="bg-green-600 text-white w-full py-2 rounded-lg">
+Open UPI App
+</button>
 
-                                    <p className="font-semibold mb-2">
-                                        Pay using UPI
-                                    </p>
+<button onClick={copyUPI} className="border w-full py-2 rounded-lg mt-2">
+Copy UPI ID
+</button>
 
-                                    <p className="text-sm">
-                                        UPI ID : <b>{STORE_UPI}</b>
-                                    </p>
+</div>
+)}
 
-                                    <img
-                                        src="/upi-qr.png"
-                                        className="w-40 mt-3 border rounded"
-                                    />
+{/* GIFT */}
+<div className="shadow-md rounded-xl p-4 bg-white">
 
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Scan QR → Pay → Upload Screenshot
-                                    </p>
+<input placeholder="Voucher Number" className="border p-2 w-full mb-2 rounded"
+value={giftCard} onChange={(e)=>setGiftCard(e.target.value)} />
 
-                                    <input
-                                        type="file"
-                                        onChange={(e: any) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) uploadProof(file);
-                                        }}
-                                        className="border p-2 rounded w-full mt-3"
-                                    />
+<input placeholder="PIN" className="border p-2 w-full mb-2 rounded"
+value={giftPin} onChange={(e)=>setGiftPin(e.target.value)} />
 
-                                </div>
-                            )}
+<button onClick={applyGiftCard} className="bg-blue-600 text-white w-full py-2 rounded">
+Apply Gift Card
+</button>
 
-                        </div>
+</div>
 
-                    </div>
+</div>
 
-                    {/* PRICE DETAILS */}
+{/* RIGHT */}
+<div className="shadow-md rounded-xl p-5 bg-white">
 
-                    <div className="border rounded p-4 sm:p-5 md:p-6 h-fit">
+<h2 className="font-semibold mb-4">Price Details</h2>
 
-                        <h2 className="font-semibold mb-6">Price Details</h2>
+<div className="flex justify-between mb-2">
+<span>MRP</span>
+<span className="line-through text-gray-400">₹{mrpTotal}</span>
+</div>
 
-                        <div className="flex justify-between mb-3">
-                            <p>MRP</p>
-                            <p>₹{mrpTotal}</p>
-                        </div>
+<div className="flex justify-between text-green-600 mb-2">
+<span>Discount</span>
+<span>-₹{discount}</span>
+</div>
 
-                        <div className="flex justify-between mb-3">
-                            <p>Discount</p>
-                            <p className="text-green-600">- ₹{discount}</p>
-                        </div>
+<div className="flex justify-between mb-2">
+<span>GST</span>
+<span className="text-green-600">₹0</span>
+</div>
 
-                        <hr className="my-4" />
+<div className="flex justify-between mb-2">
+<span>Delivery</span>
+<span className="text-green-600">FREE</span>
+</div>
 
-                        <div className="flex justify-between font-bold text-lg">
-                            <p>Total Amount</p>
-                            <p>₹{total}</p>
-                        </div>
+<hr className="my-3"/>
 
-                        <button
-                            onClick={confirmOrder}
-                            disabled={loading}
-                            className="mt-6 bg-black text-white w-full py-3 rounded"
-                        >
-                            {loading ? "Processing..." : payment === "cod" ? "Place Order" : `Pay ₹${total}`}
-                        </button>
+<div className="flex justify-between font-bold text-lg">
+<span>Total</span>
+<span>₹{total}</span>
+</div>
 
-                    </div>
+<button
+onClick={confirmOrder}
+className="bg-black text-white w-full mt-4 py-3 rounded-lg"
+>
+{loading?"Processing...":payment==="cod"?"Place Order":`Pay ₹${total}`}
+</button>
 
-                </div>
+</div>
 
-            </main>
-        );
-    }
+</div>
 
+{/* MODAL */}
+{showModal && (
+<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
 
+<div className="bg-white rounded-xl p-6 w-[90%] max-w-md animate-scaleIn">
 
+<h2 className="text-lg font-bold mb-2">Confirm Payment</h2>
+
+<p className="text-gray-500 mb-4">
+Pay ₹{total} using <b>{payment.toUpperCase()}</b>
+</p>
+
+<div className="flex gap-3">
+
+<button onClick={()=>setShowModal(false)} className="border w-full py-2 rounded">
+Cancel
+</button>
+
+<button onClick={proceedPayment} className="bg-black text-white w-full py-2 rounded">
+Confirm
+</button>
+
+</div>
+
+</div>
+
+</div>
+)}
+
+{/* TOAST */}
+{toast && (
+<div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded shadow-lg animate-bounce z-50">
+{toast}
+</div>
+)}
+
+</main>
+);
+}

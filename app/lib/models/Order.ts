@@ -107,9 +107,24 @@ interface IOrder {
   total?: number;
   status?: string;
 
-  customer?: string;            // ✅ ADD
-  paymentMethod?: string;       // ✅ ADD
-  paymentProof?: string | null; // ✅ ADD
+  customer?: any;
+  paymentMethod?: string;
+  paymentProof?: string | null;
+
+  tracking?: {
+    status: string;
+    date: Date;
+  }[];
+
+  /* ✅ NEW RETURN SYSTEM */
+  returnRequest?: {
+    requested: boolean;
+    reason?: string;
+    images?: string[];
+    status?: string;
+    requestedAt?: Date;
+    approvedAt?: Date;
+  };
 }
 
 const OrderSchema = new Schema<IOrder>(
@@ -119,9 +134,31 @@ const OrderSchema = new Schema<IOrder>(
     total: Number,
     status: String,
 
-    customer: String,        // ✅ ADD
-    paymentMethod: String,   // ✅ ADD
-    paymentProof: String,    // ✅ ADD
+    customer: Schema.Types.Mixed,
+    paymentMethod: String,
+    paymentProof: String,
+
+    tracking: [
+      {
+        status: String,
+        date: Date
+      }
+    ],
+
+    /* ✅ NEW (SAFE ADD) */
+    returnRequest: {
+      requested: { type: Boolean, default: false },
+      reason: String,
+      images: [String],
+      status: {
+        type: String,
+        enum: ["none","requested","approved","rejected","completed"],
+        default: "none"
+      },
+      requestedAt: Date,
+      approvedAt: Date
+    }
+
   },
   { timestamps: true }
 );
