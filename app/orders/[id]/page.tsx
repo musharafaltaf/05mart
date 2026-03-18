@@ -210,7 +210,10 @@ Order Tracking
 
 {steps.map((step,index)=>{
 
-const completed = order.tracking?.some((t:any)=>t.status===step);
+/* ✅ FIXED (CASE SAFE) */
+const completed = order.tracking?.some((t:any)=>
+t.status?.toLowerCase() === step.toLowerCase()
+);
 
 return(
 
@@ -239,9 +242,13 @@ ${completed ? "bg-green-500 text-white" : "bg-gray-200"}
 <p className="text-sm text-gray-500">
 
 {
-order.tracking.find((t:any)=>t.status===step)?.date
+order.tracking.find((t:any)=>
+t.status?.toLowerCase() === step.toLowerCase()
+)?.date
 ? new Date(
-order.tracking.find((t:any)=>t.status===step).date
+order.tracking.find((t:any)=>
+t.status?.toLowerCase() === step.toLowerCase()
+).date
 ).toLocaleString()
 : ""
 }
@@ -266,7 +273,7 @@ order.tracking.find((t:any)=>t.status===step).date
 
 <div className="space-y-4">
 
-{order.items.map((item:any)=>(
+{order?.items?.map((item:any)=>(
 
 <div key={item._id} className="flex gap-4 border p-4 rounded">
 

@@ -21,7 +21,7 @@ const flashSale = searchParams.get("flashSale");
 let filter:any = {};
 
 if(category){
-filter.category = category;
+filter.category = { $regex: new RegExp(`^${category}$`, "i") };
 }
 
 if(featured){
@@ -50,6 +50,10 @@ return NextResponse.json([], { status:200 });
 
 }
 
+/* =============================== */
+/* 🔥 FIXED POST (IMPORTANT) */
+/* =============================== */
+
 export async function POST(req: Request) {
 
 try {
@@ -58,9 +62,41 @@ await connectDB();
 
 const body = await req.json();
 
-/* CREATE PRODUCT */
+/* ============================= */
+/* 🔥 FIX IMAGES */
+/* ============================= */
 
-const product = await Product.create(body);
+let images = body.images || [];
+
+/* Convert string → array */
+if(typeof images === "string"){
+images = images.split(",").map((i:string)=>i.trim());
+}
+
+/* Remove empty values */
+images = images.filter((img:string)=>img);
+
+/* Remove duplicates */
+images = [...new Set(images)];
+
+/* Remove main image from gallery */
+images = images.filter((img:string)=>img !== body.image);
+
+/* Limit to 4 images */
+images = images.slice(0,4);
+
+/* ============================= */
+/* CREATE PRODUCT */
+/* ============================= */
+
+const product = await Product.create({
+
+...body,
+
+image: body.image,
+images: images, // ✅ CLEAN GALLERY
+
+});
 
 return NextResponse.json(product);
 
@@ -76,3 +112,6 @@ return NextResponse.json(
 }
 
 }
+
+
+

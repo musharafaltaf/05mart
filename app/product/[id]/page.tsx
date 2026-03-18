@@ -80,13 +80,13 @@
 
 //   );
 // }
+// 
 "use client";
 
 import { useEffect,useState } from "react";
 import { useParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
-import ProductCard from "@/components/ProductCard";
 
 export default function ProductPage(){
 
@@ -97,7 +97,6 @@ const { addToCart } = useCart();
 const { addToWishlist } = useWishlist();
 
 const [product,setProduct] = useState<any>(null);
-const [related,setRelated] = useState<any[]>([]);
 const [reviews,setReviews] = useState<any[]>([]);
 
 const [selectedImage,setSelectedImage] = useState("");
@@ -105,10 +104,16 @@ const [selectedSize,setSelectedSize] = useState("");
 
 const [showSizePopup,setShowSizePopup] = useState(false);
 const [showSizeChart,setShowSizeChart] = useState(false);
-
 const [pendingAction,setPendingAction] = useState<"cart" | "buy" | null>(null);
 
 const [loading,setLoading] = useState(true);
+const [zoom,setZoom] = useState(false);
+const [cartAnim,setCartAnim] = useState(false);
+const [sizeError,setSizeError] = useState("");
+
+/* ========================= */
+/* LOAD PRODUCT */
+/* ========================= */
 
 useEffect(()=>{
 
@@ -118,10 +123,7 @@ const loadProduct = async()=>{
 
 try{
 
-const res = await fetch(`/api/products/${id}`,{
-cache:"no-store"
-});
-
+const res = await fetch(`/api/products/${id}`);
 if(!res.ok){
 setLoading(false);
 return;
@@ -129,19 +131,13 @@ return;
 
 const data = await res.json();
 
+if(!data || !data._id){
+setLoading(false);
+return;
+}
+
 setProduct(data);
-setSelectedImage(data.image);
-
-/* RELATED PRODUCTS */
-
-const res2 = await fetch(`/api/products`);
-const all = await res2.json();
-
-const rel = all.filter((p:any)=>
-p.category === data.category && p._id !== data._id
-);
-
-setRelated(rel.slice(0,4));
+setSelectedImage(data.image || "");
 
 }catch(err){
 console.log(err);
@@ -155,20 +151,19 @@ loadProduct();
 
 },[id]);
 
-/* LOAD REVIEWS */
+/* ========================= */
+/* REVIEWS */
+/* ========================= */
 
 useEffect(()=>{
 
 const loadReviews = async()=>{
 
 try{
-
 const res = await fetch(`/api/reviews?productId=${id}`);
-
 if(!res.ok) return;
 
 const data = await res.json();
-
 setReviews(data);
 
 }catch(err){
@@ -189,42 +184,68 @@ if(!product){
 return <p className="p-10 text-center">Product not found</p>
 }
 
-/* IMAGES */
+/* ========================= */
+/* SIZE */
+/* ========================= */
 
-const images = product.images?.length
-? [product.image,...product.images]
-: [product.image];
+const sizes =
+product.sizes?.length > 0
+? product.sizes.filter((s:any)=>{
+return product.sizeStock?.[s] === undefined || product.sizeStock?.[s] > 0;
+})
+: ["S","M","L","XL"];
 
-/* DISCOUNT */
+/* ========================= */
+
+const images = [
+product?.image,
+...(Array.isArray(product?.images) ? product.images : [])
+].filter((img:any)=>img);
 
 const discount =
 product.mrp
 ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
 : 0;
 
-/* RATING */
-
 const rating =
 reviews.length
 ? (reviews.reduce((a,b)=>a+b.rating,0)/reviews.length).toFixed(1)
 : null;
 
+/* ========================= */
+/* STOCK LOGIC */
+/* ========================= */
+
+const isOutOfStock = product.stock <= 0;
+const lowStock = product.stock > 0 && product.stock <= 3;
+
+/* ========================= */
+/* UI */
+/* ========================= */
+
 return(
 
 <main className="max-w-7xl mx-auto px-4 py-10">
 
-<div className="grid md:grid-cols-2 gap-10">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-{/* IMAGE GALLERY */}
+{/* IMAGE */}
 
 <div>
 
+<div className="w-full aspect-square overflow-hidden rounded-lg bg-gray-100">
+
 <img
-src={selectedImage}
-className="w-full rounded-lg mb-4"
+src={selectedImage || "/placeholder.png"}
+onMouseEnter={()=>setZoom(true)}
+onMouseLeave={()=>setZoom(false)}
+className={`w-full h-full object-cover transition-transform duration-300 
+${zoom ? "scale-110" : "scale-100"}`}
 />
 
-<div className="flex gap-3">
+</div>
+
+<div className="flex gap-3 mt-4 flex-wrap">
 
 {images.map((img:any)=>(
 <img
@@ -240,19 +261,11 @@ ${selectedImage===img ? "border-black" : ""}`}
 
 </div>
 
-{/* PRODUCT INFO */}
+{/* INFO */}
 
 <div>
 
-<h1 className="text-2xl font-semibold">
-{product.name}
-</h1>
-
-{product.brand && (
-<p className="text-gray-600 mt-2">
-Brand: <span className="font-semibold">{product.brand}</span>
-</p>
-)}
+<h1 className="text-2xl font-semibold">{product.name}</h1>
 
 {rating && (
 <p className="text-yellow-500 mt-2">
@@ -260,22 +273,14 @@ Brand: <span className="font-semibold">{product.brand}</span>
 </p>
 )}
 
-{/* PRICE */}
-
 <div className="mt-4 flex items-center gap-3">
 
-<p className="text-3xl font-bold">
-₹{product.price}
-</p>
+<p className="text-3xl font-bold">₹{product.price}</p>
 
 {product.mrp && (
 <>
-<p className="text-gray-400 line-through text-lg">
-₹{product.mrp}
-</p>
-<p className="text-green-600 font-semibold">
-{discount}% OFF
-</p>
+<p className="text-gray-400 line-through text-lg">₹{product.mrp}</p>
+<p className="text-green-600 font-semibold">{discount}% OFF</p>
 </>
 )}
 
@@ -283,125 +288,96 @@ Brand: <span className="font-semibold">{product.brand}</span>
 
 {/* STOCK */}
 
-<p className="text-sm mt-2 text-green-600">
-{product.stock > 0 ? "In Stock" : "Out of Stock"}
+<p className={`text-sm mt-2 ${
+isOutOfStock ? "text-red-500" : "text-green-600"
+}`}>
+{isOutOfStock ? "Out of Stock" : "In Stock"}
 </p>
 
-{/* SIZE SELECTOR */}
+{lowStock && (
+<p className="text-orange-500 text-sm">
+Only {product.stock} left 🔥
+</p>
+)}
 
-{product.sizes?.length > 0 && (
+{/* SIZE */}
 
 <div className="mt-6">
 
-<p className="font-medium mb-2">
-Select Size
-</p>
+<p className="font-medium mb-2">Select Size</p>
 
 <div className="flex gap-2 flex-wrap">
 
-{product.sizes.map((size:any)=>{
-
-const sizeStock = product.sizeStock?.[size] ?? product.stock;
-
-return(
+{sizes.map((size:any)=>(
 
 <button
 key={size}
 onClick={()=>setSelectedSize(size)}
-disabled={sizeStock <= 0}
 className={`border px-4 py-1 rounded ${
-sizeStock <= 0
-? "bg-gray-200 text-gray-400 cursor-not-allowed"
-: selectedSize===size
-? "bg-black text-white"
-: "hover:bg-gray-100"
+selectedSize===size ? "bg-black text-white" : ""
 }`}
 >
-
 {size}
-
-<span className="text-xs ml-1">
-
-{sizeStock === 0
-? "(Out)"
-: sizeStock <= 2
-? `(${sizeStock} left)`
-: ""}
-
-</span>
-
 </button>
 
-)
-
-})}
+))}
 
 </div>
 
-{selectedSize && (
-<p className="text-sm text-gray-600 mt-2">
-Selected Size: <b>{selectedSize}</b>
-</p>
-)}
-
 <button
 onClick={()=>setShowSizeChart(true)}
-className="text-blue-600 mt-3 underline text-sm"
+className="text-blue-600 mt-2 underline text-sm"
 >
 View Size Chart
 </button>
 
 </div>
 
-)}
-
-<p className="text-gray-500 mt-6">
-{product.description}
-</p>
+<p className="text-gray-500 mt-6">{product.description}</p>
 
 {/* BUTTONS */}
 
 <div className="flex gap-4 mt-6">
 
 <button
+disabled={isOutOfStock}
 onClick={()=>{
 
-if(product.sizes?.length && !selectedSize){
+if(sizes.length && !selectedSize){
+setSizeError("Please select size");
 setPendingAction("cart");
 setShowSizePopup(true);
 return;
 }
 
-/* STOCK CHECK */
+addToCart({...product,size:selectedSize,quantity:1});
 
-if(product.sizeStock && product.sizeStock[selectedSize] <= 0){
-alert("This size is out of stock");
-return;
-}
-
-addToCart({
-...product,
-size:selectedSize,
-quantity:1
-});
+setCartAnim(true);
+setTimeout(()=>setCartAnim(false),800);
 
 }}
-className="bg-black text-white px-6 py-2 rounded"
+className={`px-6 py-2 rounded relative overflow-hidden ${
+isOutOfStock
+? "bg-gray-400 text-white cursor-not-allowed"
+: "bg-black text-white"
+}`}
 >
 Add to Cart
+
+{cartAnim && (
+<span className="absolute inset-0 bg-green-500 animate-ping opacity-40"></span>
+)}
+
 </button>
 
 <button
+disabled={isOutOfStock}
 onClick={()=>{
 
-if(product.sizes?.length && !selectedSize){
+if(sizes.length && !selectedSize){
+setSizeError("Please select size");
 setPendingAction("buy");
 setShowSizePopup(true);
-return;
-}
-
-if(product.sizeStock && product.sizeStock[selectedSize] <= 0){
-alert("This size is out of stock");
 return;
 }
 
@@ -414,7 +390,11 @@ quantity:1
 window.location.href="/checkout/address";
 
 }}
-className="border px-6 py-2 rounded"
+className={`px-6 py-2 rounded ${
+isOutOfStock
+? "border bg-gray-200 cursor-not-allowed"
+: "border"
+}`}
 >
 Buy Now
 </button>
@@ -432,10 +412,100 @@ className="border px-6 py-2 rounded"
 
 </div>
 
-{/* REVIEWS + RELATED PRODUCTS unchanged */}
+{/* SIZE POPUP */}
+
+{showSizePopup && (
+
+<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+<div className="bg-white p-6 rounded-xl w-[90%] max-w-md">
+
+<h3 className="text-lg font-semibold text-center mb-3">
+Select Size
+</h3>
+
+{sizeError && (
+<p className="text-red-500 text-center mb-3">{sizeError}</p>
+)}
+
+<div className="flex gap-2 flex-wrap justify-center mb-4">
+
+{sizes.map((size:any)=>(
+
+<button
+key={size}
+onClick={()=>{
+setSelectedSize(size);
+setShowSizePopup(false);
+setSizeError("");
+
+if(pendingAction==="buy"){
+localStorage.setItem("buyNow",JSON.stringify({
+...product,
+size:size,
+quantity:1
+}));
+window.location.href="/checkout/address";
+}
+
+if(pendingAction==="cart"){
+addToCart({...product,size:size,quantity:1});
+}
+}}
+className="border px-4 py-2 rounded hover:bg-black hover:text-white"
+>
+{size}
+</button>
+
+))}
+
+</div>
+
+<button
+onClick={()=>setShowSizePopup(false)}
+className="w-full border py-2 rounded"
+>
+Cancel
+</button>
+
+</div>
+
+</div>
+
+)}
+
+{/* SIZE CHART */}
+
+{showSizeChart && (
+
+<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+<div className="bg-white p-6 rounded-xl w-[95%] max-w-lg">
+
+<h3 className="text-lg font-semibold text-center mb-4">
+Size Chart
+</h3>
+
+<p className="font-medium mb-2">T-Shirts</p>
+<p className="text-sm mb-4">S: 38" | M: 40" | L: 42" | XL: 44"</p>
+
+<p className="font-medium mb-2">Trousers</p>
+<p className="text-sm">S: 30 | M: 32 | L: 34 | XL: 36</p>
+
+<button
+onClick={()=>setShowSizeChart(false)}
+className="w-full border py-2 rounded mt-4"
+>
+Close
+</button>
+
+</div>
+
+</div>
+
+)}
 
 </main>
 
 );
-
 }

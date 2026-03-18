@@ -1206,335 +1206,354 @@
 
 // }
 
-
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CheckoutSteps from "@/components/CheckoutSteps";
 
-export default function PaymentPage(){
+export default function PaymentPage() {
 
-const router = useRouter();
+    /* ✅ ALL HOOKS INSIDE */
+    const router = useRouter();
 
-const [cart,setCart] = useState<any[]>([]);
-const [payment,setPayment] = useState("cod");
+    const [cart, setCart] = useState<any[]>([]);
+    const [payment, setPayment] = useState("cod");
 
-const [loading,setLoading] = useState(false);
-const [processing,setProcessing] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
 
-const [showConfirm,setShowConfirm] = useState(false);
+    /* ========================= */
+    /* EFFECT */
+    /* ========================= */
 
-/* UPI */
+    useEffect(() => {
+        console.log("Payment page loaded");
+    }, []);
 
-const [upiId,setUpiId] = useState("");
-const [upiApp,setUpiApp] = useState("");
+    /* UPI */
 
-/* CARD */
+    const [upiId, setUpiId] = useState("");
+    const [upiApp, setUpiApp] = useState("");
 
-const [cardNumber,setCardNumber] = useState("");
-const [cardName,setCardName] = useState("");
-const [cardExpiry,setCardExpiry] = useState("");
-const [cardCvv,setCardCvv] = useState("");
+    /* CARD */
 
-/* PAYMENT PROOF */
+    const [cardNumber, setCardNumber] = useState("");
+    const [cardName, setCardName] = useState("");
+    const [cardExpiry, setCardExpiry] = useState("");
+    const [cardCvv, setCardCvv] = useState("");
 
-const [paymentProof,setPaymentProof] = useState("");
+    /* PAYMENT PROOF */
 
-/* STORE MANUAL PAYMENT DETAILS (NEW FEATURE) */
+    const [paymentProof, setPaymentProof] = useState("");
 
-const STORE_UPI = "05mart@upi";
+    /* STORE MANUAL PAYMENT DETAILS (NEW FEATURE) */
 
-/* LOAD RAZORPAY SCRIPT */
+    const STORE_UPI = "daraamir369369@okhdfcbank";
 
-useEffect(()=>{
+    /* LOAD RAZORPAY SCRIPT */
 
-if((window as any).Razorpay) return;
+    useEffect(() => {
 
-const script = document.createElement("script");
-script.src = "https://checkout.razorpay.com/v1/checkout.js";
-script.async = true;
+        if ((window as any).Razorpay) return;
 
-document.body.appendChild(script);
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
 
-},[])
+        document.body.appendChild(script);
 
-/* LOAD CART */
+    }, [])
 
-useEffect(()=>{
+    /* LOAD CART */
 
-const user = localStorage.getItem("user");
+    useEffect(() => {
 
-if(!user){
-router.push("/login");
-return;
-}
+        const user = localStorage.getItem("user");
 
-const loadCart = async()=>{
+        if (!user) {
+            router.push("/login");
+            return;
+        }
 
-const buyNow = localStorage.getItem("buyNow");
+        const loadCart = async () => {
 
-if(buyNow){
-setCart([JSON.parse(buyNow)]);
-return;
-}
+            const buyNow = localStorage.getItem("buyNow");
 
-try{
+            if (buyNow) {
+                setCart([JSON.parse(buyNow)]);
+                return;
+            }
 
-const res = await fetch("/api/cart");
-const data = await res.json();
+            try {
 
-setCart(data.items || []);
+                const res = await fetch("/api/cart");
+                const data = await res.json();
 
-}catch(err){
-console.log(err);
-}
+                setCart(data.items || []);
 
-};
+            } catch (err) {
+                console.log(err);
+            }
 
-loadCart();
+        };
 
-},[]);
+        loadCart();
 
-/* PRICE */
+    }, []);
 
-const subtotal = cart.reduce(
-(sum,item)=> sum + Number(item.price) * Number(item.quantity || item.qty || 1),
-0
-);
+    /* PRICE */
 
-const mrpTotal = cart.reduce(
-(sum,item)=> sum + Number(item.mrp || item.price) * Number(item.quantity || item.qty || 1),
-0
-);
+    const subtotal = cart.reduce(
+        (sum, item) => sum + Number(item.price) * Number(item.quantity || item.qty || 1),
+        0
+    );
 
-const discount = mrpTotal - subtotal;
+    const mrpTotal = cart.reduce(
+        (sum, item) => sum + Number(item.mrp || item.price) * Number(item.quantity || item.qty || 1),
+        0
+    );
 
-const total = subtotal;
+    const discount = mrpTotal - subtotal;
 
-/* RAZORPAY */
+    const total = subtotal;
 
-const payWithRazorpay = async () => {
+    /* RAZORPAY */
 
-if(total <= 0){
-alert("Invalid payment amount");
-return;
-}
+    const payWithRazorpay = async () => {
 
-try{
+        if (total <= 0) {
+            alert("Invalid payment amount");
+            return;
+        }
 
-const res = await fetch("/api/razorpay/order",{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body: JSON.stringify({ amount: total })
-})
+        try {
 
-const data = await res.json()
+            const res = await fetch("/api/razorpay/order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: total })
+            })
 
-const user = JSON.parse(localStorage.getItem("user") || "{}")
-const address = JSON.parse(localStorage.getItem("address") || "{}")
+            const data = await res.json()
 
-const options = {
+            const user = JSON.parse(localStorage.getItem("user") || "{}")
+            const address = JSON.parse(localStorage.getItem("address") || "{}")
 
-key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            const options = {
 
-amount: data.amount,
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 
-currency: "INR",
+                amount: data.amount,
 
-name: "05Mart",
+                currency: "INR",
 
-description: "Secure Payment",
+                name: "05Mart",
 
-image: "/logo.png",
+                description: "Secure Payment",
 
-order_id: data.id,
+                image: "/logo.png",
 
-prefill: {
+                order_id: data.id,
 
-name: address?.name || user?.name || "Customer",
-email: user?.email || "customer@email.com",
-contact: address?.phone || "9999999999"
+                prefill: {
 
-},
+                    name: address?.name || user?.name || "Customer",
+                    email: user?.email || "customer@email.com",
+                    contact: address?.phone || "9999999999"
 
-notes: {
+                },
 
-address: address?.city || "India",
-store: "05Mart"
+                notes: {
 
-},
+                    address: address?.city || "India",
+                    store: "05Mart"
 
-theme: {
-color: "#000"
-},
+                },
 
-modal:{
-ondismiss:function(){
-console.log("Payment popup closed")
-}
-},
+                theme: {
+                    color: "#000"
+                },
 
-handler: async function(){
+                modal: {
+                    ondismiss: function () {
+                        console.log("Payment popup closed")
+                    }
+                },
 
-await placeOrder()
+                handler: async function () {
 
-}
+                    await placeOrder("paid");
 
-}
+                }
 
-const rzp = new (window as any).Razorpay(options)
+            }
 
-rzp.open()
+            const rzp = new (window as any).Razorpay(options)
 
-}catch(err){
+            rzp.open()
 
-console.log(err)
+        } catch (err) {
 
-}
+            console.log(err)
 
-}
+        }
 
-/* VALIDATIONS */
+    }
 
-const validateUPI = ()=>{
+    /* VALIDATIONS */
 
-const upiRegex = /^[\w.-]+@[\w.-]+$/;
+    const validateUPI = () => {
 
-if(!upiApp && !upiId){
-alert("Select UPI app or enter UPI ID");
-return false;
-}
+        const upiRegex = /^[\w.-]+@[\w.-]+$/;
 
-if(upiId && !upiRegex.test(upiId)){
-alert("Enter valid UPI ID");
-return false;
-}
+        if (!upiApp && !upiId) {
+            alert("Select UPI app or enter UPI ID");
+            return false;
+        }
 
-return true;
+        if (upiId && !upiRegex.test(upiId)) {
+            alert("Enter valid UPI ID");
+            return false;
+        }
 
-};
+        return true;
 
-const validateCard = ()=>{
+    };
 
-if(cardNumber.length !== 16){
-alert("Enter valid 16 digit card number");
-return false;
-}
+    const validateCard = () => {
 
-if(!cardName){
-alert("Enter card holder name");
-return false;
-}
+        if (cardNumber.length !== 16) {
+            alert("Enter valid 16 digit card number");
+            return false;
+        }
 
-if(!cardExpiry){
-alert("Enter expiry date");
-return false;
-}
+        if (!cardName) {
+            alert("Enter card holder name");
+            return false;
+        }
 
-if(cardCvv.length !== 3){
-alert("Enter valid CVV");
-return false;
-}
+        if (!cardExpiry) {
+            alert("Enter expiry date");
+            return false;
+        }
 
-return true;
+        if (cardCvv.length !== 3) {
+            alert("Enter valid CVV");
+            return false;
+        }
 
-};
+        return true;
 
-/* UPLOAD PROOF */
+    };
 
-const uploadProof = async(file:any)=>{
+    /* UPLOAD PROOF */
 
-const formData = new FormData();
-formData.append("file",file);
+    const uploadProof = async (file: any) => {
 
-const res = await fetch("/api/upload",{
-method:"POST",
-body:formData
-});
+        const formData = new FormData();
+        formData.append("file", file);
 
-const data = await res.json();
+        const res = await fetch("/api/upload", {
+            method: "POST",
+            body: formData
+        });
 
-setPaymentProof(data.url);
+        const data = await res.json();
 
-};
+        setPaymentProof(data.url);
 
-/* CONFIRM ORDER */
+    };
 
-const confirmOrder = ()=>{
+    /* CONFIRM ORDER */
 
-if(cart.length===0){
-alert("Cart is empty");
-return;
-}
+    const confirmOrder = () => {
 
-if(total <= 0){
-alert("Invalid order amount");
-return;
-}
+        if (cart.length === 0) {
+            alert("Cart is empty");
+            return;
+        }
 
-/* NEW: Require screenshot for manual payment */
+        if (total <= 0) {
+            alert("Invalid order amount");
+            return;
+        }
 
-if(payment==="upi" && !paymentProof){
-alert("Please upload payment screenshot");
-return;
-}
+        /* UPI VALIDATION */
+        if (payment === "upi" && !paymentProof) {
+            alert("Please upload payment screenshot");
+            return;
+        }
 
-if(payment==="upi" && !validateUPI()) return;
-if(payment==="card" && !validateCard()) return;
+        if (payment === "upi" && !validateUPI()) return;
+        if (payment === "card" && !validateCard()) return;
 
-if(payment==="razorpay"){
-payWithRazorpay()
-return
-}
+        /* ✅ FIX: COD DIRECT ORDER */
+        if (payment === "cod") {
+            placeOrder(); // 🔥 IMPORTANT
+            return;
+        }
 
-setShowConfirm(true);
+        /* RAZORPAY */
+        if (payment === "razorpay") {
+            payWithRazorpay();
+            return;
+        }
 
-};
+        /* OTHER */
+        setShowConfirm(true);
 
-/* PLACE ORDER */
+    };
+    /* PLACE ORDER */
 
-const placeOrder = async()=>{
+    const placeOrder = async (statusParam = "pending") => {
 
 if(loading) return;
 
 setShowConfirm(false);
 setLoading(true);
 
+try{
+
+const user = JSON.parse(localStorage.getItem("user") || "{}");
 const address = JSON.parse(localStorage.getItem("address") || "{}");
 
 if(!address || !address.name){
 alert("Address missing. Please enter address first.");
 router.push("/checkout/address");
+setLoading(false);
 return;
 }
-
-try{
 
 const res = await fetch("/api/orders",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify({
-items:cart,
+body: JSON.stringify({
+items: cart,
 total,
-customer:address,
-paymentMethod:payment,
-paymentProof: payment==="cod" ? null : paymentProof
+customer: address,
+paymentMethod: payment,
+paymentProof: payment==="cod" ? null : paymentProof,
+userId: user?._id || "guest",
+status: statusParam
 })
 });
 
+const order = await res.json();  // ✅ ONLY HERE
+
 if(!res.ok){
+console.log("ERROR:", order);
 throw new Error("Order failed");
 }
-
-const order = await res.json();
 
 localStorage.removeItem("buyNow");
 
 if(payment==="cod" && order?._id){
 router.push(`/success?orderId=${order._id}`);
+setLoading(false);
 return;
 }
 
@@ -1555,149 +1574,125 @@ setLoading(false);
 
 };
 
-/* PROCESSING SCREEN */
 
-if(processing){
+        return (
 
-return(
+            <main className="max-w-7xl mx-auto px-3 sm:px-4 py-6 md:py-12">
 
-<main className="flex items-center justify-center h-screen">
+                <CheckoutSteps step={3} />
 
-<div className="text-center">
+                <div className="flex items-center gap-2 mb-6 text-green-600 text-sm">
+                    <span>🔒</span>
+                    <span>Secure Payment • 256-bit SSL encrypted</span>
+                </div>
 
-<h2 className="text-xl font-semibold mb-4">
-Processing Payment...
-</h2>
+                <h1 className="text-xl md:text-2xl font-bold mb-6">
+                    Payment
+                </h1>
 
-<p className="text-gray-500">
-Please wait while we confirm your payment
-</p>
+                <div className="grid md:grid-cols-2 gap-6 md:gap-10">
 
-</div>
+                    {/* PAYMENT METHODS */}
 
-</main>
+                    <div className="border rounded p-4 sm:p-5 md:p-6">
 
-);
+                        <h2 className="font-semibold mb-4">
+                            Select Payment Method
+                        </h2>
 
-}
+                        <div className="grid gap-4">
 
-return(
+                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "cod" ? "border-black" : ""}`}>
+                                <input type="radio" checked={payment === "cod"} onChange={() => setPayment("cod")} />
+                                Cash on Delivery
+                            </label>
 
-<main className="max-w-7xl mx-auto px-3 sm:px-4 py-6 md:py-12">
+                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "razorpay" ? "border-black" : ""}`}>
+                                <input type="radio" checked={payment === "razorpay"} onChange={() => setPayment("razorpay")} />
+                                Razorpay (UPI / Card / NetBanking)
+                            </label>
 
-<CheckoutSteps step={3} />
+                            <label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment === "upi" ? "border-black" : ""}`}>
+                                <input type="radio" checked={payment === "upi"} onChange={() => setPayment("upi")} />
+                                Manual UPI Payment
+                            </label>
 
-<div className="flex items-center gap-2 mb-6 text-green-600 text-sm">
-<span>🔒</span>
-<span>Secure Payment • 256-bit SSL encrypted</span>
-</div>
+                            {/* NEW MANUAL PAYMENT UI */}
 
-<h1 className="text-xl md:text-2xl font-bold mb-6">
-Payment
-</h1>
+                            {payment === "upi" && (
+                                <div className="border p-4 rounded mt-3 bg-gray-50">
 
-<div className="grid md:grid-cols-2 gap-6 md:gap-10">
+                                    <p className="font-semibold mb-2">
+                                        Pay using UPI
+                                    </p>
 
-{/* PAYMENT METHODS */}
+                                    <p className="text-sm">
+                                        UPI ID : <b>{STORE_UPI}</b>
+                                    </p>
 
-<div className="border rounded p-4 sm:p-5 md:p-6">
+                                    <img
+                                        src="/upi-qr.png"
+                                        className="w-40 mt-3 border rounded"
+                                    />
 
-<h2 className="font-semibold mb-4">
-Select Payment Method
-</h2>
+                                    <p className="text-xs text-gray-500 mt-2">
+                                        Scan QR → Pay → Upload Screenshot
+                                    </p>
 
-<div className="grid gap-4">
+                                    <input
+                                        type="file"
+                                        onChange={(e: any) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) uploadProof(file);
+                                        }}
+                                        className="border p-2 rounded w-full mt-3"
+                                    />
 
-<label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment==="cod"?"border-black":""}`}>
-<input type="radio" checked={payment==="cod"} onChange={()=>setPayment("cod")} />
-Cash on Delivery
-</label>
+                                </div>
+                            )}
 
-<label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment==="razorpay"?"border-black":""}`}>
-<input type="radio" checked={payment==="razorpay"} onChange={()=>setPayment("razorpay")} />
-Razorpay (UPI / Card / NetBanking)
-</label>
+                        </div>
 
-<label className={`flex gap-3 border p-3 rounded cursor-pointer ${payment==="upi"?"border-black":""}`}>
-<input type="radio" checked={payment==="upi"} onChange={()=>setPayment("upi")} />
-Manual UPI Payment
-</label>
+                    </div>
 
-{/* NEW MANUAL PAYMENT UI */}
+                    {/* PRICE DETAILS */}
 
-{payment==="upi" && (
-<div className="border p-4 rounded mt-3 bg-gray-50">
+                    <div className="border rounded p-4 sm:p-5 md:p-6 h-fit">
 
-<p className="font-semibold mb-2">
-Pay using UPI
-</p>
+                        <h2 className="font-semibold mb-6">Price Details</h2>
 
-<p className="text-sm">
-UPI ID : <b>{STORE_UPI}</b>
-</p>
+                        <div className="flex justify-between mb-3">
+                            <p>MRP</p>
+                            <p>₹{mrpTotal}</p>
+                        </div>
 
-<img
-src="/upi-qr.png"
-className="w-40 mt-3 border rounded"
-/>
+                        <div className="flex justify-between mb-3">
+                            <p>Discount</p>
+                            <p className="text-green-600">- ₹{discount}</p>
+                        </div>
 
-<p className="text-xs text-gray-500 mt-2">
-Scan QR → Pay → Upload Screenshot
-</p>
+                        <hr className="my-4" />
 
-<input
-type="file"
-onChange={(e:any)=>{
-const file = e.target.files?.[0];
-if(file) uploadProof(file);
-}}
-className="border p-2 rounded w-full mt-3"
-/>
+                        <div className="flex justify-between font-bold text-lg">
+                            <p>Total Amount</p>
+                            <p>₹{total}</p>
+                        </div>
 
-</div>
-)}
+                        <button
+                            onClick={confirmOrder}
+                            disabled={loading}
+                            className="mt-6 bg-black text-white w-full py-3 rounded"
+                        >
+                            {loading ? "Processing..." : payment === "cod" ? "Place Order" : `Pay ₹${total}`}
+                        </button>
 
-</div>
+                    </div>
 
-</div>
+                </div>
 
-{/* PRICE DETAILS */}
+            </main>
+        );
+    }
 
-<div className="border rounded p-4 sm:p-5 md:p-6 h-fit">
 
-<h2 className="font-semibold mb-6">Price Details</h2>
 
-<div className="flex justify-between mb-3">
-<p>MRP</p>
-<p>₹{mrpTotal}</p>
-</div>
-
-<div className="flex justify-between mb-3">
-<p>Discount</p>
-<p className="text-green-600">- ₹{discount}</p>
-</div>
-
-<hr className="my-4"/>
-
-<div className="flex justify-between font-bold text-lg">
-<p>Total Amount</p>
-<p>₹{total}</p>
-</div>
-
-<button
-onClick={confirmOrder}
-disabled={loading}
-className="mt-6 bg-black text-white w-full py-3 rounded"
->
-{loading ? "Processing..." : payment==="cod" ? "Place Order" : `Pay ₹${total}`}
-</button>
-
-</div>
-
-</div>
-
-</main>
-
-);
-
-}

@@ -1,124 +1,231 @@
 "use client";
 
-import { useState,useEffect } from "react";
+import { useEffect, useState } from "react";
 
-export default function BannerAdmin(){
+export default function AdminBannerPage(){
 
+const [banners,setBanners] = useState<any[]>([]);
 const [form,setForm] = useState({
 title:"",
 subtitle:"",
-buttonText:"",
-buttonLink:"",
-image:""
+image:"",
+link:""
 });
 
-const [banners,setBanners] = useState<any[]>([]);
+const [editingId,setEditingId] = useState<string | null>(null);
 
-const load = async()=>{
+/* ========================= */
+/* LOAD BANNERS */
+/* ========================= */
+
+const loadBanners = async()=>{
+
+try{
+
 const res = await fetch("/api/banners");
 const data = await res.json();
-setBanners(data);
+setBanners(data || []);
+
+}catch(err){
+console.log(err);
+}
+
 };
 
-useEffect(()=>{load();},[]);
+useEffect(()=>{
+loadBanners();
+},[]);
 
-const upload = async(e:any)=>{
+/* ========================= */
+/* IMAGE UPLOAD */
+/* ========================= */
 
-const file = e.target.files[0];
+const uploadImage = async(file:any)=>{
 
 const formData = new FormData();
 formData.append("file",file);
 
-const res = await fetch("/api/upload",{method:"POST",body:formData});
+const res = await fetch("/api/upload",{
+method:"POST",
+body:formData
+});
+
 const data = await res.json();
 
-setForm({...form,image:data.url});
+setForm(prev=>({
+...prev,
+image:data.url
+}));
 
 };
 
-const handleChange=(e:any)=>{
-setForm({...form,[e.target.name]:e.target.value});
-};
+/* ========================= */
+/* ADD / UPDATE */
+/* ========================= */
 
-const addBanner = async()=>{
+const saveBanner = async()=>{
+
+if(editingId){
+
+/* UPDATE */
+
+await fetch(`/api/banners/${editingId}`,{
+method:"PUT",
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify(form)
+});
+
+}else{
+
+/* ADD */
 
 await fetch("/api/banners",{
 method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
+headers:{ "Content-Type":"application/json" },
 body:JSON.stringify(form)
 });
+
+}
+
+/* RESET */
 
 setForm({
 title:"",
 subtitle:"",
-buttonText:"",
-buttonLink:"",
-image:""
+image:"",
+link:""
 });
 
-load();
+setEditingId(null);
+
+loadBanners();
 
 };
 
+/* ========================= */
+/* DELETE */
+/* ========================= */
+
+const deleteBanner = async(id:string)=>{
+
+await fetch(`/api/banners/${id}`,{
+method:"DELETE"
+});
+
+loadBanners();
+
+};
+
+/* ========================= */
+/* EDIT */
+/* ========================= */
+
+const editBanner = (b:any)=>{
+
+setForm({
+title:b.title,
+subtitle:b.subtitle,
+image:b.image,
+link:b.link || ""
+});
+
+setEditingId(b._id);
+
+};
+
+/* ========================= */
+/* UI */
+/* ========================= */
+
 return(
 
-<main className="max-w-6xl mx-auto p-10">
+<main className="max-w-5xl mx-auto px-4 py-10">
 
 <h1 className="text-2xl font-bold mb-6">
-Hero Banner Panel
+Banner Management
 </h1>
 
-<div className="grid gap-4 max-w-md">
+{/* FORM */}
+
+<div className="border p-6 rounded mb-10">
 
 <input
-name="title"
-placeholder="Banner Title"
+placeholder="Title"
+className="border p-2 w-full mb-3"
 value={form.title}
-onChange={handleChange}
-className="border p-2"
+onChange={(e)=>setForm({...form,title:e.target.value})}
 />
 
 <input
-name="subtitle"
 placeholder="Subtitle"
+className="border p-2 w-full mb-3"
 value={form.subtitle}
-onChange={handleChange}
-className="border p-2"
+onChange={(e)=>setForm({...form,subtitle:e.target.value})}
 />
 
 <input
-name="buttonText"
-placeholder="Button Text"
-value={form.buttonText}
-onChange={handleChange}
-className="border p-2"
+placeholder="Link (/category/tshirts)"
+className="border p-2 w-full mb-3"
+value={form.link}
+onChange={(e)=>setForm({...form,link:e.target.value})}
 />
 
 <input
-name="buttonLink"
-placeholder="Button Link"
-value={form.buttonLink}
-onChange={handleChange}
-className="border p-2"
+type="file"
+className="mb-3"
+onChange={(e:any)=>{
+const file = e.target.files?.[0];
+if(file) uploadImage(file);
+}}
 />
 
-<input type="file" onChange={upload}/>
+{form.image && (
+<img src={form.image} className="w-40 rounded mb-3"/>
+)}
 
 <button
-onClick={addBanner}
+onClick={saveBanner}
 className="bg-black text-white px-6 py-2 rounded"
 >
-Add Banner
+{editingId ? "Update Banner" : "Add Banner"}
 </button>
 
 </div>
 
-<div className="grid grid-cols-3 gap-6 mt-10">
+{/* LIST */}
+
+<div className="space-y-4">
 
 {banners.map((b:any)=>(
-<img key={b._id} src={b.image} className="rounded"/>
+
+<div key={b._id} className="border p-4 rounded flex gap-4 items-center">
+
+<img src={b.image} className="w-24 h-16 object-cover rounded"/>
+
+<div className="flex-1">
+
+<p className="font-semibold">{b.title}</p>
+<p className="text-sm text-gray-500">{b.subtitle}</p>
+<p className="text-xs text-blue-600">{b.link}</p>
+
+</div>
+
+<button
+onClick={()=>editBanner(b)}
+className="px-3 py-1 border rounded"
+>
+Edit
+</button>
+
+<button
+onClick={()=>deleteBanner(b._id)}
+className="px-3 py-1 bg-red-500 text-white rounded"
+>
+Delete
+</button>
+
+</div>
+
 ))}
 
 </div>

@@ -141,7 +141,7 @@ const res = await fetch("/api/products");
 
 const data = await res.json();
 
-setProducts(data.slice(0,6));
+setProducts(data.slice(0,15));
 
 }catch(err){
 console.log("FlashSale error:",err);

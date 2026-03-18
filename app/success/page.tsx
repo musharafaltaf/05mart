@@ -168,36 +168,54 @@ try{
 
 const res = await fetch(`/api/orders/${orderId}`);
 
+/* ✅ FIX: DO NOT REDIRECT */
 if(!res.ok){
-router.push("/");
+setOrderValid(false);
 return;
 }
 
 const data = await res.json();
 
+/* ✅ FIX: DO NOT REDIRECT */
 if(!data?._id){
-router.push("/");
-return;
-}
-
-/* NEW PAYMENT CHECK */
-
-if(
-data.paymentMethod !== "cod" &&
-data.status !== "paid" &&
-data.status !== "confirmed"
-){
-setPaymentFailed(true);
 setOrderValid(false);
 return;
 }
 
-setOrderValid(true);
+/* ========================= */
+/* ✅ FIXED PAYMENT LOGIC */
+/* ========================= */
+
+/* COD → ALWAYS SUCCESS */
+/* COD */
+if(data.paymentMethod === "cod" || data.status === "pending"){
+  setOrderValid(true);
+  return;
+}
+
+/* ONLINE PAYMENT */
+if(
+  data.paymentMethod === "razorpay" &&
+  (data.status === "paid" || data.status === "confirmed")
+){
+  setOrderValid(true);
+  return;
+}
+
+/* FAILED */
+setPaymentFailed(true);
+setOrderValid(false);
+
+/* ❌ FAILED */
+setPaymentFailed(true);
+setOrderValid(false);
 
 }catch(err){
 
 console.log(err);
-router.push("/");
+
+/* ✅ DO NOT REDIRECT */
+setOrderValid(false);
 
 }
 
@@ -240,7 +258,9 @@ if(orderValid === null){
 return <div className="text-center p-10">Verifying order...</div>
 }
 
-/* PAYMENT FAILED PAGE */
+/* ========================= */
+/* ❌ PAYMENT FAILED PAGE */
+/* ========================= */
 
 if(paymentFailed){
 
@@ -285,6 +305,10 @@ Go to Home
 );
 
 }
+
+/* ========================= */
+/* ✅ SUCCESS PAGE */
+/* ========================= */
 
 return(
 

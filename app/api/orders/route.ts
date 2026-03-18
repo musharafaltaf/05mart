@@ -58,68 +58,170 @@
 // }
 
 
+// import { NextResponse } from "next/server";
+// import { connectDB } from "@/app/lib/mongodb";
+// import Order from "@/app/lib/models/Order";
+// import Product from "@/app/lib/models/Product";
+
+// /* ========================= */
+// /* CREATE ORDER */
+// /* ========================= */
+
+// export async function POST(req:Request){
+
+// await connectDB();
+
+// try{
+
+// const body = await req.json();
+
+// const order = await Order.create({
+
+// userId: body.userId || "guest",
+
+// items: body.items,
+
+// total: body.total,
+
+// customer: body.customer,
+
+// paymentMethod: body.paymentMethod,
+
+// paymentProof: body.paymentProof || null,
+
+// status: body.status || "pending",
+
+// tracking:[
+// {
+// status:"Order Placed",
+// date:new Date()
+// }
+// ]
+
+// });
+
+// /* REDUCE STOCK */
+
+// for(const item of body.items){
+
+// await (Product as any).findByIdAndUpdate(
+// item._id,
+// {
+// $inc:{
+// stock:-item.quantity,
+// [`sizeStock.${item.size}`]:-item.quantity
+// }
+// }
+// );
+
+// }
+
+// return NextResponse.json(order);
+
+// }catch(err){
+
+// console.log("ORDER CREATE ERROR:",err);
+
+// return NextResponse.json({ error:"Order failed" },{ status:500 });
+
+// }
+
+// }
+
+// /* ========================= */
+// /* GET ORDERS */
+// /* ========================= */
+
+// export async function GET(req: Request){
+
+// await connectDB();
+
+// try{
+
+// const { searchParams } = new URL(req.url);
+// const userId = searchParams.get("userId");
+
+// let orders;
+
+// /* ✅ CORRECT FILTER */
+// if(userId){
+
+// orders = await Order.find({
+// userId: userId
+// }).sort({ createdAt:-1 });
+
+// }else{
+
+// /* ADMIN */
+// orders = await Order.find().sort({ createdAt:-1 });
+
+// }
+
+// return NextResponse.json(orders);
+
+// }catch(error){
+
+// console.log("GET ORDERS ERROR:",error);
+
+// return NextResponse.json([], { status:200 });
+
+// }
+
+// }
+
+
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Order from "@/app/lib/models/Order";
 import Product from "@/app/lib/models/Product";
 
-export async function POST(req:Request){
+/* ========================= */
+/* CREATE ORDER */
+/* ========================= */
 
-await connectDB();
+export async function POST(req: Request) {
+  await connectDB();
 
-const body = await req.json();
+  try {
+    const body = await req.json();
 
-const order = await Order.create({
+    if (!body.items || !body.customer) {
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+    }
 
-userId:"guest",
+    // ✅ Create order data FIRST
+    const orderData = {
+      userId: body.userId || "guest",
+      items: body.items,
+      total: body.total,
+      customer: body.customer,
+      paymentMethod: body.paymentMethod,
+      paymentProof: body.paymentProof || null,
 
-items:body.items,
+      tracking: [
+        {
+          status: "Order Placed",
+          date: new Date(),
+        },
+      ],
+    };
 
-total:body.total,
+    // ✅ Create order ONCE
+    const order = await Order.create(orderData);
 
-customer:body.customer,
+    /* UPDATE STOCK */
+    for (const item of body.items) {
+      await (Product as any).findByIdAndUpdate(item._id, {
+        $inc: {
+          stock: -item.quantity,
+          [`sizeStock.${item.size}`]: -item.quantity,
+        },
+      });
+    }
 
-paymentMethod:body.paymentMethod,
-
-paymentProof:body.paymentProof || null,
-
-status:"pending",
-
-tracking:[
-{
-status:"Order Placed",
-date:new Date()
-}
-]
-
-});
-
-/* REDUCE STOCK */
-
-for(const item of body.items){
-
-await (Product as any).findByIdAndUpdate(
-item._id,
-{
-$inc:{
-stock:-item.quantity,
-[`sizeStock.${item.size}`]:-item.quantity
-}
-}
-);
-
-}
-
-return NextResponse.json(order);
-
-}
-
-export async function GET(){
-
-await connectDB();
-
-const orders = await Order.find().sort({createdAt:-1});
-
-return NextResponse.json(orders);
-
+    return NextResponse.json(order);
+  } catch (err) {
+    console.log("ORDER ERROR:", err);
+    return NextResponse.json({ error: "Order failed" }, { status: 500 });
+  }
 }

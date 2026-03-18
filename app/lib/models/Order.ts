@@ -48,52 +48,86 @@
 
 // export default Order;
 
-import mongoose from "mongoose";
+// import mongoose from "mongoose";
 
-const OrderSchema = new mongoose.Schema({
+// const OrderSchema = new mongoose.Schema({
 
-userId:String,
+// userId:String,
 
-items:Array,
+// items:Array,
 
-total:Number,
+// total:Number,
 
-customer:Object,
+// customer:Object,
 
-paymentMethod:String,
+// paymentMethod:String,
 
-paymentProof:String,
+// paymentProof:String,
 
-status:{
-type:String,
-default:"pending"
-},
+// status:{
+// type:String,
+// default:"pending"
+// },
 
-tracking:[
-{
-status:String,
-date:Date
+// tracking:[
+// {
+// status:String,
+// date:Date
+// }
+// ],
+
+// returnStatus:{
+// type:String,
+// default:null
+// },
+
+// refundStatus:{
+// type:String,
+// default:null
+// },
+
+// reviewGiven:{
+// type:Boolean,
+// default:false
+// }
+
+// },{
+// timestamps:true
+// });
+
+// export default mongoose.models.Order ||
+// mongoose.model("Order",OrderSchema);
+
+
+import mongoose, { Schema, Model } from "mongoose";
+
+interface IOrder {
+  userId?: string;
+  items?: any[];
+  total?: number;
+  status?: string;
+
+  customer?: string;            // ✅ ADD
+  paymentMethod?: string;       // ✅ ADD
+  paymentProof?: string | null; // ✅ ADD
 }
-],
 
-returnStatus:{
-type:String,
-default:null
-},
+const OrderSchema = new Schema<IOrder>(
+  {
+    userId: String,
+    items: Array,
+    total: Number,
+    status: String,
 
-refundStatus:{
-type:String,
-default:null
-},
+    customer: String,        // ✅ ADD
+    paymentMethod: String,   // ✅ ADD
+    paymentProof: String,    // ✅ ADD
+  },
+  { timestamps: true }
+);
 
-reviewGiven:{
-type:Boolean,
-default:false
-}
+const Order: Model<IOrder> =
+  mongoose.models.Order ||
+  mongoose.model<IOrder>("Order", OrderSchema);
 
-},{
-timestamps:true
-});
-
-export default mongoose.models.Order ||
-mongoose.model("Order",OrderSchema);
+export default Order;

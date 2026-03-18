@@ -67,12 +67,13 @@
 //   }
 
 // }
-export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
-/* GET PRODUCT */
+/* ========================= */
+/* GET SINGLE PRODUCT */
+/* ========================= */
 
 export async function GET(
 req: Request,
@@ -93,7 +94,7 @@ return NextResponse.json(product);
 
 }catch(error){
 
-console.log("PRODUCT FETCH ERROR:",error);
+console.log("GET PRODUCT ERROR:",error);
 
 return NextResponse.json({error:"Server error"},{status:500});
 
@@ -101,7 +102,53 @@ return NextResponse.json({error:"Server error"},{status:500});
 
 }
 
-/* ADD THIS DELETE FUNCTION */
+/* ========================= */
+/* 🔥 UPDATE PRODUCT (NEW) */
+/* ========================= */
+
+export async function PUT(
+req: Request,
+{ params }: { params: { id: string } }
+){
+
+try{
+
+await connectDB();
+
+const body = await req.json();
+
+/* 🔥 IMPORTANT FIX */
+if(!body.price){
+return NextResponse.json(
+{ error:"Price is required" },
+{ status:400 }
+);
+}
+
+const updated = await (Product as any).findByIdAndUpdate(
+params.id,
+body,
+{ new:true }
+);
+
+return NextResponse.json(updated);
+
+}catch(error){
+
+console.log("UPDATE ERROR:",error);
+
+return NextResponse.json(
+{ error:"Update failed" },
+{ status:500 }
+);
+
+}
+
+}
+
+/* ========================= */
+/* DELETE PRODUCT */
+/* ========================= */
 
 export async function DELETE(
 req: Request,
@@ -118,7 +165,7 @@ return NextResponse.json({success:true});
 
 }catch(error){
 
-console.log("PRODUCT DELETE ERROR:",error);
+console.log("DELETE ERROR:",error);
 
 return NextResponse.json({error:"Delete failed"},{status:500});
 

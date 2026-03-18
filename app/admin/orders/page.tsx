@@ -433,7 +433,7 @@ import QRCode from "qrcode";
 
 export default function AdminOrders(){
 
-const [orders,setOrders] = useState([]);
+const [orders,setOrders] = useState<any[]>([]);
 
 const loadOrders = async()=>{
 
@@ -448,23 +448,33 @@ useEffect(()=>{
 loadOrders();
 },[]);
 
-/* UPDATE STATUS */
+/* ========================= */
+/* ✅ FIXED UPDATE STATUS */
+/* ========================= */
 
 const updateStatus = async(id,status)=>{
 
-await fetch(`/api/orders/${id}`,{
+console.log("Updating:", id, status); // ✅ ADD
+
+const res = await fetch(`/api/orders/${id}`,{
 method:"PATCH",
 headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({status})
+body: JSON.stringify({status})
 });
+
+const data = await res.json();
+
+console.log("RESPONSE:", data); // ✅ ADD
 
 loadOrders();
 
 };
 
+/* ========================= */
 /* SHIPPING LABEL */
+/* ========================= */
 
-const downloadLabel = (order)=>{
+const downloadLabel = (order:any)=>{
 
 const doc = new jsPDF();
 
@@ -485,9 +495,11 @@ doc.save(`label_${order._id}.pdf`);
 
 };
 
+/* ========================= */
 /* INVOICE */
+/* ========================= */
 
-const downloadInvoice = async(order)=>{
+const downloadInvoice = async(order:any)=>{
 
 const doc = new jsPDF();
 
@@ -522,7 +534,7 @@ doc.text(`Pincode: ${order.customer?.pincode}`,20,y);
 
 y+=20;
 
-order.items.forEach(item=>{
+order.items.forEach((item:any)=>{
 
 doc.text(
 `${item.name} | ${item.size} | Qty ${item.quantity} | ₹${item.price}`,
@@ -546,6 +558,10 @@ doc.save(`invoice_${order._id}.pdf`);
 
 };
 
+/* ========================= */
+/* UI */
+/* ========================= */
+
 return(
 
 <main className="max-w-6xl mx-auto px-4 py-6">
@@ -556,7 +572,7 @@ Admin Orders
 
 <div className="space-y-5">
 
-{orders.map(order=>(
+{orders.map((order:any)=>(
 
 <div key={order._id} className="border p-4 md:p-6 rounded-lg">
 
@@ -591,12 +607,9 @@ style={{ maxHeight: "120px" }}
 
 <div className="mt-4 text-sm">
 
-<p className="font-semibold mb-1">
-Customer
-</p>
+<p className="font-semibold mb-1">Customer</p>
 
 <p>{order.customer?.name}</p>
-
 <p>{order.customer?.phone}</p>
 
 <p>
@@ -622,7 +635,7 @@ Call Customer
 
 <div className="mt-4 space-y-3">
 
-{order.items.map(item=>(
+{order.items.map((item:any)=>(
 
 <div key={item._id} className="flex gap-3 border p-2 rounded">
 

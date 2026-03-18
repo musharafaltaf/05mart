@@ -8,6 +8,7 @@ export default function CategoryPage() {
 
 const params = useParams();
 
+/* ✅ SAFE PARAM */
 const category =
 Array.isArray(params?.category)
 ? params.category[0]
@@ -15,6 +16,10 @@ Array.isArray(params?.category)
 
 const [products,setProducts] = useState<any[]>([]);
 const [loading,setLoading] = useState(true);
+
+/* ========================= */
+/* LOAD PRODUCTS */
+/* ========================= */
 
 useEffect(()=>{
 
@@ -24,20 +29,32 @@ const loadProducts = async()=>{
 
 try{
 
+/* ✅ FETCH ALL */
 const res = await fetch("/api/products");
 
-if(!res.ok) return;
+if(!res.ok){
+setProducts([]);
+setLoading(false);
+return;
+}
 
 const data = await res.json();
 
-const filtered = data.filter(
-(p:any)=> p.category?.toLowerCase() === category.toLowerCase()
-);
+/* ✅ SAFE FILTER (VERY IMPORTANT FIX) */
+const filtered = data.filter((p:any)=>{
+
+const dbCategory = (p.category || "").toLowerCase().trim();
+const urlCategory = (category || "").toLowerCase().trim();
+
+return dbCategory === urlCategory;
+
+});
 
 setProducts(filtered);
 
 }catch(err){
-console.log(err);
+console.log("CATEGORY ERROR:",err);
+setProducts([]);
 }
 
 setLoading(false);
@@ -48,9 +65,17 @@ loadProducts();
 
 },[category]);
 
+/* ========================= */
+/* LOADING */
+/* ========================= */
+
 if(loading){
 return <p className="p-10 text-center">Loading...</p>;
 }
+
+/* ========================= */
+/* UI */
+/* ========================= */
 
 return(
 
@@ -60,8 +85,12 @@ return(
 {category} Products
 </h1>
 
+
+
 {products.length === 0 && (
-<p>No products found</p>
+<p className="text-center text-gray-500">
+No products found in this category
+</p>
 )}
 
 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

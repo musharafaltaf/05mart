@@ -132,17 +132,60 @@
 // }
 
 
-import HeroSlider from "@/components/HeroSlider"
-import Categories from "@/components/Categories"
-import StoreBenefits from "@/components/StoreBenefits"
-import ProductCard from "@/components/ProductCard"
-import TrendingProducts from "@/components/TrendingProducts"
+// import HeroSlider from "@/components/HeroSlider"
+// import Categories from "@/components/Categories"
+// import StoreBenefits from "@/components/StoreBenefits"
+// import ProductCard from "@/components/ProductCard"
+// import TrendingProducts from "@/components/TrendingProducts"
+// import FlashSale from "@/components/FlashSale";
+// import PromoBanner from "@/components/PromoBanner";
+// import RecentlyViewed from "@/components/RecentlyViewed";
+// import FeaturedProducts from "@/components/FeaturedProducts";
+// import ShopByCategory from "@/components/ShopByCategory";
+// import Hero from "@/components/Hero";
+
+// export default function Home(){
+
+// return(
+
+// <main className="relative z-10">
+
+// <HeroSlider/>
+
+// <Categories/>
+
+// <TrendingProducts/>
+// <FlashSale/>
+// <PromoBanner/>
+// <RecentlyViewed/>
+// <FeaturedProducts/>
+// <ShopByCategory/>
+// <Hero/>
+
+// <section className="max-w-7xl mx-auto px-4 py-10">
+
+// <h2 className="text-2xl font-bold mb-6">
+// Featured Products
+// </h2>
+
+// </section>
+
+// <StoreBenefits/>
+
+// </main>
+
+// )
+
+// }
+
+
+import HeroSlider from "@/components/HeroSlider";
+import StoreBenefits from "@/components/StoreBenefits";
+import TrendingProducts from "@/components/TrendingProducts";
 import FlashSale from "@/components/FlashSale";
-import PromoBanner from "@/components/PromoBanner";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import FeaturedProducts from "@/components/FeaturedProducts";
 import ShopByCategory from "@/components/ShopByCategory";
-import Hero from "@/components/Hero";
 
 export default function Home(){
 
@@ -150,25 +193,45 @@ return(
 
 <main className="relative z-10">
 
+{/* HERO BANNER */}
+
 <HeroSlider/>
 
-<Categories/>
+{/* CATEGORIES */}
 
-<TrendingProducts/>
-<FlashSale/>
-<PromoBanner/>
-<RecentlyViewed/>
-<FeaturedProducts/>
+{/* <Categories/> */}
 <ShopByCategory/>
-<Hero/>
 
-<section className="max-w-7xl mx-auto px-4 py-10">
+{/* FLASH SALE */}
+<FeaturedProducts/>
+<TrendingProducts/>
 
-<h2 className="text-2xl font-bold mb-6">
-Featured Products
-</h2>
+<FlashSale/>
 
-</section>
+{/* TRENDING PRODUCTS */}
+
+
+
+{/* PROMO BANNER */}
+
+{/* <PromoBanner/> */}
+
+{/* FEATURED PRODUCTS */}
+
+
+
+{/* RECENTLY VIEWED */}
+
+<RecentlyViewed/>
+
+{/* SHOP BY CATEGORY */}
+
+
+{/* FINAL HERO / PROMOTION */}
+
+{/* <Hero/> */}
+
+{/* STORE BENEFITS */}
 
 <StoreBenefits/>
 

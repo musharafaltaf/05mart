@@ -261,23 +261,55 @@ setAddress(JSON.parse(savedAddress));
 
 /* CALCULATIONS */
 
-const subtotal = cart.reduce(
+// const subtotal = cart.reduce(
+// (sum,item)=> sum + Number(item.price || 0) * Number(item.quantity || item.qty || 1),
+// 0
+// );
+
+// const mrpTotal = cart.reduce(
+// (sum,item)=> sum + Number(item.oldPrice || item.mrp || item.price || 0) * Number(item.quantity || item.qty || 1),
+// 0
+// );
+// const discount = mrpTotal - subtotal;
+
+// const discountPercent =
+// mrpTotal > 0 ? Math.round((discount / mrpTotal) * 100) : 0;
+
+// const total = subtotal;
+
+/* ========================= */
+/* SAFE CALCULATIONS */
+/* ========================= */
+
+
+/* ========================= */
+/* NORMALIZE CART DATA */
+/* ========================= */
+
+const safeCart = cart.map(item => ({
+price: Number(item.price) || 0,
+mrp: Number(item.oldPrice || item.mrp || item.price) || 0,
+quantity: Number(item.quantity || item.qty) || 1
+}));
+
+const subtotal = safeCart.reduce(
 (sum,item)=> sum + item.price * item.quantity,
 0
 );
 
-const mrpTotal = cart.reduce(
-(sum,item)=> sum + ((item.oldPrice || item.mrp || item.price) * item.quantity),
+const mrpTotal = safeCart.reduce(
+(sum,item)=> sum + item.mrp * item.quantity,
 0
 );
 
-const discount = mrpTotal - subtotal;
+const discount = mrpTotal > subtotal ? (mrpTotal - subtotal) : 0;
 
 const discountPercent =
-mrpTotal > 0 ? Math.round((discount / mrpTotal) * 100) : 0;
+mrpTotal > 0
+? Math.round((discount / mrpTotal) * 100)
+: 0;
 
 const total = subtotal;
-
 /* DELIVERY DATE */
 
 const getDeliveryDate = ()=>{
@@ -370,7 +402,7 @@ Delivery by {getDeliveryDate()}
 </p>
 
 <p className="text-gray-500 text-sm mt-1">
-7 Day Return Available • ₹40 return pickup fee
+2 Day Return Available • ₹40 return pickup fee
 </p>
 
 </div>
@@ -378,7 +410,7 @@ Delivery by {getDeliveryDate()}
 <div className="text-right">
 
 <p className="font-semibold">
-₹{item.price * item.quantity}
+₹{(Number(item.price)||0) * (Number(item.quantity || item.qty)||1)}
 </p>
 
 {item.oldPrice && (
