@@ -127,6 +127,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Order from "@/app/lib/models/Order";
+import Notification from "@/app/lib/models/Notification";
 
 /* ========================= */
 /* GET SINGLE ORDER */
@@ -199,7 +200,7 @@ export async function PATCH(req: Request, { params }: any){
     }
 
     /* ========================= */
-    /* ✅ NEW RETURN APPROVAL */
+    /* ✅ RETURN APPROVAL */
     /* ========================= */
 
     if(body.returnStatus){
@@ -217,6 +218,33 @@ export async function PATCH(req: Request, { params }: any){
       updateData,
       { new: true }
     );
+
+    /* ========================= */
+    /* 🔔 NOTIFICATION SYSTEM (NEW) */
+    /* ========================= */
+
+    if(order?.userId){
+
+      /* STATUS NOTIFICATION */
+      if(body.status){
+        await Notification.create({
+          userId: order.userId,
+          message: `Your order ${order._id} is now ${body.status}`
+        });
+      }
+
+      /* RETURN NOTIFICATION */
+      if(body.returnStatus){
+        await Notification.create({
+          userId: order.userId,
+          message:
+            body.returnStatus === "approved"
+              ? `Your return request for order ${order._id} has been approved`
+              : `Your return request for order ${order._id} has been rejected`
+        });
+      }
+
+    }
 
     return NextResponse.json(order);
 

@@ -458,216 +458,596 @@
 // }
 
 
+// "use client";
+
+// import Link from "next/link";
+// import { useState, useEffect, useRef } from "react";
+// import { useCart } from "@/app/context/CartContext";
+// import { useWishlist } from "@/app/context/WishlistContext";
+// import SearchBar from "@/components/SearchBar";
+
+// export default function Navbar() {
+
+// const [menuOpen,setMenuOpen] = useState(false);
+// const [user,setUser] = useState<any>(null);
+
+// const menuRef = useRef<any>(null); // NEW
+
+// const { cart } = useCart();
+// const { wishlist } = useWishlist();
+
+// const cartCount = cart?.length || 0;
+// const wishlistCount = wishlist?.length || 0;
+
+// useEffect(()=>{
+
+// const storedUser = localStorage.getItem("user");
+
+// if(storedUser){
+// setUser(JSON.parse(storedUser));
+// }
+
+// },[]);
+
+// /* CLOSE MENU WHEN CLICKING OUTSIDE */
+
+// useEffect(()=>{
+
+// const handleClick = (e:any)=>{
+
+// if(menuRef.current && !menuRef.current.contains(e.target)){
+// setMenuOpen(false);
+// }
+
+// };
+
+// document.addEventListener("mousedown",handleClick);
+
+// return ()=>document.removeEventListener("mousedown",handleClick);
+
+// },[]);
+
+// const logout = ()=>{
+
+// localStorage.removeItem("user");
+// localStorage.removeItem("token");
+// location.reload();
+
+// };
+
+// return (
+
+// <header className="border-b bg-white sticky top-0 z-50">
+
+// <div className="max-w-7xl mx-auto px-4">
+
+// <div className="flex items-center justify-between h-16 gap-4">
+
+// <Link href="/" className="text-2xl font-extrabold tracking-wide">
+// 05Mart
+// </Link>
+
+// <div className="hidden md:flex flex-1 mx-6">
+// <SearchBar />
+// </div>
+
+// <div className="flex items-center gap-4">
+
+// <Link href="/wishlist" className="relative text-xl">
+
+// ❤️
+
+// {wishlistCount>0 && (
+// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
+// {wishlistCount}
+// </span>
+// )}
+
+// </Link>
+
+// <Link href="/cart" className="relative text-xl">
+
+// 🛒
+
+// {cartCount>0 && (
+// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
+// {cartCount}
+// </span>
+// )}
+
+// </Link>
+
+// {user?.role==="admin" && (
+
+// <div className="hidden md:flex gap-4 text-sm">
+
+// <Link href="/admin">
+// Admin
+// </Link>
+
+// <Link href="/admin/orders">
+// Orders
+// </Link>
+
+// </div>
+
+// )}
+
+// {user ? (
+
+// <Link href="/profile" className="text-xl">
+// 👤
+// </Link>
+
+// ) : (
+
+// <Link href="/login" className="text-sm font-medium">
+// Login
+// </Link>
+
+// )}
+
+// <button
+// onClick={()=>setMenuOpen(!menuOpen)}
+// className="md:hidden text-2xl"
+// >
+// ☰
+// </button>
+
+// </div>
+
+// </div>
+
+// <div className="md:hidden py-3">
+// <SearchBar />
+// </div>
+
+// {/* ATTACH REF HERE */}
+
+// {menuOpen && (
+
+// <div ref={menuRef} className="md:hidden border-t py-4 space-y-4 flex flex-col">
+
+// <Link href="/" onClick={()=>setMenuOpen(false)}>
+// Home
+// </Link>
+
+// <Link href="/cart" onClick={()=>setMenuOpen(false)}>
+// Cart
+// </Link>
+
+// <Link href="/wishlist" onClick={()=>setMenuOpen(false)}>
+// Wishlist
+// </Link>
+
+// {user?.role==="admin" && (
+
+// <>
+// <Link href="/admin" onClick={()=>setMenuOpen(false)}>
+// Admin
+// </Link>
+
+// <Link
+// href="/admin/orders"
+// className="border p-4 rounded hover:shadow text-center block"
+// >
+// Orders
+// </Link>
+// </>
+
+// )}
+
+// {user ? (
+
+// <>
+// <Link href="/profile" onClick={()=>setMenuOpen(false)}>
+// Profile
+// </Link>
+
+// <button
+// onClick={logout}
+// className="text-red-500 text-left"
+// >
+// Logout
+// </button>
+// </>
+
+// ) : (
+
+// <Link href="/login" onClick={()=>setMenuOpen(false)}>
+// Login
+// </Link>
+
+// )}
+
+// </div>
+
+// )}
+
+// </div>
+
+// </header>
+
+// );
+
+// }
+
+
+
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
 import SearchBar from "@/components/SearchBar";
 
-export default function Navbar() {
+export default function Navbar(){
 
-const [menuOpen,setMenuOpen] = useState(false);
+const pathname = usePathname();
+const router = useRouter();
+
+/* ========================= */
+/* STATES */
+/* ========================= */
+
+// const [showSearch,setShowSearch] = useState(false);
+const [showProfile,setShowProfile] = useState(false);
+const [showNotif,setShowNotif] = useState(false);
+const [notifCount,setNotifCount] = useState(0);
 const [user,setUser] = useState<any>(null);
 
-const menuRef = useRef<any>(null); // NEW
-
+/* CONTEXT */
 const { cart } = useCart();
 const { wishlist } = useWishlist();
 
 const cartCount = cart?.length || 0;
 const wishlistCount = wishlist?.length || 0;
 
+/* refs */
+const profileRef = useRef<any>(null);
+const notifRef = useRef<any>(null);
+const cartRef = useRef<any>(null);
+
+/* ========================= */
+/* USER */
+/* ========================= */
+
 useEffect(()=>{
-
-const storedUser = localStorage.getItem("user");
-
-if(storedUser){
-setUser(JSON.parse(storedUser));
-}
-
+const u = JSON.parse(localStorage.getItem("user") || "null");
+setUser(u);
 },[]);
 
-/* CLOSE MENU WHEN CLICKING OUTSIDE */
+/* ========================= */
+/* NOTIFICATIONS */
+/* ========================= */
 
 useEffect(()=>{
 
-const handleClick = (e:any)=>{
+const load = async()=>{
 
-if(menuRef.current && !menuRef.current.contains(e.target)){
-setMenuOpen(false);
+const u = JSON.parse(localStorage.getItem("user") || "null");
+if(!u?._id) return;
+
+try{
+const res = await fetch(`/api/notifications?userId=${u._id}`);
+const data = await res.json();
+setNotifCount(Array.isArray(data)?data.filter((n:any)=>!n.read).length:0);
+}catch{
+setNotifCount(0);
 }
 
 };
 
-document.addEventListener("mousedown",handleClick);
-
-return ()=>document.removeEventListener("mousedown",handleClick);
+load();
+const interval = setInterval(load,5000);
+return ()=>clearInterval(interval);
 
 },[]);
 
-const logout = ()=>{
+/* ========================= */
+/* CART FLY */
+/* ========================= */
 
-localStorage.removeItem("user");
-localStorage.removeItem("token");
-location.reload();
+useEffect(()=>{
+
+const fly = (e:any)=>{
+
+const img = document.createElement("img");
+img.src = e.detail?.image || "/logo.png";
+
+img.style.position = "fixed";
+img.style.width = "40px";
+img.style.height = "40px";
+img.style.left = "50%";
+img.style.top = "60%";
+img.style.zIndex = "9999";
+img.style.transition = "all 0.8s ease";
+
+document.body.appendChild(img);
+
+const rect = cartRef.current?.getBoundingClientRect();
+
+if(rect){
+setTimeout(()=>{
+img.style.left = rect.left + "px";
+img.style.top = rect.top + "px";
+img.style.transform = "scale(0.2)";
+img.style.opacity = "0.5";
+},50);
+}
+
+setTimeout(()=>img.remove(),800);
 
 };
 
-return (
+window.addEventListener("addToCartAnimation",fly);
+return ()=>window.removeEventListener("addToCartAnimation",fly);
 
-<header className="border-b bg-white sticky top-0 z-50">
+},[]);
 
-<div className="max-w-7xl mx-auto px-4">
+/* ========================= */
+/* OUTSIDE CLICK */
+/* ========================= */
 
-<div className="flex items-center justify-between h-16 gap-4">
+useEffect(()=>{
 
-<Link href="/" className="text-2xl font-extrabold tracking-wide">
-05Mart
+const handle = (e:any)=>{
+
+if(profileRef.current && !profileRef.current.contains(e.target)){
+setShowProfile(false);
+}
+
+if(notifRef.current && !notifRef.current.contains(e.target)){
+setShowNotif(false);
+}
+
+};
+
+document.addEventListener("mousedown",handle);
+return ()=>document.removeEventListener("mousedown",handle);
+
+},[]);
+
+/* ========================= */
+/* NAV ITEM */
+/* ========================= */
+
+const NavItem = ({href,icon,label}:any)=>{
+
+const active = pathname === href;
+
+return(
+<div
+onClick={()=>router.push(href)}
+className="flex flex-col items-center flex-1 cursor-pointer"
+>
+
+<div className={`transition-all duration-300 flex items-center justify-center rounded-full
+${active
+? "w-14 h-14 bg-gradient-to-r from-indigo-500 to-purple-500 text-white -mt-6 scale-110 shadow-xl"
+: "w-11 h-11 bg-gray-200"
+}`}
+>
+{icon}
+</div>
+
+{active && <span className="text-xs mt-1">{label}</span>}
+
+</div>
+);
+};
+
+/* ========================= */
+/* UI */
+/* ========================= */
+
+return(
+<>
+
+{/* ========================= */}
+{/* DESKTOP NAVBAR */}
+{/* ========================= */}
+
+<header className="hidden md:block sticky top-0 z-50 bg-white border-b shadow-sm">
+
+<div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
+
+<Link href="/" className="flex gap-2 items-center">
+<img src="/logo.png" className="w-12 h-12"/>
+<span className="font-bold text-xl">05Mart</span>
 </Link>
 
-<div className="hidden md:flex flex-1 mx-6">
+<div className="flex-1">
 <SearchBar />
 </div>
 
-<div className="flex items-center gap-4">
+<div className="flex items-center gap-6 text-xl">
 
-<Link href="/wishlist" className="relative text-xl">
-
+<Link href="/wishlist" className="relative">
 ❤️
-
-{wishlistCount>0 && (
-<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-{wishlistCount}
-</span>
-)}
-
+{wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
 </Link>
 
-<Link href="/cart" className="relative text-xl">
-
+<Link ref={cartRef} href="/cart" className="relative">
 🛒
+{cartCount>0 && <span className="badge">{cartCount}</span>}
+</Link>
 
-{cartCount>0 && (
-<span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-{cartCount}
-</span>
+{/* 🔔 */}
+<div ref={notifRef} className="relative">
+<button onClick={()=>setShowNotif(!showNotif)}>🔔</button>
+
+{notifCount>0 && <span className="badge">{notifCount}</span>}
+
+{showNotif && (
+<div className="dropdown">
+<p>Notifications</p>
+<Link href="/notifications">View all</Link>
+</div>
 )}
-
-</Link>
-
-{user?.role==="admin" && (
-
-<div className="hidden md:flex gap-4 text-sm">
-
-<Link href="/admin">
-Admin
-</Link>
-
-<Link href="/admin/orders">
-Orders
-</Link>
 
 </div>
 
-)}
-
-{user ? (
-
-<Link href="/profile" className="text-xl">
-👤
-</Link>
-
-) : (
-
-<Link href="/login" className="text-sm font-medium">
-Login
-</Link>
-
-)}
-
-<button
-onClick={()=>setMenuOpen(!menuOpen)}
-className="md:hidden text-2xl"
->
-☰
+{/* 👤 */}
+<div ref={profileRef} className="relative">
+<button onClick={()=>setShowProfile(!showProfile)}>
+{user?.name?.charAt(0)||"U"}
 </button>
 
-</div>
-
-</div>
-
-<div className="md:hidden py-3">
-<SearchBar />
-</div>
-
-{/* ATTACH REF HERE */}
-
-{menuOpen && (
-
-<div ref={menuRef} className="md:hidden border-t py-4 space-y-4 flex flex-col">
-
-<Link href="/" onClick={()=>setMenuOpen(false)}>
-Home
-</Link>
-
-<Link href="/cart" onClick={()=>setMenuOpen(false)}>
-Cart
-</Link>
-
-<Link href="/wishlist" onClick={()=>setMenuOpen(false)}>
-Wishlist
-</Link>
-
-{user?.role==="admin" && (
-
-<>
-<Link href="/admin" onClick={()=>setMenuOpen(false)}>
-Admin
-</Link>
-
-<Link
-href="/admin/orders"
-className="border p-4 rounded hover:shadow text-center block"
->
-Orders
-</Link>
-</>
-
-)}
-
+{showProfile && (
+<div className="dropdown">
 {user ? (
-
 <>
-<Link href="/profile" onClick={()=>setMenuOpen(false)}>
-Profile
-</Link>
-
-<button
-onClick={logout}
-className="text-red-500 text-left"
->
-Logout
-</button>
+<Link href="/profile">Profile</Link>
+<Link href="/orders">Orders</Link>
 </>
-
-) : (
-
-<Link href="/login" onClick={()=>setMenuOpen(false)}>
-Login
-</Link>
-
+):(
+<>
+<Link href="/login">Login</Link>
+<Link href="/register">Register</Link>
+</>
+)}
+</div>
 )}
 
 </div>
 
-)}
+</div>
 
 </div>
 
 </header>
 
-);
+{/* ========================= */}
+{/* MOBILE NAVBAR */}
+{/* ========================= */}
 
+<header className="md:hidden sticky top-0 z-50 bg-white border-b px-4 py-3 flex justify-between items-center shadow-sm">
+
+<Link href="/" className="flex items-center gap-2">
+<img src="/logo.png" className="w-9 h-9"/>
+<span className="font-bold text-lg">05Mart</span>
+</Link>
+
+<div className="flex items-center gap-4 text-xl">
+
+
+
+<Link href="/wishlist" className="relative">
+❤️
+{wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
+</Link>
+
+<Link ref={cartRef} href="/cart" className="relative">
+🛒
+{cartCount>0 && <span className="badge">{cartCount}</span>}
+</Link>
+
+{/* 🔔 */}
+<div ref={notifRef} className="relative">
+<button onClick={()=>setShowNotif(!showNotif)}>🔔</button>
+
+{notifCount>0 && <span className="badge">{notifCount}</span>}
+
+{showNotif && (
+<div className="dropdown">
+<p>Notifications</p>
+<Link href="/notifications">View all</Link>
+</div>
+)}
+
+</div>
+
+{/* 👤 */}
+<div ref={profileRef} className="relative">
+<button onClick={()=>setShowProfile(!showProfile)}>
+{user?.name?.charAt(0)||"U"}
+</button>
+
+{showProfile && (
+<div className="dropdown">
+{user ? (
+<>
+<Link href="/profile">Profile</Link>
+<Link href="/orders">Orders</Link>
+</>
+):(
+<>
+<Link href="/login">Login</Link>
+<Link href="/register">Register</Link>
+</>
+)}
+</div>
+)}
+
+</div>
+
+</div>
+
+</header>
+
+{/* ========================= */}
+{/* MOBILE SEARCH (FIXED) */}
+{/* ========================= */}
+
+<div className="md:hidden py-3">
+<SearchBar />
+</div>
+{/* ========================= */}
+{/* BOTTOM NAVBAR */}
+{/* ========================= */}
+
+<div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex z-50 animate-slideUp">
+
+<NavItem href="/" icon="🏠" label="Home"/>
+<NavItem href="/orders" icon="📦" label="Orders"/>
+<NavItem href="/wishlist" icon="❤️" label="Wishlist"/>
+<NavItem href="/notifications" icon="🔔" label="Alerts"/>
+<NavItem href="/profile" icon="👤" label="Profile"/>
+
+</div>
+
+<style jsx>{`
+
+.badge{
+position:absolute;
+top:-6px;
+right:-6px;
+background:red;
+color:white;
+font-size:10px;
+padding:2px 6px;
+border-radius:50%;
+}
+
+.dropdown{
+position:absolute;
+right:0;
+top:35px;
+background:white;
+padding:10px;
+border-radius:10px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+display:flex;
+flex-direction:column;
+gap:6px;
+z-index:9999;
+}
+
+.animate-slideUp{
+animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp{
+0%{transform:translateY(100%)}
+100%{transform:translateY(0)}
+}
+
+`}</style>
+
+</>
+);
 }

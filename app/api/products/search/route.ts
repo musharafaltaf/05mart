@@ -1,45 +1,32 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
 
 export async function GET(req: Request) {
-
   try {
-
-    await connectDB();
-
     const { searchParams } = new URL(req.url);
-    const query = searchParams.get("q");
+    const q = searchParams.get("q");
 
-    if (!query || query.trim() === "") {
+    if (!q || typeof q !== "string") {
       return NextResponse.json([]);
     }
 
-    /* ESCAPE REGEX (prevents errors in live search) */
-
-    const safeQuery = query
-      .trim()
-      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const safe = q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const products = await Product.find({
       $or: [
-        { name: { $regex: safeQuery, $options: "i" } },
-        { category: { $regex: safeQuery, $options: "i" } }
+        { name: { $regex: safe, $options: "i" } },
+        { category: { $regex: safe, $options: "i" } }
       ]
     } as any)
-      .limit(8)
-      .sort({ createdAt: -1 });
+      .select("_id name price image")
+      .limit(6)
+      .lean();
 
-    return NextResponse.json(products);
+    return NextResponse.json(Array.isArray(products) ? products : []);
 
-  } catch (error) {
-
-    console.error("Product search error:", error);
-
+  } catch (err) {
+    console.log("SEARCH API ERROR:", err);
     return NextResponse.json([]);
-
   }
-
-}
+} // ✅ THIS WAS MISSING
