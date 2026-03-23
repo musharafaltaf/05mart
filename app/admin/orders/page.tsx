@@ -425,6 +425,26 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 "use client";
 
 import { useEffect,useState } from "react";
@@ -437,10 +457,26 @@ const [orders,setOrders] = useState<any[]>([]);
 
 const loadOrders = async()=>{
 
-const res = await fetch("/api/orders");
+try{
+
+const user = JSON.parse(localStorage.getItem("user") || "null");
+
+/* 🔒 ADMIN CHECK */
+if(!user || user.role !== "admin"){
+  alert("Access denied");
+  return;
+}
+
+const res = await fetch(`/api/orders?userId=${user._id}&role=${user.role}`);
+
 const data = await res.json();
 
-setOrders(data);
+setOrders(Array.isArray(data) ? data : []);
+
+}catch(err){
+console.log("ADMIN LOAD ERROR:",err);
+setOrders([]);
+}
 
 };
 
@@ -449,12 +485,10 @@ loadOrders();
 },[]);
 
 /* ========================= */
-/* ✅ FIXED UPDATE STATUS */
+/* UPDATE STATUS */
 /* ========================= */
 
-const updateStatus = async(id,status)=>{
-
-console.log("Updating:", id, status); // ✅ ADD
+const updateStatus = async(id:any,status:any)=>{
 
 const res = await fetch(`/api/orders/${id}`,{
 method:"PATCH",
@@ -462,9 +496,7 @@ headers:{ "Content-Type":"application/json" },
 body: JSON.stringify({status})
 });
 
-const data = await res.json();
-
-console.log("RESPONSE:", data); // ✅ ADD
+await res.json();
 
 loadOrders();
 
@@ -576,8 +608,6 @@ Admin Orders
 
 <div key={order._id} className="border p-4 md:p-6 rounded-lg">
 
-{/* HEADER */}
-
 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
 
 <p className="font-semibold text-sm md:text-base break-all">
@@ -587,8 +617,7 @@ Order {order._id}
 <select
 value={order.status}
 onChange={(e)=>updateStatus(order._id,e.target.value)}
-className="border rounded px-2 py-1 text-sm bg-white w-full md:w-[150px] max-w-[160px]"
-style={{ maxHeight: "120px" }}
+className="border rounded px-2 py-1 text-sm bg-white w-full md:w-[150px]"
 >
 <option value="pending">Pending</option>
 <option value="confirmed">Confirmed</option>
@@ -603,8 +632,6 @@ style={{ maxHeight: "120px" }}
 
 </div>
 
-{/* CUSTOMER */}
-
 <div className="mt-4 text-sm">
 
 <p className="font-semibold mb-1">Customer</p>
@@ -612,14 +639,8 @@ style={{ maxHeight: "120px" }}
 <p>{order.customer?.name}</p>
 <p>{order.customer?.phone}</p>
 
-<p>
-{order.customer?.house} {order.customer?.area}
-</p>
-
-<p>
-{order.customer?.city}, {order.customer?.state}
-</p>
-
+<p>{order.customer?.house} {order.customer?.area}</p>
+<p>{order.customer?.city}, {order.customer?.state}</p>
 <p>{order.customer?.pincode}</p>
 
 <a
@@ -631,26 +652,19 @@ Call Customer
 
 </div>
 
-{/* PRODUCTS */}
-
 <div className="mt-4 space-y-3">
 
 {order.items.map((item:any)=>(
 
 <div key={item._id} className="flex gap-3 border p-2 rounded">
 
-<img
-src={item.image}
-className="w-14 h-14 md:w-16 md:h-16 object-cover rounded"
-/>
+<img src={item.image} className="w-16 h-16 object-cover rounded"/>
 
 <div className="text-sm">
-
 <p className="font-medium">{item.name}</p>
 <p>Size {item.size}</p>
 <p>Qty {item.quantity}</p>
 <p>₹{item.price}</p>
-
 </div>
 
 </div>
@@ -659,20 +673,18 @@ className="w-14 h-14 md:w-16 md:h-16 object-cover rounded"
 
 </div>
 
-{/* ACTIONS */}
-
 <div className="flex flex-col sm:flex-row gap-3 mt-4">
 
 <button
 onClick={()=>downloadInvoice(order)}
-className="bg-black text-white px-3 py-2 rounded text-sm w-full sm:w-auto"
+className="bg-black text-white px-3 py-2 rounded text-sm"
 >
 Invoice
 </button>
 
 <button
 onClick={()=>downloadLabel(order)}
-className="bg-blue-600 text-white px-3 py-2 rounded text-sm w-full sm:w-auto"
+className="bg-blue-600 text-white px-3 py-2 rounded text-sm"
 >
 Shipping Label
 </button>
@@ -688,5 +700,4 @@ Shipping Label
 </main>
 
 );
-
 }

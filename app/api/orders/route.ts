@@ -187,6 +187,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
+    /* ✅ VALIDATION */
     if (!body.items || !body.customer) {
       return NextResponse.json(
         { error: "Invalid data" },
@@ -194,9 +195,19 @@ export async function POST(req: Request) {
       );
     }
 
+    /* 🔒 REQUIRE LOGIN */
+    if (!body.userId) {
+      return NextResponse.json(
+        { error: "Login required" },
+        { status: 401 }
+      );
+    }
+
     const order = await Order.create({
 
-      userId: body.userId || "guest",
+      /* ✅ USER LINKED ORDER */
+      userId: body.userId,
+
       items: body.items,
       total: body.total,
       customer: body.customer,
@@ -220,7 +231,10 @@ export async function POST(req: Request) {
 
     });
 
+    /* ========================= */
     /* UPDATE STOCK */
+/* ========================= */
+
     for (const item of body.items) {
 
       try {
@@ -257,7 +271,7 @@ export async function POST(req: Request) {
 }
 
 /* ========================= */
-/* GET ORDERS (FINAL FIX) */
+/* GET ORDERS (FINAL SECURE) */
 /* ========================= */
 
 export async function GET(req: Request) {
@@ -267,26 +281,36 @@ export async function GET(req: Request) {
     await connectDB();
 
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
 
-    console.log("Fetching orders for:", userId);
+    const userId = searchParams.get("userId");
+    const role = searchParams.get("role");
+
+    console.log("Fetching orders:", userId, role);
 
     let orders;
 
-    if (userId) {
-      orders = await Order.find({ userId }).sort({ createdAt: -1 });
-    } else {
+    /* ✅ ADMIN: ALL ORDERS */
+    if (role === "admin") {
       orders = await Order.find().sort({ createdAt: -1 });
     }
 
-    /* ✅ SAFETY FIX */
+    /* ✅ USER: ONLY THEIR ORDERS */
+    else if (userId) {
+      orders = await Order.find({ userId }).sort({ createdAt: -1 });
+    }
+
+    /* ❌ BLOCK */
+    else {
+      return NextResponse.json([], { status: 403 });
+    }
+
+    /* SAFETY */
     if (!orders || !Array.isArray(orders)) {
-      console.log("Orders not array, returning empty");
       return NextResponse.json([]);
     }
 
-    /* ✅ CONVERT TO JSON SAFE */
-    const safeOrders = orders.map((o:any) => ({
+    /* CLEAN RESPONSE */
+    const safeOrders = orders.map((o: any) => ({
       ...o.toObject(),
       _id: o._id.toString()
     }));

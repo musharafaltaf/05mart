@@ -6,7 +6,6 @@
 
 
 
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -25,49 +24,31 @@ try{
 
 const userData = localStorage.getItem("user");
 
-let data:any[] = [];
-
-/* ========================= */
-/* TRY USER ORDERS */
-/* ========================= */
-
-if(userData){
+/* 🔒 NO USER → NO ORDERS */
+if(!userData){
+setOrders([]);
+setLoading(false);
+return;
+}
 
 const user = JSON.parse(userData);
 
-if(user?._id){
+/* 🔒 NO USER ID */
+if(!user?._id){
+setOrders([]);
+setLoading(false);
+return;
+}
 
+/* ✅ FETCH ONLY USER ORDERS */
 const res = await fetch(`/api/orders?userId=${user._id}`);
 
 if(res.ok){
 const result = await res.json();
-if(Array.isArray(result)){
-data = result;
+setOrders(Array.isArray(result) ? result : []);
+}else{
+setOrders([]);
 }
-}
-
-}
-
-}
-
-/* ========================= */
-/* FALLBACK */
-/* ========================= */
-
-if(data.length === 0){
-
-const res = await fetch(`/api/orders`);
-
-if(res.ok){
-const result = await res.json();
-data = Array.isArray(result) ? result : [];
-}
-
-}
-
-/* ========================= */
-
-setOrders(data);
 
 }catch(err){
 
@@ -120,7 +101,6 @@ My Orders
 
 <div className="space-y-6">
 
-{/* ✅ SAFE MAP */}
 {orders.filter(Boolean).map((order:any)=>{
 
 if(!order) return null;

@@ -24,6 +24,8 @@ alert("Enter email and password");
 return;
 }
 
+try{
+
 const res = await fetch("/api/auth/login",{
 method:"POST",
 headers:{
@@ -34,16 +36,25 @@ body:JSON.stringify(form)
 
 const data = await res.json();
 
+/* ❌ ERROR CASE */
 if(!res.ok){
-alert(data.error);
+alert(data.error || "Login failed");
 return;
 }
 
-localStorage.setItem("user",JSON.stringify(data.user));
+/* ✅ SUCCESS CASE */
+localStorage.setItem("user", JSON.stringify(data.user));
 
-alert("Login successful");
+/* 🔥 IMPORTANT: REFRESH NAVBAR */
+window.dispatchEvent(new Event("userChanged"));
 
-router.push("/");
+/* 🔥 GO TO SUCCESS PAGE */
+router.push("/auth-success");
+
+}catch(err){
+console.log(err);
+alert("Something went wrong");
+}
 
 };
 

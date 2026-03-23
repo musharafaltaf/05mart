@@ -357,7 +357,6 @@ const [authorized,setAuthorized] = useState(false);
 const [products,setProducts] = useState<any[]>([]);
 const [loading,setLoading] = useState(true);
 
-/* 🔥 NEW */
 const [editingId,setEditingId] = useState<string | null>(null);
 
 const [form,setForm] = useState({
@@ -376,11 +375,12 @@ flashSale:false,
 flashPrice:""
 });
 
+/* 🔒 ADMIN CHECK */
 useEffect(()=>{
 
-const user = JSON.parse(localStorage.getItem("user") || "{}");
+const user = JSON.parse(localStorage.getItem("user") || "null");
 
-if(user?.role !== "admin"){
+if(!user || user.role !== "admin"){
 router.push("/");
 return;
 }
@@ -390,14 +390,20 @@ loadProducts();
 
 },[]);
 
+/* LOAD PRODUCTS */
 const loadProducts = async()=>{
 
 try{
+setLoading(true);
+
 const res = await fetch("/api/products");
 const data = await res.json();
-setProducts(data);
+
+setProducts(Array.isArray(data)?data:[]);
+
 }catch(err){
 console.log(err);
+setProducts([]);
 }
 
 setLoading(false);
@@ -405,28 +411,21 @@ setLoading(false);
 };
 
 const handleChange = (e:any)=>{
-
 const {name,value,type,checked} = e.target;
 
 setForm({
 ...form,
 [name]: type==="checkbox" ? checked : value
 });
-
 };
 
-/* MAIN IMAGE */
-
+/* IMAGE UPLOAD */
 const uploadImage = async(file:any)=>{
 
 const formData = new FormData();
 formData.append("file",file);
 
-const res = await fetch("/api/upload",{
-method:"POST",
-body:formData
-});
-
+const res = await fetch("/api/upload",{ method:"POST", body:formData });
 const data = await res.json();
 
 setForm(prev=>({...prev,image:data.url}));
@@ -434,7 +433,6 @@ setForm(prev=>({...prev,image:data.url}));
 };
 
 /* EXTRA IMAGES */
-
 const uploadSingleExtra = async(file:any,index:number)=>{
 
 if(!file) return;
@@ -442,29 +440,18 @@ if(!file) return;
 const formData = new FormData();
 formData.append("file",file);
 
-const res = await fetch("/api/upload",{
-method:"POST",
-body:formData
-});
-
+const res = await fetch("/api/upload",{ method:"POST", body:formData });
 const data = await res.json();
 
 setForm(prev=>{
 const updated = [...prev.images];
 updated[index] = data.url;
-
-return {
-...prev,
-images: updated
-};
+return {...prev,images:updated};
 });
 
 };
 
-/* ========================= */
-/* 🔥 EDIT PRODUCT */
-/* ========================= */
-
+/* EDIT */
 const editProduct = (p:any)=>{
 
 setForm({
@@ -477,11 +464,9 @@ description:p.description || "",
 category:p.category || "",
 stock:p.stock || "",
 sizes:(p.sizes || []).join(","),
-
 sizeStock: p.sizeStock
 ? Object.entries(p.sizeStock).map(([k,v])=>`${k}:${v}`).join(",")
 : "",
-
 featured:p.featured || false,
 flashSale:p.flashSale || false,
 flashPrice:p.flashPrice || ""
@@ -491,10 +476,7 @@ setEditingId(p._id);
 
 };
 
-/* ========================= */
-/* ADD / UPDATE PRODUCT */
-/* ========================= */
-
+/* ADD / UPDATE */
 const addProduct = async()=>{
 
 try{
@@ -505,11 +487,10 @@ return;
 }
 
 if(!form.image){
-alert("Please upload main image");
+alert("Upload image");
 return;
 }
 
-/* SIZE STOCK */
 let sizeStockObj:any = {};
 
 if(form.sizeStock){
@@ -524,30 +505,21 @@ sizeStockObj[size.trim()] = Number(qty);
 const sizes = Object.keys(sizeStockObj);
 const totalStock = Object.values(sizeStockObj).reduce((a:any,b:any)=>a+b,0);
 
-/* BODY */
 const body = {
 ...form,
 category: form.category.toLowerCase(),
-
 mrp:Number(form.mrp) || 0,
 price:Number(form.price),
-
 sizes: sizes.length ? sizes : (
 form.sizes
 ? form.sizes.split(",").map((s:any)=>s.trim())
 : ["S","M","L","XL"]
 ),
-
 sizeStock: sizeStockObj,
-
 stock: sizes.length ? totalStock : Number(form.stock) || 0
 };
 
-/* 🔥 IMPORTANT */
-const url = editingId
-? `/api/products/${editingId}`
-: `/api/products`;
-
+const url = editingId ? `/api/products/${editingId}` : `/api/products`;
 const method = editingId ? "PUT" : "POST";
 
 const res = await fetch(url,{
@@ -561,7 +533,8 @@ alert("Failed");
 return;
 }
 
-/* RESET */
+setEditingId(null);
+
 setForm({
 name:"",
 mrp:"",
@@ -578,33 +551,24 @@ flashSale:false,
 flashPrice:""
 });
 
-setEditingId(null);
-
 loadProducts();
 
-alert(editingId ? "Product updated" : "Product added");
+alert(editingId ? "Updated" : "Added");
 
 }catch(err){
-console.log("ADD ERROR:",err);
-alert("Something went wrong");
+console.log(err);
+alert("Error");
 }
 
 };
 
 /* DELETE */
-
 const deleteProduct = async(id:string)=>{
-
-await fetch(`/api/products/${id}`,{
-method:"DELETE"
-});
-
+await fetch(`/api/products/${id}`,{ method:"DELETE" });
 loadProducts();
-
 };
 
 /* AUTH */
-
 if(!authorized){
 return <p className="p-10 text-center">Checking access...</p>
 }
@@ -613,34 +577,21 @@ return(
 
 <main className="max-w-7xl mx-auto px-4 py-10">
 
-<h1 className="text-3xl font-bold mb-6">
-Admin Dashboard
-</h1>
+<h1 className="text-3xl font-bold mb-6">Admin Dashboard</h1>
 
+{/* NAV */}
 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
 
-<button onClick={()=>router.push("/admin/banner")} className="border p-4 rounded">
-Hero Banner
-</button>
-
-<button onClick={()=>router.push("/admin/categories")} className="border p-4 rounded">
-Categories
-</button>
-
-<button onClick={()=>router.push("/admin")} className="border p-4 rounded">
-Products
-</button>
-
-<Link href="/admin/orders" className="border p-4 rounded text-center">
-Orders
-</Link>
+<button onClick={()=>router.push("/admin/banner")} className="border p-4 rounded">Hero Banner</button>
+<button onClick={()=>router.push("/admin/categories")} className="border p-4 rounded">Categories</button>
+<button onClick={()=>router.push("/admin")} className="border p-4 rounded">Products</button>
+<Link href="/admin/orders" className="border p-4 rounded text-center">Orders</Link>
 
 </div>
 
-<p className="text-gray-500 mb-10">
-Manage your store products
-</p>
+<p className="text-gray-500 mb-10">Manage your store products</p>
 
+{/* FORM */}
 <div className="border p-6 rounded mb-10">
 
 <h2 className="font-semibold mb-4">
@@ -653,28 +604,21 @@ Manage your store products
 <input name="mrp" placeholder="MRP" className="border p-2 rounded" value={form.mrp} onChange={handleChange}/>
 <input name="price" placeholder="Price" className="border p-2 rounded" value={form.price} onChange={handleChange}/>
 
-<input type="file" className="border p-2 rounded"
-onChange={(e:any)=>{
-const file = e.target.files?.[0];
-if(file) uploadImage(file);
-}}/>
+<input type="file" onChange={(e:any)=>uploadImage(e.target.files?.[0])} className="border p-2 rounded"/>
 
 <input type="file" onChange={(e:any)=>uploadSingleExtra(e.target.files?.[0],0)} className="border p-2 rounded"/>
 <input type="file" onChange={(e:any)=>uploadSingleExtra(e.target.files?.[0],1)} className="border p-2 rounded"/>
 <input type="file" onChange={(e:any)=>uploadSingleExtra(e.target.files?.[0],2)} className="border p-2 rounded"/>
 <input type="file" onChange={(e:any)=>uploadSingleExtra(e.target.files?.[0],3)} className="border p-2 rounded"/>
 
-<div className="flex gap-2 mt-2 flex-wrap">
-{form.images.map((img:any)=>(
-img && <img key={img} src={img} className="w-14 h-14 object-cover rounded"/>
-))}
+<div className="flex gap-2 flex-wrap">
+{form.images.map((img:any)=> img && <img key={img} src={img} className="w-14 h-14 rounded"/>)}
 </div>
 
-<input name="category" placeholder="Category (tshirt)" className="border p-2 rounded" value={form.category} onChange={handleChange}/>
+<input name="category" placeholder="Category" className="border p-2 rounded" value={form.category} onChange={handleChange}/>
 <input name="stock" placeholder="Stock" className="border p-2 rounded" value={form.stock} onChange={handleChange}/>
-<input name="sizes" placeholder="Sizes (S,M,L)" className="border p-2 rounded" value={form.sizes} onChange={handleChange}/>
-
-<input name="sizeStock" placeholder="Size Stock (S:2,M:0,L:5)" className="border p-2 rounded" value={form.sizeStock} onChange={handleChange}/>
+<input name="sizes" placeholder="Sizes" className="border p-2 rounded" value={form.sizes} onChange={handleChange}/>
+<input name="sizeStock" placeholder="Size Stock" className="border p-2 rounded" value={form.sizeStock} onChange={handleChange}/>
 
 <input name="flashPrice" placeholder="Flash Price" className="border p-2 rounded" value={form.flashPrice} onChange={handleChange}/>
 <input name="description" placeholder="Description" className="border p-2 rounded md:col-span-2" value={form.description} onChange={handleChange}/>
@@ -683,24 +627,18 @@ img && <img key={img} src={img} className="w-14 h-14 object-cover rounded"/>
 
 <div className="flex gap-6 mt-4">
 
-<label className="flex items-center gap-2">
-<input type="checkbox" name="featured" checked={form.featured} onChange={handleChange}/>
-Featured Product
-</label>
-
-<label className="flex items-center gap-2">
-<input type="checkbox" name="flashSale" checked={form.flashSale} onChange={handleChange}/>
-Flash Sale
-</label>
+<label><input type="checkbox" name="featured" checked={form.featured} onChange={handleChange}/> Featured</label>
+<label><input type="checkbox" name="flashSale" checked={form.flashSale} onChange={handleChange}/> Flash Sale</label>
 
 </div>
 
 <button onClick={addProduct} className="mt-6 bg-black text-white px-6 py-2 rounded">
-{editingId ? "Update Product" : "Add Product"}
+{editingId ? "Update" : "Add"}
 </button>
 
 </div>
 
+{/* PRODUCTS */}
 <h2 className="text-xl font-semibold mb-4">Products</h2>
 
 {loading && <p>Loading...</p>}
@@ -711,30 +649,16 @@ Flash Sale
 
 <div key={p._id} className="flex items-center gap-6 border p-4 rounded">
 
-<img src={p.image} className="w-16 h-16 object-cover rounded"/>
+<img src={p.image} className="w-16 h-16 rounded"/>
 
 <div className="flex-1">
-
 <p className="font-semibold">{p.name}</p>
-
-<p className="text-sm text-gray-500">
-₹{p.price}
-<span className="line-through ml-2 text-gray-400">₹{p.mrp}</span>
-</p>
-
-<p className="text-xs mt-1">
-Stock: {p.stock}
-</p>
-
+<p className="text-sm">₹{p.price} <span className="line-through text-gray-400">₹{p.mrp}</span></p>
+<p className="text-xs">Stock: {p.stock}</p>
 </div>
 
-<button onClick={()=>editProduct(p)} className="px-3 py-1 border rounded">
-Edit
-</button>
-
-<button onClick={()=>deleteProduct(p._id)} className="bg-red-500 text-white px-3 py-1 rounded">
-Delete
-</button>
+<button onClick={()=>editProduct(p)} className="border px-3 py-1 rounded">Edit</button>
+<button onClick={()=>deleteProduct(p._id)} className="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
 
 </div>
 
@@ -743,6 +667,5 @@ Delete
 </div>
 
 </main>
-
 );
 }
