@@ -4,26 +4,35 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage(){
+export default function RegisterPage(){
 
 const router = useRouter();
 
 const [form,setForm] = useState({
+name:"",
 email:"",
-password:""
+password:"",
+confirmPassword:""
 });
 
 const [loading,setLoading] = useState(false);
 const [showPassword,setShowPassword] = useState(false);
+const [showConfirm,setShowConfirm] = useState(false);
 
 const handleChange=(e:any)=>{
 setForm({...form,[e.target.name]:e.target.value});
 };
 
-const login = async()=>{
+const register = async()=>{
 
-if(!form.email || !form.password){
-alert("Enter email and password");
+if(!form.name || !form.email || !form.password || !form.confirmPassword){
+alert("Please fill all fields");
+return;
+}
+
+/* PASSWORD MATCH CHECK */
+if(form.password !== form.confirmPassword){
+alert("Passwords do not match");
 return;
 }
 
@@ -31,24 +40,27 @@ try{
 
 setLoading(true);
 
-const res = await fetch("/api/auth/login",{
+const res = await fetch("/api/auth/register",{
 method:"POST",
 headers:{
 "Content-Type":"application/json"
 },
-body:JSON.stringify(form)
+body:JSON.stringify({
+name:form.name,
+email:form.email,
+password:form.password
+})
 });
 
 const data = await res.json();
 
-/* ERROR */
 if(!res.ok){
-alert(data.error || "Login failed");
+alert(data.error || "Registration failed");
 setLoading(false);
 return;
 }
 
-/* SUCCESS */
+/* SAVE USER */
 localStorage.setItem("user", JSON.stringify(data.user));
 
 window.dispatchEvent(new Event("userChanged"));
@@ -58,7 +70,8 @@ router.push("/auth-success");
 }catch(err){
 console.log(err);
 alert("Something went wrong");
-}finally{
+}
+finally{
 setLoading(false);
 }
 
@@ -69,10 +82,18 @@ return(
 <main className="max-w-md mx-auto py-16 px-4">
 
 <h1 className="text-3xl font-bold mb-6 text-center">
-Login to 05Mart
+Create 05Mart Account
 </h1>
 
 <div className="space-y-4">
+
+{/* NAME */}
+<input
+name="name"
+placeholder="Full Name"
+className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-black"
+onChange={handleChange}
+/>
 
 {/* EMAIL */}
 <input
@@ -103,9 +124,30 @@ className="absolute right-3 top-3 text-sm text-gray-500"
 
 </div>
 
-{/* BUTTON */}
+{/* CONFIRM PASSWORD */}
+<div className="relative">
+
+<input
+name="confirmPassword"
+type={showConfirm ? "text" : "password"}
+placeholder="Confirm Password"
+className="border p-3 w-full rounded focus:outline-none focus:ring-2 focus:ring-black"
+onChange={handleChange}
+/>
+
 <button
-onClick={login}
+type="button"
+onClick={()=>setShowConfirm(!showConfirm)}
+className="absolute right-3 top-3 text-sm text-gray-500"
+>
+{showConfirm ? "Hide" : "Show"}
+</button>
+
+</div>
+
+{/* REGISTER BUTTON */}
+<button
+onClick={register}
 disabled={loading}
 className={`w-full py-3 rounded text-white transition
 ${loading ? "bg-gray-400" : "bg-black hover:opacity-90"}`}
@@ -114,19 +156,19 @@ ${loading ? "bg-gray-400" : "bg-black hover:opacity-90"}`}
 {loading ? (
 <span className="flex items-center justify-center gap-2">
 <span className="loader"></span>
-Logging in...
+Creating account...
 </span>
-) : "Login"}
+) : "Register"}
 
 </button>
 
-{/* LINK */}
+{/* LOGIN LINK */}
 <p className="text-center text-sm">
 
-Don't have an account?{" "}
+Already have an account?{" "}
 
-<Link href="/register" className="text-blue-600 font-medium">
-Register
+<Link href="/login" className="text-blue-600 font-medium">
+Login
 </Link>
 
 </p>
@@ -152,5 +194,4 @@ to{ transform:rotate(360deg); }
 </main>
 
 );
-
 }
