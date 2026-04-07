@@ -139,13 +139,17 @@ return <p className="p-10 text-center">Product not found</p>
 
 /* SIZE LOGIC */
 
-const sizes =
-product.sizes?.length
-? product.sizes.filter((s:any)=>{
-return product.sizeStock?.[s] === undefined || product.sizeStock?.[s] > 0;
-})
-: ["S","M","L","XL"];
+/* FIX SIZE ARRAY */
 
+const sizes = product.sizes
+? (Array.isArray(product.sizes)
+    ? product.sizes
+    : product.sizes.split(","))
+      .map((s:string)=>s.trim())
+      .filter((s:string)=>{
+        return product.sizeStock?.[s] === undefined || product.sizeStock?.[s] > 0;
+      })
+: ["S","M","L","XL"];
 /* IMAGES */
 
 const images = Array.from(

@@ -191,10 +191,41 @@ if(form.flashSale && !form.flashPrice){
 return setPopup({show:true,message:"Flash price required"})
 }
 
+/* CONVERT SIZES */
+
+const sizesArray = form.sizes
+.split(",")
+.map((s)=>s.trim())
+
+/* CONVERT SIZE STOCK */
+
+const sizeStockObject:any = {}
+
+form.sizeStock.split(",").forEach(pair=>{
+
+const [size,qty] = pair.split(":")
+
+if(size && qty){
+sizeStockObject[size.trim()] = Number(qty)
+}
+
+})
+
+/* FINAL PAYLOAD */
+
+const payload = {
+
+...form,
+
+sizes: sizesArray,
+sizeStock: sizeStockObject
+
+}
+
 await fetch("/api/products",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
-body:JSON.stringify(form)
+body:JSON.stringify(payload)
 })
 
 setPopup({show:true,message:"Product added successfully"})
