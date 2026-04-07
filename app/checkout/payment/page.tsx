@@ -1400,35 +1400,59 @@ if (payment === "razorpay") return payWithRazorpay();
 
 const placeOrder = async (statusParam = "pending") => {
 
-if (loading) return;
-setLoading(true);
+  if (loading) return;
 
-const user = JSON.parse(localStorage.getItem("user") || "{}");
-const address = JSON.parse(localStorage.getItem("address") || "{}");
+  setLoading(true);
 
-const res = await fetch("/api/orders", {
-method: "POST",
-headers: { "Content-Type": "application/json" },
-body: JSON.stringify({
-items: cart,
-total,
-customer: address,
-paymentMethod: payment,
-userId: user?._id || "guest",
-status: statusParam
-})
-});
+  try {
 
-const order = await res.json();
+    /* USER (OPTIONAL) */
+    const userData = localStorage.getItem("user");
+    const user = userData ? JSON.parse(userData) : null;
 
-setTimeout(()=>{
-router.push(`/success?orderId=${order._id}`);
-},500);
+    /* ADDRESS */
+    const address = JSON.parse(localStorage.getItem("address") || "{}");
 
-setLoading(false);
+    /* CREATE ORDER */
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        items: cart,
+        total,
+        customer: address,
+        paymentMethod: payment,
+
+        /* SAFE USER */
+        userId: user?._id || "guest",
+
+        status: statusParam
+      })
+    });
+
+    const order = await res.json();
+
+    if (!res.ok) {
+      alert(order?.error || "Order failed");
+      setLoading(false);
+      return;
+    }
+
+    /* SUCCESS REDIRECT */
+    router.push(`/success?orderId=${order._id}`);
+
+  } catch (err) {
+
+    console.log("ORDER ERROR:", err);
+    alert("Something went wrong");
+
+  }
+
+  setLoading(false);
 
 };
-
 /* ========================= */
 /* UI */
 /* ========================= */

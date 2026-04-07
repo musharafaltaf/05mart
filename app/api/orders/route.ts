@@ -181,146 +181,175 @@ import Product from "@/app/lib/models/Product";
 
 export async function POST(req: Request) {
 
-  await connectDB();
+await connectDB();
 
-  try {
+try{
 
-    const body = await req.json();
+const body = await req.json();
 
-    /* ✅ VALIDATION */
-    if (!body.items || !body.customer) {
-      return NextResponse.json(
-        { error: "Invalid data" },
-        { status: 400 }
-      );
-    }
+/* VALIDATION */
+if(!body.items || !body.customer){
+return NextResponse.json(
+{ error:"Invalid data" },
+{ status:400 }
+);
+}
 
-    /* 🔒 REQUIRE LOGIN */
-    if (!body.userId) {
-      return NextResponse.json(
-        { error: "Login required" },
-        { status: 401 }
-      );
-    }
+/* REQUIRE LOGIN */
+if(!body.userId){
+return NextResponse.json(
+{ error:"Login required" },
+{ status:401 }
+);
+}
 
-    const order = await Order.create({
+/* CREATE ORDER */
+const order = await Order.create({
 
-      /* ✅ USER LINKED ORDER */
-      userId: body.userId,
+userId: body.userId,
 
-      items: body.items,
-      total: body.total,
-      customer: body.customer,
+items: body.items,
+total: body.total,
+customer: body.customer,
 
-      paymentMethod: body.paymentMethod || "cod",
-      paymentProof: body.paymentProof || null,
+paymentMethod: body.paymentMethod || "cod",
+paymentProof: body.paymentProof || null,
 
-      status:
-        body.paymentMethod === "razorpay"
-          ? "paid"
-          : body.paymentMethod === "upi"
-          ? "pending_verification"
-          : "pending",
+status:
+body.paymentMethod === "razorpay"
+? "paid"
+: body.paymentMethod === "upi"
+? "pending_verification"
+: "pending",
 
-      tracking: [
-        {
-          status: "Order Placed",
-          date: new Date()
-        }
-      ]
+tracking:[
+{
+status:"Order Placed",
+date:new Date()
+}
+]
 
-    });
+});
 
-    /* ========================= */
-    /* UPDATE STOCK */
+/* ========================= */
+/* UPDATE STOCK */
 /* ========================= */
 
-    for (const item of body.items) {
+for(const item of body.items){
 
-      try {
+try{
 
-        await (Product as any).findByIdAndUpdate(
-          item._id,
-          {
-            $inc: {
-              stock: -item.quantity,
-              ...(item.size && {
-                [`sizeStock.${item.size}`]: -item.quantity
-              })
-            }
-          }
-        );
+await (Product as any).findByIdAndUpdate(
+item._id,
+{
+$inc:{
+stock:-item.quantity,
+...(item.size && {
+[`sizeStock.${item.size}`]: -item.quantity
+})
+}
+}
+);
 
-      } catch (err) {
-        console.log("STOCK ERROR:", err);
-      }
+}catch(err){
+console.log("STOCK ERROR:",err);
+}
 
-    }
-
-    return NextResponse.json(order);
-
-  } catch (err) {
-
-    console.log("ORDER ERROR:", err);
-
-    return NextResponse.json(
-      { error: "Order failed" },
-      { status: 500 }
-    );
-  }
 }
 
 /* ========================= */
-/* GET ORDERS (FINAL SECURE) */
+/* ADMIN ALERT */
+/* ========================= */
+
+console.log("🛒 NEW ORDER RECEIVED");
+console.log("Order ID:", order._id);
+console.log("Customer:", body.customer?.name);
+console.log("Total:", body.total);
+
+/* FUTURE REALTIME HOOK */
+globalThis.NEW_ORDER_EVENT = {
+id: order._id,
+total: body.total,
+customer: body.customer?.name
+};
+
+return NextResponse.json(order);
+
+}catch(err){
+
+console.log("ORDER ERROR:",err);
+
+return NextResponse.json(
+{ error:"Order failed" },
+{ status:500 }
+);
+
+}
+
+}
+
+/* ========================= */
+/* GET ORDERS */
 /* ========================= */
 
 export async function GET(req: Request) {
 
-  try {
+try{
 
-    await connectDB();
+await connectDB();
 
-    const { searchParams } = new URL(req.url);
+const { searchParams } = new URL(req.url);
 
-    const userId = searchParams.get("userId");
-    const role = searchParams.get("role");
+const userId = searchParams.get("userId");
+const role = searchParams.get("role");
 
-    console.log("Fetching orders:", userId, role);
+console.log("Fetching orders:", userId, role);
 
-    let orders;
+let orders;
 
-    /* ✅ ADMIN: ALL ORDERS */
-    if (role === "admin") {
-      orders = await Order.find().sort({ createdAt: -1 });
-    }
+/* ADMIN ACCESS */
+if(role === "admin"){
 
-    /* ✅ USER: ONLY THEIR ORDERS */
-    else if (userId) {
-      orders = await Order.find({ userId }).sort({ createdAt: -1 });
-    }
+orders = await Order.find()
+.sort({ createdAt:-1 });
 
-    /* ❌ BLOCK */
-    else {
-      return NextResponse.json([], { status: 403 });
-    }
+}
 
-    /* SAFETY */
-    if (!orders || !Array.isArray(orders)) {
-      return NextResponse.json([]);
-    }
+/* USER ACCESS */
+else if(userId){
 
-    /* CLEAN RESPONSE */
-    const safeOrders = orders.map((o: any) => ({
-      ...o.toObject(),
-      _id: o._id.toString()
-    }));
+orders = await Order.find({
+userId: userId
+}).sort({ createdAt:-1 });
 
-    return NextResponse.json(safeOrders);
+}
 
-  } catch (err) {
+else{
 
-    console.log("GET ORDERS ERROR:", err);
+return NextResponse.json([], { status:403 });
 
-    return NextResponse.json([], { status: 200 });
-  }
+}
+
+/* SAFETY */
+if(!orders || !Array.isArray(orders)){
+return NextResponse.json([]);
+}
+
+/* CLEAN RESPONSE */
+const safeOrders = orders.map((o:any)=>({
+...o.toObject(),
+_id: o._id.toString(),
+userId: o.userId?.toString()
+}));
+
+return NextResponse.json(safeOrders);
+
+}catch(err){
+
+console.log("GET ORDERS ERROR:",err);
+
+return NextResponse.json([], { status:200 });
+
+}
+
 }

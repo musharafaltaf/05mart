@@ -1,237 +1,204 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
-export default function AdminBannerPage(){
+export default function AddBanner(){
 
-const [banners,setBanners] = useState<any[]>([]);
-const [form,setForm] = useState({
-title:"",
-subtitle:"",
-image:"",
-link:""
-});
+const router = useRouter()
 
-const [editingId,setEditingId] = useState<string | null>(null);
+const [image,setImage] = useState("")
+const [title,setTitle] = useState("")
+const [link,setLink] = useState("")
+const [active,setActive] = useState(true)
 
-/* ========================= */
-/* LOAD BANNERS */
-/* ========================= */
+const [popup,setPopup] = useState({
+show:false,
+message:""
+})
 
-const loadBanners = async()=>{
-
-try{
-
-const res = await fetch("/api/banners");
-const data = await res.json();
-setBanners(data || []);
-
-}catch(err){
-console.log(err);
-}
-
-};
-
-useEffect(()=>{
-loadBanners();
-},[]);
-
-/* ========================= */
-/* IMAGE UPLOAD */
-/* ========================= */
+/* UPLOAD IMAGE */
 
 const uploadImage = async(file:any)=>{
 
-const formData = new FormData();
-formData.append("file",file);
+const formData = new FormData()
+formData.append("file",file)
 
-const res = await fetch("/api/upload",{
-method:"POST",
-body:formData
-});
+const res = await fetch("/api/upload",{method:"POST",body:formData})
+const data = await res.json()
 
-const data = await res.json();
+setImage(data.url)
 
-setForm(prev=>({
-...prev,
-image:data.url
-}));
+}
 
-};
+/* ADD BANNER */
 
-/* ========================= */
-/* ADD / UPDATE */
-/* ========================= */
+const addBanner = async()=>{
 
-const saveBanner = async()=>{
-
-if(editingId){
-
-/* UPDATE */
-
-await fetch(`/api/banners/${editingId}`,{
-method:"PUT",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify(form)
-});
-
-}else{
-
-/* ADD */
+if(!image){
+return setPopup({show:true,message:"Banner image required"})
+}
 
 await fetch("/api/banners",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
-body:JSON.stringify(form)
-});
+body:JSON.stringify({title,image,link,active})
+})
+
+setPopup({show:true,message:"Banner added successfully"})
+
+setTimeout(()=>{
+router.push("/admin/banner/edit")
+},1000)
 
 }
 
-/* RESET */
-
-setForm({
-title:"",
-subtitle:"",
-image:"",
-link:""
-});
-
-setEditingId(null);
-
-loadBanners();
-
-};
-
-/* ========================= */
-/* DELETE */
-/* ========================= */
-
-const deleteBanner = async(id:string)=>{
-
-await fetch(`/api/banners/${id}`,{
-method:"DELETE"
-});
-
-loadBanners();
-
-};
-
-/* ========================= */
-/* EDIT */
-/* ========================= */
-
-const editBanner = (b:any)=>{
-
-setForm({
-title:b.title,
-subtitle:b.subtitle,
-image:b.image,
-link:b.link || ""
-});
-
-setEditingId(b._id);
-
-};
-
-/* ========================= */
-/* UI */
-/* ========================= */
-
 return(
 
-<main className="max-w-5xl mx-auto px-4 py-10">
+<main className="container">
 
-<h1 className="text-2xl font-bold mb-6">
-Banner Management
-</h1>
+<h1>Add Banner</h1>
 
-{/* FORM */}
+<div className="card">
 
-<div className="border p-6 rounded mb-10">
+<label className="upload">
 
-<input
-placeholder="Title"
-className="border p-2 w-full mb-3"
-value={form.title}
-onChange={(e)=>setForm({...form,title:e.target.value})}
-/>
-
-<input
-placeholder="Subtitle"
-className="border p-2 w-full mb-3"
-value={form.subtitle}
-onChange={(e)=>setForm({...form,subtitle:e.target.value})}
-/>
-
-<input
-placeholder="Link (/category/tshirts)"
-className="border p-2 w-full mb-3"
-value={form.link}
-onChange={(e)=>setForm({...form,link:e.target.value})}
-/>
+{image ? (
+<img src={image}/>
+):(
+<p>Upload Banner</p>
+)}
 
 <input
 type="file"
-className="mb-3"
-onChange={(e:any)=>{
-const file = e.target.files?.[0];
-if(file) uploadImage(file);
-}}
+hidden
+onChange={(e)=>uploadImage(e.target.files?.[0])}
 />
 
-{form.image && (
-<img src={form.image} className="w-40 rounded mb-3"/>
+</label>
+
+<input
+placeholder="Banner Title"
+value={title}
+onChange={(e)=>setTitle(e.target.value)}
+/>
+
+<input
+placeholder="Banner Link (Example: /product/123)"
+value={link}
+onChange={(e)=>setLink(e.target.value)}
+/>
+
+<label className="check">
+
+<input
+type="checkbox"
+checked={active}
+onChange={(e)=>setActive(e.target.checked)}
+/>
+
+Active Banner
+
+</label>
+
+<button onClick={addBanner} className="submit">
+Add Banner
+</button>
+
+</div>
+
+{popup.show && (
+
+<div className="overlay">
+
+<div className="popup">
+
+<p>{popup.message}</p>
+
+<button onClick={()=>setPopup({show:false,message:""})}>
+OK
+</button>
+
+</div>
+
+</div>
+
 )}
 
-<button
-onClick={saveBanner}
-className="bg-black text-white px-6 py-2 rounded"
->
-{editingId ? "Update Banner" : "Add Banner"}
-</button>
+<style jsx>{`
 
-</div>
+.container{
+max-width:600px;
+margin:auto;
+padding:40px 20px;
+}
 
-{/* LIST */}
+.card{
+background:white;
+border:1px solid #eee;
+padding:20px;
+border-radius:10px;
+}
 
-<div className="space-y-4">
+.upload{
+border:2px dashed #ddd;
+height:220px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+margin-bottom:20px;
+}
 
-{banners.map((b:any)=>(
+.upload img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
 
-<div key={b._id} className="border p-4 rounded flex gap-4 items-center">
+input{
+width:100%;
+padding:10px;
+margin-top:10px;
+border:1px solid #ddd;
+border-radius:6px;
+}
 
-<img src={b.image} className="w-24 h-16 object-cover rounded"/>
+.check{
+display:flex;
+gap:10px;
+margin-top:10px;
+}
 
-<div className="flex-1">
+.submit{
+background:black;
+color:white;
+padding:12px;
+border-radius:6px;
+width:100%;
+margin-top:20px;
+}
 
-<p className="font-semibold">{b.title}</p>
-<p className="text-sm text-gray-500">{b.subtitle}</p>
-<p className="text-xs text-blue-600">{b.link}</p>
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+display:flex;
+align-items:center;
+justify-content:center;
+}
 
-</div>
+.popup{
+background:white;
+padding:25px;
+border-radius:8px;
+text-align:center;
+}
 
-<button
-onClick={()=>editBanner(b)}
-className="px-3 py-1 border rounded"
->
-Edit
-</button>
-
-<button
-onClick={()=>deleteBanner(b._id)}
-className="px-3 py-1 bg-red-500 text-white rounded"
->
-Delete
-</button>
-
-</div>
-
-))}
-
-</div>
+`}</style>
 
 </main>
 
-);
+)
 
 }

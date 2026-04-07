@@ -1,86 +1,187 @@
-"use client";
+"use client"
 
-import { useState,useEffect } from "react";
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
-export default function CategoryAdmin(){
+export default function AddCategory(){
 
-const [name,setName] = useState("");
-const [image,setImage] = useState("");
-const [categories,setCategories] = useState<any[]>([]);
+const router = useRouter()
 
-const load = async()=>{
-const res = await fetch("/api/categories");
-const data = await res.json();
-setCategories(data);
-};
+const [name,setName] = useState("")
+const [image,setImage] = useState("")
 
-useEffect(()=>{load();},[]);
+const [popup,setPopup] = useState({
+show:false,
+message:""
+})
 
-const upload = async(e:any)=>{
+/* UPLOAD IMAGE */
 
-const file = e.target.files[0];
+const uploadImage = async(file:any)=>{
 
-const formData = new FormData();
-formData.append("file",file);
+const formData = new FormData()
+formData.append("file",file)
 
-const res = await fetch("/api/upload",{method:"POST",body:formData});
-const data = await res.json();
+const res = await fetch("/api/upload",{method:"POST",body:formData})
+const data = await res.json()
 
-setImage(data.url);
+setImage(data.url)
 
-};
+}
 
-const add = async()=>{
+/* ADD CATEGORY */
+
+const addCategory = async()=>{
+
+if(!name){
+return setPopup({show:true,message:"Category name required"})
+}
+
+if(!image){
+return setPopup({show:true,message:"Category image required"})
+}
 
 await fetch("/api/categories",{
+
 method:"POST",
-headers:{"Content-Type":"application/json"},
+
+headers:{
+"Content-Type":"application/json"
+},
+
 body:JSON.stringify({name,image})
-});
 
-setName("");
-setImage("");
-load();
+})
 
-};
+setPopup({show:true,message:"Category added successfully"})
+
+setTimeout(()=>{
+router.push("/admin/categories/edit")
+},1000)
+
+}
 
 return(
 
-<main className="max-w-6xl mx-auto p-10">
+<main className="container">
 
-<h1 className="text-2xl font-bold mb-6">
-Categories
-</h1>
+<h1>Add Category</h1>
+
+<div className="card">
+
+<label className="upload">
+
+{image ? (
+<img src={image}/>
+):(
+<p>Upload Category Image</p>
+)}
 
 <input
-placeholder="Category name"
-value={name}
-onChange={(e)=>setName(e.target.value)}
-className="border p-2"
+type="file"
+hidden
+onChange={(e)=>uploadImage(e.target.files?.[0])}
 />
 
-<input type="file" onChange={upload}/>
+</label>
 
-<button
-onClick={add}
-className="bg-black text-white px-4 py-2"
->
+<input
+placeholder="Category Name"
+value={name}
+onChange={(e)=>setName(e.target.value)}
+/>
+
+<button onClick={addCategory} className="submit">
 Add Category
 </button>
 
-<div className="grid grid-cols-4 gap-6 mt-10">
-
-{categories.map((c:any)=>(
-<div key={c._id}>
-<img src={c.image} className="rounded"/>
-<p>{c.name}</p>
 </div>
-))}
+
+{popup.show && (
+
+<div className="overlay">
+
+<div className="popup">
+
+<p>{popup.message}</p>
+
+<button onClick={()=>setPopup({show:false,message:""})}>
+OK
+</button>
 
 </div>
+
+</div>
+
+)}
+
+<style jsx>{`
+
+.container{
+max-width:600px;
+margin:auto;
+padding:40px 20px;
+}
+
+.card{
+background:white;
+border:1px solid #eee;
+padding:20px;
+border-radius:10px;
+}
+
+.upload{
+border:2px dashed #ddd;
+height:200px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+margin-bottom:20px;
+}
+
+.upload img{
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+input{
+width:100%;
+padding:10px;
+border:1px solid #ddd;
+border-radius:6px;
+}
+
+.submit{
+background:black;
+color:white;
+padding:12px;
+border-radius:6px;
+width:100%;
+margin-top:20px;
+}
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+.popup{
+background:white;
+padding:25px;
+border-radius:8px;
+text-align:center;
+}
+
+`}</style>
 
 </main>
 
-);
+)
 
 }

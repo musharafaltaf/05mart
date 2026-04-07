@@ -11,71 +11,75 @@ const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 export async function POST(req: Request) {
 
-try {
+  try {
 
-await connectDB();
+    await connectDB();
 
-/* CREATE DEFAULT ADMIN IF NOT EXISTS */
-await createAdmin();
+    /* CREATE DEFAULT ADMIN IF NOT EXISTS */
+    await createAdmin();
 
-const { email, password } = await req.json();
+    const { email, password } = await req.json();
 
-if (!email || !password) {
+    if (!email || !password) {
 
-return NextResponse.json(
-{ error: "Email and password required" },
-{ status: 400 }
-);
+      return NextResponse.json(
+        { error: "Email and password required" },
+        { status: 400 }
+      );
 
-}
+    }
 
-const user = await User.findOne({ email } as any);
+    const user = await User.findOne({ email } as any);
 
-if (!user) {
+    if (!user) {
 
-return NextResponse.json(
-{ error: "Invalid credentials" },
-{ status: 401 }
-);
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
 
-}
+    }
 
-const match = await bcrypt.compare(password, user.password);
+    const match = await bcrypt.compare(password, user.password);
 
-if (!match) {
+    if (!match) {
 
-return NextResponse.json(
-{ error: "Invalid credentials" },
-{ status: 401 }
-);
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
 
-}
+    }
 
-const token = jwt.sign(
-{ userId: user._id, role: user.role },
-JWT_SECRET,
-{ expiresIn: "7d" }
-);
+    /* TOKEN */
 
-return NextResponse.json({
-token,
-user:{
-id:user._id,
-name:user.name,
-email:user.email,
-role:user.role
-}
-});
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-} catch (error) {
+    /* IMPORTANT: RETURN _id NOT id */
 
-console.log("LOGIN ERROR:", error);
+    return NextResponse.json({
+      token,
+      user: {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
 
-return NextResponse.json(
-{ error: "Server error during login" },
-{ status: 500 }
-);
+  } catch (error) {
 
-}
+    console.log("LOGIN ERROR:", error);
+
+    return NextResponse.json(
+      { error: "Server error during login" },
+      { status: 500 }
+    );
+
+  }
 
 }

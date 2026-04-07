@@ -402,7 +402,7 @@ Delivery by {getDeliveryDate()}
 </p>
 
 <p className="text-gray-500 text-sm mt-1">
-2 Day Return Available • ₹40 return pickup fee
+2 Day Return Available • ₹70 return pickup fee
 </p>
 
 </div>

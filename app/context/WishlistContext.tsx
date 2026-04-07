@@ -1,39 +1,100 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const WishlistContext = createContext<any>(null);
 
 export function WishlistProvider({ children }: any) {
 
-  const [wishlist, setWishlist] = useState<any[]>([]);
+const [wishlist,setWishlist] = useState<any[]>([]);
+const [user,setUser] = useState<any>(null);
 
-  const addToWishlist = (product: any) => {
+/* LOAD USER + WISHLIST */
 
-    if (!product) return;
+useEffect(()=>{
 
-    setWishlist((prev) => {
+const loadWishlist = ()=>{
 
-      const exists = prev.find((item) => item && item.id === product.id);
+const u = JSON.parse(localStorage.getItem("user") || "null");
+setUser(u);
 
-      if (exists) {
-        return prev.filter((item) => item && item.id !== product.id);
-      }
+if(!u?._id){
+setWishlist([]);
+return;
+}
 
-      return [...prev, product];
+const stored = localStorage.getItem(`wishlist_${u._id}`);
 
-    });
+if(stored){
+setWishlist(JSON.parse(stored));
+}else{
+setWishlist([]);
+}
 
-  };
+};
 
-  return (
+loadWishlist();
 
-    <WishlistContext.Provider value={{ wishlist, addToWishlist }}>
-      {children}
-    </WishlistContext.Provider>
+window.addEventListener("userChanged",loadWishlist);
 
-  );
+return ()=>{
+window.removeEventListener("userChanged",loadWishlist);
+};
+
+},[]);
+
+/* SAVE WISHLIST */
+
+useEffect(()=>{
+
+if(user?._id){
+localStorage.setItem(`wishlist_${user._id}`,JSON.stringify(wishlist));
+}
+
+},[wishlist,user]);
+
+/* ADD PRODUCT */
+
+const addToWishlist = (product:any)=>{
+
+setWishlist(prev=>{
+
+const exists = prev.find((p:any)=>p._id===product._id);
+
+if(exists) return prev;
+
+return [...prev,product];
+
+});
+
+};
+
+/* REMOVE PRODUCT */
+
+const removeFromWishlist = (id:string)=>{
+
+setWishlist(prev=>prev.filter(p=>p._id!==id));
+
+};
+
+return(
+
+<WishlistContext.Provider
+value={{
+wishlist,
+addToWishlist,
+removeFromWishlist
+}}
+>
+
+{children}
+
+</WishlistContext.Provider>
+
+);
 
 }
 
-export const useWishlist = () => useContext(WishlistContext);
+export const useWishlist = ()=>{
+return useContext(WishlistContext);
+};

@@ -1,95 +1,20 @@
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { useParams } from "next/navigation";
-
-// export default function ProductPage() {
-
-//   const { id } = useParams();
-
-//   const [product, setProduct] = useState<any>(null);
-
-//   useEffect(() => {
-
-//     const fetchProduct = async () => {
-
-//       const res = await fetch(`/api/products/${id}`);
-
-//       const data = await res.json();
-
-//       setProduct(data);
-
-//     };
-
-//     fetchProduct();
-
-//   }, [id]);
-
-//   if (!product) return <p className="p-10">Loading...</p>;
-
-//   const finalPrice =
-//     product.price - (product.price * product.discount) / 100;
-
-//   return (
-
-//     <div className="max-w-6xl mx-auto p-8 grid md:grid-cols-2 gap-10">
-
-//       <img
-//         src={product.image || "https://via.placeholder.com/500"}
-//         alt={product.name}
-//         className="w-full rounded"
-//       />
-
-//       <div>
-
-//         <h1 className="text-3xl font-bold mb-4">
-//           {product.name}
-//         </h1>
-
-//         <p className="text-gray-600 mb-4">
-//           {product.description}
-//         </p>
-
-//         <div className="flex items-center gap-3 mb-6">
-
-//           <span className="text-2xl font-bold text-green-600">
-//             ₹{Math.round(finalPrice)}
-//           </span>
-
-//           {product.discount > 0 && (
-//             <>
-//               <span className="line-through text-gray-400">
-//                 ₹{product.price}
-//               </span>
-
-//               <span className="text-red-500">
-//                 {product.discount}% OFF
-//               </span>
-//             </>
-//           )}
-
-//         </div>
-
-//         <button className="bg-black text-white px-6 py-3 rounded">
-//           Add to Cart
-//         </button>
-
-//       </div>
-
-//     </div>
-
-//   );
-// }
-// 
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect,useState,useRef } from "react";
 import { useParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useWishlist } from "@/app/context/WishlistContext";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Thumbs } from "swiper/modules";
+import { useRouter } from "next/navigation";
+
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/thumbs";
 
 export default function ProductPage(){
 
+const router = useRouter();
 const params = useParams();
 const id = params?.id as string;
 
@@ -102,18 +27,32 @@ const [reviews,setReviews] = useState<any[]>([]);
 const [selectedImage,setSelectedImage] = useState("");
 const [selectedSize,setSelectedSize] = useState("");
 
-const [showSizePopup,setShowSizePopup] = useState(false);
 const [showSizeChart,setShowSizeChart] = useState(false);
-const [pendingAction,setPendingAction] = useState<"cart" | "buy" | null>(null);
 
 const [loading,setLoading] = useState(true);
 const [zoom,setZoom] = useState(false);
-const [cartAnim,setCartAnim] = useState(false);
+
+const [cartState,setCartState] = useState<"idle"|"loading"|"added">("idle");
+const [wishlistState,setWishlistState] = useState<"idle"|"added">("idle");
+const [buyLoading,setBuyLoading] = useState(false);
+
+const [imageViewer,setImageViewer] = useState(false);
+const [viewerIndex,setViewerIndex] = useState(0);
+
+const [reviewViewer,setReviewViewer] = useState(false);
+const [reviewImages,setReviewImages] = useState<string[]>([]);
+const [reviewIndex,setReviewIndex] = useState(0);
+
+const [thumbsSwiper,setThumbsSwiper] = useState<any>(null);
+
 const [sizeError,setSizeError] = useState("");
 
-/* ========================= */
+/* sticky bar */
+
+const [showSticky,setShowSticky] = useState(false);
+const actionRef = useRef<HTMLDivElement>(null);
+
 /* LOAD PRODUCT */
-/* ========================= */
 
 useEffect(()=>{
 
@@ -131,13 +70,8 @@ return;
 
 const data = await res.json();
 
-if(!data || !data._id){
-setLoading(false);
-return;
-}
-
 setProduct(data);
-setSelectedImage(data.image || "");
+setSelectedImage(data?.image || "");
 
 }catch(err){
 console.log(err);
@@ -151,16 +85,15 @@ loadProduct();
 
 },[id]);
 
-/* ========================= */
-/* REVIEWS */
-/* ========================= */
+/* LOAD REVIEWS */
 
 useEffect(()=>{
 
 const loadReviews = async()=>{
 
 try{
-const res = await fetch(`/api/reviews?productId=${id}`);
+
+const res = await fetch(`/api/reviews?productId=${id}&t=${Date.now()}`);
 if(!res.ok) return;
 
 const data = await res.json();
@@ -176,6 +109,26 @@ if(id) loadReviews();
 
 },[id]);
 
+/* sticky scroll logic */
+
+useEffect(()=>{
+
+const onScroll=()=>{
+
+if(!actionRef.current) return;
+
+const rect = actionRef.current.getBoundingClientRect();
+
+setShowSticky(rect.top < -200);
+
+};
+
+window.addEventListener("scroll",onScroll);
+
+return ()=>window.removeEventListener("scroll",onScroll);
+
+},[]);
+
 if(loading){
 return <p className="p-10 text-center">Loading product...</p>
 }
@@ -184,76 +137,100 @@ if(!product){
 return <p className="p-10 text-center">Product not found</p>
 }
 
-/* ========================= */
-/* SIZE */
-/* ========================= */
+/* SIZE LOGIC */
 
 const sizes =
-product.sizes?.length > 0
+product.sizes?.length
 ? product.sizes.filter((s:any)=>{
 return product.sizeStock?.[s] === undefined || product.sizeStock?.[s] > 0;
 })
 : ["S","M","L","XL"];
 
-/* ========================= */
+/* IMAGES */
 
-const images = [
-product?.image,
-...(Array.isArray(product?.images) ? product.images : [])
-].filter((img:any)=>img);
+const images = Array.from(
+  new Set([
+    product?.image,
+    ...(Array.isArray(product?.images) ? product.images : [])
+  ].filter(Boolean))
+);
+/* DISCOUNT */
 
 const discount =
 product.mrp
-? Math.round(((product.mrp - product.price) / product.mrp) * 100)
-: 0;
+? Math.round(((product.mrp-product.price)/product.mrp)*100)
+:0;
+
+/* RATING */
 
 const rating =
 reviews.length
 ? (reviews.reduce((a,b)=>a+b.rating,0)/reviews.length).toFixed(1)
-: null;
+:null;
 
-/* ========================= */
-/* STOCK LOGIC */
-/* ========================= */
+/* RATING BREAKDOWN */
+
+const averageRating =
+reviews.length
+? (reviews.reduce((sum,r)=>sum+r.rating,0)/reviews.length).toFixed(1)
+:0;
+
+const ratingBreakdown=[5,4,3,2,1].map(star=>{
+
+const count=reviews.filter(r=>r.rating===star).length;
+
+return{
+star,
+count,
+percent:reviews.length
+? (count/reviews.length)*100
+:0
+};
+
+});
+
+/* STOCK */
 
 const isOutOfStock = product.stock <= 0;
-const lowStock = product.stock > 0 && product.stock <= 3;
-
-/* ========================= */
-/* UI */
-/* ========================= */
-
 return(
 
 <main className="max-w-7xl mx-auto px-4 py-10">
 
-<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
-{/* IMAGE */}
+{/* IMAGE SECTION */}
 
-<div>
+<div className="animate-fade">
 
-<div className="w-full aspect-square overflow-hidden rounded-lg bg-gray-100">
+<div className="w-full aspect-square overflow-hidden rounded-xl bg-gray-100">
 
 <img
 src={selectedImage || "/placeholder.png"}
+loading="lazy"
 onMouseEnter={()=>setZoom(true)}
 onMouseLeave={()=>setZoom(false)}
-className={`w-full h-full object-cover transition-transform duration-300 
-${zoom ? "scale-110" : "scale-100"}`}
+onClick={()=>setImageViewer(true)}
+className={`w-full h-full object-cover transition-all duration-500 cursor-zoom-in ${
+zoom ? "scale-110":"scale-100"
+}`}
 />
 
 </div>
 
-<div className="flex gap-3 mt-4 flex-wrap">
+<div className="grid grid-cols-5 gap-3 mt-4">
 
-{images.map((img:any)=>(
+{images.map((img:any,i:number)=>(
 <img
-key={img}
+key={i}
+loading="lazy"
 src={img}
-onClick={()=>setSelectedImage(img)}
-className={`w-16 h-16 object-cover border rounded cursor-pointer 
-${selectedImage===img ? "border-black" : ""}`}
+onClick={()=>{
+setSelectedImage(img);
+setViewerIndex(i);
+}}
+className={`aspect-square object-cover rounded-lg cursor-pointer hover:scale-110 transition ${
+selectedImage===img ? "ring-2 ring-black":""
+}`}
 />
 ))}
 
@@ -261,44 +238,45 @@ ${selectedImage===img ? "border-black" : ""}`}
 
 </div>
 
-{/* INFO */}
+{/* PRODUCT INFO */}
 
-<div>
+<div className="animate-slide">
 
-<h1 className="text-2xl font-semibold">{product.name}</h1>
+<h1 className="text-xl md:text-2xl lg:text-3xl font-semibold">
+{product.name}
+</h1>
 
-{rating && (
+{rating &&(
 <p className="text-yellow-500 mt-2">
 ⭐ {rating} ({reviews.length} reviews)
 </p>
 )}
 
-<div className="mt-4 flex items-center gap-3">
+<div className="flex items-center gap-3 mt-4">
 
-<p className="text-3xl font-bold">₹{product.price}</p>
+<p className="text-2xl md:text-3xl font-bold">
+₹{product.price}
+</p>
 
-{product.mrp && (
+{product.mrp &&(
 <>
-<p className="text-gray-400 line-through text-lg">₹{product.mrp}</p>
-<p className="text-green-600 font-semibold">{discount}% OFF</p>
+<p className="text-gray-400 line-through">
+₹{product.mrp}
+</p>
+
+<p className="text-green-600 font-semibold">
+{discount}% OFF
+</p>
 </>
 )}
 
 </div>
 
-{/* STOCK */}
-
-<p className={`text-sm mt-2 ${
-isOutOfStock ? "text-red-500" : "text-green-600"
+<p className={`mt-2 text-sm ${
+isOutOfStock ? "text-red-500":"text-green-600"
 }`}>
-{isOutOfStock ? "Out of Stock" : "In Stock"}
+{isOutOfStock ? "Out of Stock":"In Stock"}
 </p>
-
-{lowStock && (
-<p className="text-orange-500 text-sm">
-Only {product.stock} left 🔥
-</p>
-)}
 
 {/* SIZE */}
 
@@ -309,35 +287,41 @@ Only {product.stock} left 🔥
 <div className="flex gap-2 flex-wrap">
 
 {sizes.map((size:any)=>(
-
 <button
 key={size}
 onClick={()=>setSelectedSize(size)}
-className={`border px-4 py-1 rounded ${
-selectedSize===size ? "bg-black text-white" : ""
+className={`border px-4 py-1 rounded transition hover:bg-black hover:text-white ${
+selectedSize===size ? "bg-black text-white":""
 }`}
 >
 {size}
 </button>
-
 ))}
 
 </div>
 
 <button
 onClick={()=>setShowSizeChart(true)}
-className="text-blue-600 mt-2 underline text-sm"
+className="text-blue-600 mt-2 underline text-sm hover:opacity-70"
 >
 View Size Chart
 </button>
 
+{sizeError &&(
+<p className="text-red-500 text-sm mt-1">
+{sizeError}
+</p>
+)}
+
 </div>
 
-<p className="text-gray-500 mt-6">{product.description}</p>
+<p className="text-gray-500 mt-6">
+{product.description}
+</p>
 
-{/* BUTTONS */}
+{/* ACTION BUTTONS */}
 
-<div className="flex gap-4 mt-6">
+<div ref={actionRef} className="flex gap-4 mt-6 flex-wrap">
 
 <button
 disabled={isOutOfStock}
@@ -345,28 +329,28 @@ onClick={()=>{
 
 if(sizes.length && !selectedSize){
 setSizeError("Please select size");
-setPendingAction("cart");
-setShowSizePopup(true);
 return;
 }
 
-addToCart({...product,size:selectedSize,quantity:1});
+if(cartState==="added"){
+router.push("/cart");
+return;
+}
 
-setCartAnim(true);
-setTimeout(()=>setCartAnim(false),800);
+setCartState("loading");
+
+setTimeout(()=>{
+addToCart({...product,size:selectedSize,quantity:1});
+setCartState("added");
+},400);
 
 }}
-className={`px-6 py-2 rounded relative overflow-hidden ${
-isOutOfStock
-? "bg-gray-400 text-white cursor-not-allowed"
-: "bg-black text-white"
-}`}
+className="bg-black text-white px-6 py-3 rounded-xl hover:scale-105 active:scale-95 transition shadow-md"
 >
-Add to Cart
 
-{cartAnim && (
-<span className="absolute inset-0 bg-green-500 animate-ping opacity-40"></span>
-)}
+{cartState==="idle" && "Add to Cart"}
+{cartState==="loading" && "Adding..."}
+{cartState==="added" && "View Cart"}
 
 </button>
 
@@ -376,10 +360,12 @@ onClick={()=>{
 
 if(sizes.length && !selectedSize){
 setSizeError("Please select size");
-setPendingAction("buy");
-setShowSizePopup(true);
 return;
 }
+
+setBuyLoading(true);
+
+setTimeout(()=>{
 
 localStorage.setItem("buyNow",JSON.stringify({
 ...product,
@@ -389,84 +375,254 @@ quantity:1
 
 window.location.href="/checkout/address";
 
+},500);
+
 }}
-className={`px-6 py-2 rounded ${
-isOutOfStock
-? "border bg-gray-200 cursor-not-allowed"
-: "border"
-}`}
+className="border px-6 py-3 rounded-xl hover:bg-gray-100 transition shadow-sm"
 >
-Buy Now
+
+{buyLoading ? "Processing..." : "Buy Now"}
+
 </button>
 
 <button
-onClick={()=>addToWishlist(product)}
-className="border px-6 py-2 rounded"
->
-❤ Wishlist
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-{/* SIZE POPUP */}
-
-{showSizePopup && (
-
-<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-
-<div className="bg-white p-6 rounded-xl w-[90%] max-w-md">
-
-<h3 className="text-lg font-semibold text-center mb-3">
-Select Size
-</h3>
-
-{sizeError && (
-<p className="text-red-500 text-center mb-3">{sizeError}</p>
-)}
-
-<div className="flex gap-2 flex-wrap justify-center mb-4">
-
-{sizes.map((size:any)=>(
-
-<button
-key={size}
 onClick={()=>{
-setSelectedSize(size);
-setShowSizePopup(false);
-setSizeError("");
 
-if(pendingAction==="buy"){
-localStorage.setItem("buyNow",JSON.stringify({
-...product,
-size:size,
-quantity:1
-}));
-window.location.href="/checkout/address";
+if(wishlistState==="added"){
+router.push("/wishlist");
+return;
 }
 
-if(pendingAction==="cart"){
-addToCart({...product,size:size,quantity:1});
-}
+addToWishlist(product);
+setWishlistState("added");
+
 }}
-className="border px-4 py-2 rounded hover:bg-black hover:text-white"
+className="border px-6 py-3 rounded-xl hover:bg-gray-100 transition"
 >
-{size}
+
+{wishlistState==="added" ? "❤ View Wishlist":"❤ Wishlist"}
+
 </button>
 
+</div>
+
+</div>
+
+</div>
+
+{/* REVIEWS */}
+
+{/* ================= CUSTOMER REVIEWS ================= */}
+
+<section className="mt-16 space-y-8">
+
+<h2 className="text-2xl font-semibold">
+Customer Reviews
+</h2>
+
+{/* SUMMARY */}
+
+<div className="flex gap-10 flex-wrap">
+
+<div>
+
+<p className="text-4xl font-bold">
+{averageRating} ⭐
+</p>
+
+<p className="text-gray-500">
+{reviews.length} reviews
+</p>
+
+</div>
+
+{/* BREAKDOWN */}
+
+<div className="space-y-2">
+
+{ratingBreakdown.map(r=>(
+<div key={r.star} className="flex items-center gap-3">
+
+<span>{r.star}★</span>
+
+<div className="w-40 h-2 bg-gray-200 rounded overflow-hidden">
+
+<div
+style={{width:`${r.percent}%`}}
+className="h-full bg-yellow-400 transition-all duration-700"
+/>
+
+</div>
+
+<span className="text-sm text-gray-600">
+{r.count}
+</span>
+
+</div>
 ))}
 
 </div>
 
-<button
-onClick={()=>setShowSizePopup(false)}
-className="w-full border py-2 rounded"
+</div>
+
+{/* NO REVIEWS */}
+
+{reviews.length===0 &&(
+<p className="text-gray-500">
+No reviews yet
+</p>
+)}
+
+{/* REVIEW CARDS */}
+
+<div className="space-y-6">
+
+{reviews.map((r:any)=>(
+<div
+key={r._id}
+className="border rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition"
 >
-Cancel
+
+{/* HEADER */}
+
+<div className="flex justify-between">
+
+<div>
+
+<p className="font-semibold">
+{r.userName}
+</p>
+
+<span className="text-xs text-green-600">
+✔ Verified Purchase
+</span>
+
+</div>
+
+<div className="text-yellow-500">
+{"★".repeat(r.rating)}
+{"☆".repeat(5-r.rating)}
+</div>
+
+</div>
+
+{/* COMMENT */}
+
+<p className="mt-3 text-gray-700">
+{r.comment}
+</p>
+
+{/* CUSTOMER IMAGES */}
+
+{r.images?.length>0 &&(
+
+<div className="flex gap-3 mt-3 flex-wrap">
+
+{r.images.map((img:string,i:number)=>(
+<img
+key={i}
+src={img}
+loading="lazy"
+onClick={()=>{
+setReviewImages(r.images);
+setReviewIndex(i);
+setReviewViewer(true);
+}}
+className="w-24 h-24 md:w-20 md:h-20 object-cover rounded cursor-pointer hover:scale-110 transition"
+/>
+))}
+
+</div>
+
+)}
+
+{/* DATE */}
+
+<p className="text-xs text-gray-400 mt-3">
+{new Date(r.createdAt).toDateString()}
+</p>
+
+<button className="text-sm text-gray-600 mt-2 hover:underline">
+👍 Helpful
 </button>
+
+</div>
+))}
+
+</div>
+
+</section>
+
+
+
+{/* ================= REVIEW IMAGE VIEWER ================= */}
+
+{reviewViewer && (
+
+<div
+className="fixed inset-0 bg-black/95 z-[99999] flex items-center justify-center"
+onClick={()=>setReviewViewer(false)}
+>
+
+{/* CLOSE BUTTON */}
+
+<button
+onClick={()=>setReviewViewer(false)}
+className="absolute top-6 right-6 text-white text-4xl hover:scale-110 transition z-[100000]"
+>
+❌
+</button>
+
+<div
+className="w-full max-w-5xl px-6"
+onClick={(e)=>e.stopPropagation()}
+>
+
+{/* MAIN SLIDER */}
+
+<Swiper
+modules={[Navigation, Thumbs]}
+navigation
+thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
+className="mb-4"
+initialSlide={reviewIndex}
+>
+
+{reviewImages.map((img,i)=>(
+<SwiperSlide key={i}>
+
+<img
+src={img}
+className="w-full max-h-[70vh] object-contain rounded-lg"
+/>
+
+</SwiperSlide>
+))}
+
+</Swiper>
+
+{/* THUMBNAILS */}
+
+<Swiper
+modules={[Thumbs]}
+onSwiper={setThumbsSwiper}
+slidesPerView={5}
+spaceBetween={10}
+watchSlidesProgress
+>
+
+{reviewImages.map((img,i)=>(
+<SwiperSlide key={i}>
+
+<img
+src={img}
+className="h-20 w-full object-cover rounded cursor-pointer border hover:border-white"
+/>
+
+</SwiperSlide>
+))}
+
+</Swiper>
 
 </div>
 
@@ -474,30 +630,114 @@ Cancel
 
 )}
 
-{/* SIZE CHART */}
+
+
+
+{/* STICKY BUY BAR */}
+
+{showSticky &&(
+
+<div className="fixed bottom-0 left-0 w-full bg-white border-t shadow-lg z-50 animate-slideUp">
+
+<div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
+
+<p className="font-bold text-lg">
+₹{product.price}
+</p>
+
+<div className="flex gap-2">
+
+<button
+className="bg-black text-white px-4 py-2 rounded-lg"
+onClick={()=>addToCart({...product,size:selectedSize,quantity:1})}
+>
+Add to Cart
+</button>
+
+<button
+className="border px-4 py-2 rounded-lg"
+onClick={()=>window.location.href="/checkout/address"}
+>
+Buy Now
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
+
+{/* SIZE CHART MODAL */}
 
 {showSizeChart && (
 
-<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+<div
+className="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center"
+onClick={()=>setShowSizeChart(false)}
+>
 
-<div className="bg-white p-6 rounded-xl w-[95%] max-w-lg">
+<div
+className="bg-white max-w-md w-full p-6 rounded-xl shadow-xl"
+onClick={(e)=>e.stopPropagation()}
+>
 
-<h3 className="text-lg font-semibold text-center mb-4">
+<div className="flex justify-between items-center mb-4">
+
+<h2 className="text-lg font-semibold">
 Size Chart
-</h3>
-
-<p className="font-medium mb-2">T-Shirts</p>
-<p className="text-sm mb-4">S: 38" | M: 40" | L: 42" | XL: 44"</p>
-
-<p className="font-medium mb-2">Trousers</p>
-<p className="text-sm">S: 30 | M: 32 | L: 34 | XL: 36</p>
+</h2>
 
 <button
 onClick={()=>setShowSizeChart(false)}
-className="w-full border py-2 rounded mt-4"
+className="text-xl hover:scale-110"
 >
-Close
+✕
 </button>
+
+</div>
+
+<table className="w-full text-sm border">
+
+<thead className="bg-gray-100">
+
+<tr>
+<th className="p-2 border">Size</th>
+<th className="p-2 border">Chest</th>
+<th className="p-2 border">Length</th>
+</tr>
+
+</thead>
+
+<tbody>
+
+<tr>
+<td className="border p-2 text-center">S</td>
+<td className="border p-2 text-center">36</td>
+<td className="border p-2 text-center">26</td>
+</tr>
+
+<tr>
+<td className="border p-2 text-center">M</td>
+<td className="border p-2 text-center">38</td>
+<td className="border p-2 text-center">27</td>
+</tr>
+
+<tr>
+<td className="border p-2 text-center">L</td>
+<td className="border p-2 text-center">40</td>
+<td className="border p-2 text-center">28</td>
+</tr>
+
+<tr>
+<td className="border p-2 text-center">XL</td>
+<td className="border p-2 text-center">42</td>
+<td className="border p-2 text-center">29</td>
+</tr>
+</tbody>
+</table>
 
 </div>
 
@@ -507,5 +747,8 @@ Close
 
 </main>
 
-);
+
+
+
+)
 }

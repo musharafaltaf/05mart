@@ -1,25 +1,36 @@
-import mongoose, { Schema, Model } from "mongoose";
+import mongoose from "mongoose";
 
-interface INotification {
-  userId?: string;
-  message: string;
-  read?: boolean;
+const NotificationSchema = new mongoose.Schema({
+
+userId:{
+type:String,
+required:true
+},
+
+message:{
+type:String,
+required:true
+},
+
+read:{
+type:Boolean,
+default:false
+},
+
+/* NEW */
+
+productId:String,
+productName:String,
+productImage:String,
+
+link:String,
+
+createdAt:{
+type:Date,
+default:Date.now
 }
 
-const NotificationSchema = new Schema<INotification>(
-  {
-    userId: String,
-    message: String,
-    read: {
-      type: Boolean,
-      default: false
-    }
-  },
-  { timestamps: true }
-);
+});
 
-const Notification: Model<INotification> =
-  mongoose.models.Notification ||
-  mongoose.model<INotification>("Notification", NotificationSchema);
-
-export default Notification;
+export default mongoose.models.Notification ||
+mongoose.model("Notification",NotificationSchema);

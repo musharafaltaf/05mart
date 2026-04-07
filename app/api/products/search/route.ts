@@ -1,6 +1,8 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Product from "@/app/lib/models/Product";
+
 
 export async function GET(req: Request) {
   try {

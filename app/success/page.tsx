@@ -116,7 +116,7 @@
 // </button>
 
 // <a
-// href="tel:+916005955305"
+// href="tel:+919103316778"
 // className="border py-3 rounded-lg hover:bg-gray-100 transition"
 // >
 // Contact Support
@@ -368,7 +368,7 @@
 // </button>
 
 // <a
-// href="tel:+916005955305"
+// href="tel:+919103316778"
 // className="border py-3 rounded-lg hover:bg-gray-100 transition"
 // >
 // Contact Support
@@ -698,7 +698,7 @@
 // </button>
 
 // <a
-// href="tel:+916005955305"
+// href="tel:+919103316778"
 // className="border py-3 rounded-lg hover:bg-gray-100 transition"
 // >
 // Contact Support
@@ -1008,7 +1008,7 @@ View Order
 </Link>
 
 <a
-href={`https://wa.me/916005955305?text=Track order ${orderId}`}
+href={`https://wa.me/919103316778?text=Track order ${orderId}`}
 target="_blank"
 className="border py-2"
 >

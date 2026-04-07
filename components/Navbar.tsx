@@ -1,1423 +1,1162 @@
-// "use client";
+"use client"
+
+import { useState,useEffect } from "react"
+import { useRouter,usePathname } from "next/navigation"
+import { useCart } from "@/app/context/CartContext"
+import { useWishlist } from "@/app/context/WishlistContext"
+import SearchBar from "./SearchBar"
+
+import {
+Menu,
+Heart,
+ShoppingCart,
+Home,
+User,
+Bell,
+Package,
+RotateCcw,
+RefreshCcw,
+LayoutDashboard,
+ImagePlus,
+Tag
+} from "lucide-react"
+
+export default function Layout({children}:{children:React.ReactNode}){
+
+const router = useRouter()
+const pathname = usePathname()
+
+const [menuOpen,setMenuOpen] = useState(false)
+const [user,setUser] = useState<any>(null)
+
+const { cart } = useCart()
+const { wishlist } = useWishlist()
+
+const cartCount = cart?.length || 0
+const wishlistCount = wishlist?.length || 0
+
+const [alertCount,setAlertCount] = useState(0)
+const [profileImage,setProfileImage] = useState<string | null>(null)
+const [viewImage,setViewImage] = useState(false)
+
+const [touchStart,setTouchStart] = useState(0)
+const [touchEnd,setTouchEnd] = useState(0)
+const [mounted,setMounted] = useState(false)
+const [openProducts,setOpenProducts] = useState(false)
+const [openBanners,setOpenBanners] = useState(false)
+const [openCategories,setOpenCategories] = useState(false)
+const [openSection,setOpenSection] = useState<string | null>(null)
 
-// import Link from "next/link";
-// import { useState } from "react";
-// import { useCart } from "@/app/context/CartContext";
-// import { useWishlist } from "@/app/context/WishlistContext";
-
-// export default function Navbar(){
-
-// const [menuOpen,setMenuOpen] = useState(false);
-
-// const { cart } = useCart();
-// const { wishlist } = useWishlist();
-
-// const cartCount = cart?.length || 0;
-// const wishlistCount = wishlist?.length || 0;
-
-// return(
-
-// <header className="border-b bg-white sticky top-0 z-50">
-
-// <div className="max-w-7xl mx-auto px-4">
-
-// <div className="flex items-center justify-between h-16">
-
-// {/* LOGO */}
-
-// <Link href="/" className="text-xl font-bold">
-// 05Mart
-// </Link>
-
-// {/* SEARCH */}
-
-// <div className="hidden md:flex flex-1 mx-6">
-
-// <input
-// type="text"
-// placeholder="Search products..."
-// className="w-full border rounded-lg px-4 py-2"
-// />
-
-// </div>
-
-// {/* ICONS */}
-
-// <div className="flex items-center gap-4">
-
-// <Link href="/wishlist" className="relative">
-
-// <span className="text-xl">❤️</span>
-
-// {wishlistCount > 0 && (
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {wishlistCount}
-// </span>
-// )}
-
-// </Link>
-
-// <Link href="/cart" id="cart-icon" className="relative">
-
-// <span className="text-xl">🛒</span>
-
-// {cartCount > 0 && (
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {cartCount}
-// </span>
-// )}
-
-// </Link>
-
-// <Link href="/orders">
-// Orders
-// </Link>
-
-// {/* MOBILE MENU BUTTON */}
-
-// <button
-// onClick={()=>setMenuOpen(!menuOpen)}
-// className="md:hidden text-2xl"
-// >
-// ☰
-// </button>
-
-// </div>
-
-// </div>
-
-// {/* MOBILE MENU */}
-
-// {menuOpen && (
-
-// <div className="md:hidden border-t py-4 space-y-3">
-
-// <Link href="/" onClick={()=>setMenuOpen(false)}>
-// Home
-// </Link>
-
-// <Link href="/cart" onClick={()=>setMenuOpen(false)}>
-// Cart
-// </Link>
-
-// <Link href="/wishlist" onClick={()=>setMenuOpen(false)}>
-// Wishlist
-// </Link>
-
-// <Link href="/orders" onClick={()=>setMenuOpen(false)}>
-// Orders
-// </Link>
-
-// <Link href="/admin" onClick={()=>setMenuOpen(false)}>
-// Admin
-// </Link>
-
-// <Link href="/login" onClick={()=>setMenuOpen(false)}>
-// Login
-// </Link>
-
-// </div>
-
-// )}
-
-// </div>
-
-// </header>
-
-// )
-
-// }
-
-
-// "use client";
-
-// import Link from "next/link";
-// import { useState, useEffect } from "react";
-// import { useCart } from "@/app/context/CartContext";
-// import { useWishlist } from "@/app/context/WishlistContext";
-
-// export default function Navbar() {
-
-// const [query,setQuery] = useState("");
-// const [results,setResults] = useState<any[]>([]);
-// const [menuOpen,setMenuOpen] = useState(false);
-// const [searchOpen,setSearchOpen] = useState(false);
-// const [user,setUser] = useState<any>(null);
-
-// const { cart } = useCart();
-// const { wishlist } = useWishlist();
-
-// const cartCount = cart?.length || 0;
-// const wishlistCount = wishlist?.length || 0;
-
-// /* LOAD USER */
-
-// useEffect(()=>{
-// const storedUser = localStorage.getItem("user");
-// if(storedUser){
-// setUser(JSON.parse(storedUser));
-// }
-// },[]);
-
-// /* SEARCH API */
-
-// useEffect(()=>{
-
-// if(query.length < 2){
-// setResults([]);
-// return;
-// }
-
-// const loadResults = async()=>{
-
-// const res = await fetch(`/api/search?q=${query}`);
-// const data = await res.json();
-
-// setResults(data);
-
-// };
-
-// loadResults();
-
-// },[query]);
-
-// /* LOGOUT */
-
-// const logout = ()=>{
-// localStorage.removeItem("user");
-// localStorage.removeItem("token");
-// location.reload();
-// };
-
-// return(
-
-// <header className="border-b bg-white sticky top-0 z-50">
-
-// <div className="max-w-7xl mx-auto px-4">
-
-// {/* NAVBAR */}
-
-// <div className="flex items-center justify-between h-16">
-
-// {/* LOGO */}
-
-// <Link href="/" className="text-xl font-bold">
-// 05Mart
-// </Link>
-
-// {/* DESKTOP SEARCH */}
-
-// <div className="relative hidden md:block w-96">
-
-// <input
-// type="text"
-// placeholder="Search products..."
-// value={query}
-// onChange={(e)=>setQuery(e.target.value)}
-// className="w-full border rounded-lg px-4 py-2"
-// />
-
-// {results.length > 0 && (
-
-// <div className="absolute bg-white border w-full mt-2 rounded shadow-lg z-50">
-
-// {results.map((p:any)=>(
-
-// <Link
-// key={p._id}
-// href={`/product/${p._id}`}
-// onClick={()=>setResults([])}
-// className="flex items-center gap-3 p-3 hover:bg-gray-100"
-// >
-
-// <img
-// src={p.image}
-// className="w-10 h-10 object-cover rounded"
-// />
-
-// <div>
-
-// <p className="text-sm font-medium">
-// {p.name}
-// </p>
-
-// <p className="text-xs text-gray-500">
-// ₹{p.price}
-// </p>
-
-// </div>
-
-// </Link>
-
-// ))}
-
-// </div>
-
-// )}
-
-// </div>
-
-// {/* ICONS */}
-
-// <div className="flex items-center gap-4">
-
-// {/* MOBILE SEARCH BUTTON */}
-
-// <button
-// onClick={()=>setSearchOpen(true)}
-// className="text-xl md:hidden"
-// >
-// 🔍
-// </button>
-
-// {/* WISHLIST */}
-
-// <Link href="/wishlist" className="relative">
-// ❤️
-// {wishlistCount>0 &&(
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {wishlistCount}
-// </span>
-// )}
-// </Link>
-
-// {/* CART */}
-
-// <Link href="/cart" className="relative">
-// 🛒
-// {cartCount>0 &&(
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {cartCount}
-// </span>
-// )}
-// </Link>
-
-// {/* PROFILE */}
-
-// {user ? (
-
-// <Link href="/profile">
-// 👤
-// </Link>
-
-// ) : (
-
-// <Link href="/login">
-// Login
-// </Link>
-
-// )}
-
-// {/* MOBILE MENU */}
-
-// <button
-// onClick={()=>setMenuOpen(!menuOpen)}
-// className="md:hidden text-2xl"
-// >
-// ☰
-// </button>
-
-// </div>
-
-// </div>
-
-// {/* MOBILE SEARCH */}
-
-// {searchOpen && (
-
-// <div className="flex items-center gap-3 py-3 md:hidden">
-
-// <button
-// onClick={()=>setSearchOpen(false)}
-// className="text-lg"
-// >
-// ←
-// </button>
-
-// <input
-// autoFocus
-// type="text"
-// value={query}
-// onChange={(e)=>setQuery(e.target.value)}
-// placeholder="Search products..."
-// className="flex-1 border rounded-lg px-4 py-2"
-// />
-
-// </div>
-
-// )}
-
-// {/* MOBILE SEARCH RESULTS */}
-
-// {searchOpen && results.length>0 && (
-
-// <div className="md:hidden border-t">
-
-// {results.map((p:any)=>(
-
-// <Link
-// key={p._id}
-// href={`/product/${p._id}`}
-// onClick={()=>setSearchOpen(false)}
-// className="flex items-center gap-3 p-3 border-b"
-// >
-
-// <img
-// src={p.image}
-// className="w-10 h-10 object-cover"
-// />
-
-// <div>
-
-// <p className="text-sm font-medium">
-// {p.name}
-// </p>
-
-// <p className="text-xs text-gray-500">
-// ₹{p.price}
-// </p>
-
-// </div>
-
-// </Link>
-
-// ))}
-
-// </div>
-
-// )}
-
-// {/* MOBILE MENU */}
-
-// {menuOpen && (
-
-// <div className="md:hidden border-t py-4 space-y-4 flex flex-col">
-
-// <Link href="/" onClick={()=>setMenuOpen(false)}>
-// Home
-// </Link>
-
-// <Link href="/cart" onClick={()=>setMenuOpen(false)}>
-// Cart
-// </Link>
-
-// <Link href="/wishlist" onClick={()=>setMenuOpen(false)}>
-// Wishlist
-// </Link>
-
-// <Link href="/orders" onClick={()=>setMenuOpen(false)}>
-// Orders
-// </Link>
-
-// {user ? (
-
-// <>
-// <Link href="/profile" onClick={()=>setMenuOpen(false)}>
-// Profile
-// </Link>
-// {user?.role === "admin" && (
-
-// <Link href="/admin" className="font-medium">
-// Admin
-// </Link>
-
-// )}
-
-// <button
-// onClick={logout}
-// className="text-red-500 text-left"
-// >
-// Logout
-// </button>
-// </>
-
-// ):(
-
-// <>
-// <Link href="/login" onClick={()=>setMenuOpen(false)}>
-// Login
-// </Link>
-
-// <Link href="/register" onClick={()=>setMenuOpen(false)}>
-// Register
-// </Link>
-// </>
-
-// )}
-
-// </div>
-
-// )}
-
-// </div>
-
-// </header>
-
-// );
-
-// }
-
-
-// "use client";
-
-// import Link from "next/link";
-// import { useState, useEffect, useRef } from "react";
-// import { useCart } from "@/app/context/CartContext";
-// import { useWishlist } from "@/app/context/WishlistContext";
-// import SearchBar from "@/components/SearchBar";
-
-// export default function Navbar() {
-
-// const [menuOpen,setMenuOpen] = useState(false);
-// const [user,setUser] = useState<any>(null);
-
-// const menuRef = useRef<any>(null); // NEW
-
-// const { cart } = useCart();
-// const { wishlist } = useWishlist();
-
-// const cartCount = cart?.length || 0;
-// const wishlistCount = wishlist?.length || 0;
-
-// useEffect(()=>{
-
-// const storedUser = localStorage.getItem("user");
-
-// if(storedUser){
-// setUser(JSON.parse(storedUser));
-// }
-
-// },[]);
-
-// /* CLOSE MENU WHEN CLICKING OUTSIDE */
-
-// useEffect(()=>{
-
-// const handleClick = (e:any)=>{
-
-// if(menuRef.current && !menuRef.current.contains(e.target)){
-// setMenuOpen(false);
-// }
-
-// };
-
-// document.addEventListener("mousedown",handleClick);
-
-// return ()=>document.removeEventListener("mousedown",handleClick);
-
-// },[]);
-
-// const logout = ()=>{
-
-// localStorage.removeItem("user");
-// localStorage.removeItem("token");
-// location.reload();
-
-// };
-
-// return (
-
-// <header className="border-b bg-white sticky top-0 z-50">
-
-// <div className="max-w-7xl mx-auto px-4">
-
-// <div className="flex items-center justify-between h-16 gap-4">
-
-// <Link href="/" className="text-2xl font-extrabold tracking-wide">
-// 05Mart
-// </Link>
-
-// <div className="hidden md:flex flex-1 mx-6">
-// <SearchBar />
-// </div>
-
-// <div className="flex items-center gap-4">
-
-// <Link href="/wishlist" className="relative text-xl">
-
-// ❤️
-
-// {wishlistCount>0 && (
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {wishlistCount}
-// </span>
-// )}
-
-// </Link>
-
-// <Link href="/cart" className="relative text-xl">
-
-// 🛒
-
-// {cartCount>0 && (
-// <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 rounded">
-// {cartCount}
-// </span>
-// )}
-
-// </Link>
-
-// {user?.role==="admin" && (
-
-// <div className="hidden md:flex gap-4 text-sm">
-
-// <Link href="/admin">
-// Admin
-// </Link>
-
-// <Link href="/admin/orders">
-// Orders
-// </Link>
-
-// </div>
-
-// )}
-
-// {user ? (
-
-// <Link href="/profile" className="text-xl">
-// 👤
-// </Link>
-
-// ) : (
-
-// <Link href="/login" className="text-sm font-medium">
-// Login
-// </Link>
-
-// )}
-
-// <button
-// onClick={()=>setMenuOpen(!menuOpen)}
-// className="md:hidden text-2xl"
-// >
-// ☰
-// </button>
-
-// </div>
-
-// </div>
-
-// <div className="md:hidden py-3">
-// <SearchBar />
-// </div>
-
-// {/* ATTACH REF HERE */}
-
-// {menuOpen && (
-
-// <div ref={menuRef} className="md:hidden border-t py-4 space-y-4 flex flex-col">
-
-// <Link href="/" onClick={()=>setMenuOpen(false)}>
-// Home
-// </Link>
-
-// <Link href="/cart" onClick={()=>setMenuOpen(false)}>
-// Cart
-// </Link>
-
-// <Link href="/wishlist" onClick={()=>setMenuOpen(false)}>
-// Wishlist
-// </Link>
-
-// {user?.role==="admin" && (
-
-// <>
-// <Link href="/admin" onClick={()=>setMenuOpen(false)}>
-// Admin
-// </Link>
-
-// <Link
-// href="/admin/orders"
-// className="border p-4 rounded hover:shadow text-center block"
-// >
-// Orders
-// </Link>
-// </>
-
-// )}
-
-// {user ? (
-
-// <>
-// <Link href="/profile" onClick={()=>setMenuOpen(false)}>
-// Profile
-// </Link>
-
-// <button
-// onClick={logout}
-// className="text-red-500 text-left"
-// >
-// Logout
-// </button>
-// </>
-
-// ) : (
-
-// <Link href="/login" onClick={()=>setMenuOpen(false)}>
-// Login
-// </Link>
-
-// )}
-
-// </div>
-
-// )}
-
-// </div>
-
-// </header>
-
-// );
-
-// }
-
-
-
-"use client";
-
-import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import { usePathname, useRouter } from "next/navigation";
-
-import { useCart } from "@/app/context/CartContext";
-import { useWishlist } from "@/app/context/WishlistContext";
-import SearchBar from "@/components/SearchBar";
-
-export default function Navbar(){
-
-const [pageLoading,setPageLoading] = useState(false);
-const [menuOpen,setMenuOpen] = useState(false);
-
-const pathname = usePathname();
-const router = useRouter();
-
-/* STATES */
-const [showProfile,setShowProfile] = useState(false);
-const [showNotif,setShowNotif] = useState(false);
-const [notifCount,setNotifCount] = useState(0);
-const [user,setUser] = useState<any>(null);
-
-/* CONTEXT */
-const { cart } = useCart();
-const { wishlist } = useWishlist();
-
-const cartCount = cart?.length || 0;
-const wishlistCount = wishlist?.length || 0;
-
-/* refs */
-const profileRef = useRef<any>(null);
-const notifRef = useRef<any>(null);
-
-/* 🔥 AUTO USER REFRESH */
 useEffect(()=>{
 
-const loadUser = ()=>{
-const u = JSON.parse(localStorage.getItem("user") || "null");
-setUser(u);
-};
+const loadData = ()=>{
 
-loadUser();
+const userData = localStorage.getItem("user")
 
-/* 🔥 LISTEN */
-window.addEventListener("userChanged", loadUser);
+if(!userData){
+setUser(null)
+setProfileImage(null)
+return
+}
 
-return ()=>window.removeEventListener("userChanged", loadUser);
+const u = JSON.parse(userData)
 
-},[]);
+setUser(u)
 
-/* ADMIN */
-const isAdmin = (user?.role || "").toLowerCase() === "admin";
+if(u && u._id){
 
-/* 🔥 NOTIFICATIONS (AUTO REFRESH WITH USER CHANGE) */
+const img = localStorage.getItem(`profileImage_${u._id}`)
+
+if(img){
+setProfileImage(img)
+}else{
+setProfileImage(null)
+}
+
+}
+
+}
+
+loadData()
+
+window.addEventListener("profileUpdated",loadData)
+
+return ()=>{
+window.removeEventListener("profileUpdated",loadData)
+}
+
+},[])
+
 useEffect(()=>{
 
-const load = async()=>{
+const loadAlerts = async()=>{
 
 try{
-const u = JSON.parse(localStorage.getItem("user") || "null");
 
-if(!u?._id){
-setNotifCount(0);
+const user = JSON.parse(localStorage.getItem("user") || "null");
+
+if(!user?._id){
+setAlertCount(0);
 return;
 }
 
-const res = await fetch(`/api/notifications?userId=${u._id}`,{
-cache:"no-store"
-});
+const res = await fetch(`/api/notifications?userId=${user._id}`);
+
+if(!res.ok) return;
 
 const data = await res.json();
 
-if(Array.isArray(data)){
-const unread = data
-.filter((n:any)=>n.userId===u._id)
-.filter((n:any)=>!n.read).length;
+const unread = data.filter((n:any)=>!n.read).length;
 
-setNotifCount(unread);
-}else{
-setNotifCount(0);
+setAlertCount(unread);
+
+}catch(err){
+console.log("ALERT ERROR",err);
 }
 
-}catch{
-setNotifCount(0);
 }
 
-};
+/* first load */
+loadAlerts();
 
-load();
+/* refresh every 5 seconds */
+const interval = setInterval(loadAlerts,5000);
 
-const interval = setInterval(load,5000);
+/* refresh when tab focused */
+window.addEventListener("focus",loadAlerts);
 
-/* 🔥 ALSO REFRESH ON LOGIN/LOGOUT */
-window.addEventListener("userChanged", load);
+/* STEP 4 — listen for manual updates */
+window.addEventListener("notificationUpdated",loadAlerts);
 
 return ()=>{
 clearInterval(interval);
-window.removeEventListener("userChanged", load);
-};
+window.removeEventListener("focus",loadAlerts);
+window.removeEventListener("notificationUpdated",loadAlerts);
+}
 
 },[]);
+/* LIMIT BADGE */
 
-/* DROPDOWN FIX */
+const limitBadge=(num:number)=>{
+if(num>9) return "10+"
+return num
+}
+
 useEffect(()=>{
-const handle = (e:any)=>{
-if(profileRef.current?.contains(e.target)) return;
-if(notifRef.current?.contains(e.target)) return;
-setShowProfile(false);
-setShowNotif(false);
-};
-document.addEventListener("mousedown", handle);
-return ()=>document.removeEventListener("mousedown", handle);
-},[]);
+setMounted(true)
+},[])
 
-/* NAV ITEM */
-const NavItem = ({href,icon,label}:any)=>{
-const active = pathname === href;
+
+/* SIDEBAR SCROLL LOCK */
+
+useEffect(()=>{
+if(menuOpen){
+document.body.style.overflow="hidden"
+}else{
+document.body.style.overflow="auto"
+}
+},[menuOpen])
+
+/* AUTO CLOSE ON ROUTE CHANGE */
+
+useEffect(()=>{
+setMenuOpen(false)
+},[pathname])
+
+/* CLICK RIPPLE EFFECT */
+
+const ripple=(e:any)=>{
+
+const button=e.currentTarget
+const circle=document.createElement("span")
+
+const diameter=Math.max(button.clientWidth,button.clientHeight)
+const radius=diameter/2
+
+circle.style.width=circle.style.height=`${diameter}px`
+circle.style.left=`${e.clientX-button.offsetLeft-radius}px`
+circle.style.top=`${e.clientY-button.offsetTop-radius}px`
+circle.classList.add("ripple")
+
+const rippleEl=button.getElementsByClassName("ripple")[0]
+
+if(rippleEl){
+rippleEl.remove()
+}
+
+button.appendChild(circle)
+
+}
+/* PROFILE UPLOAD */
+
+const uploadProfile=(e:any)=>{
+
+const file = e.target.files[0]
+
+if(!file || !user?._id) return
+
+const reader = new FileReader()
+
+reader.onload=(ev:any)=>{
+
+const img = ev.target.result
+
+setProfileImage(img)
+
+localStorage.setItem(`profileImage_${user._id}`,img)
+
+window.dispatchEvent(new Event("profileUpdated"))
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+const go=(url:string)=>{
+router.push(url)
+setMenuOpen(false)
+}
+
+/* DROPDOWN TOGGLE */
+
+const toggleSection=(name:string)=>{
+
+if(openSection===name){
+setOpenSection(null)
+}else{
+setOpenSection(name)
+}
+
+}
+
+const logout=()=>{
+setProfileImage(null)
+setUser(null)
+
+localStorage.removeItem("user")
+
+window.dispatchEvent(new Event("userChanged"))
+
+router.push("/")
+}
+
+/* SWIPE GESTURE */
+
+const handleTouchStart = (e:any)=>{
+setTouchStart(e.targetTouches[0].clientX)
+}
+
+const handleTouchMove = (e:any)=>{
+setTouchEnd(e.targetTouches[0].clientX)
+}
+
+const handleTouchEnd = ()=>{
+
+/* swipe left → open menu */
+
+if(touchStart - touchEnd > 80){
+setMenuOpen(true)
+}
+
+/* swipe right → close menu */
+
+if(touchEnd - touchStart > 80){
+setMenuOpen(false)
+}
+
+}
+
+const NavItem=({icon,label,url}:any)=>{
+
+const active = pathname===url
 
 return(
+
 <div
-onClick={()=>{
-setPageLoading(true);
-setTimeout(()=>router.push(href),300);
-setTimeout(()=>setPageLoading(false),1200);
-}}
-className="flex flex-col items-center flex-1 cursor-pointer"
+className={`navItem ${active?"active":""}`}
+onClick={()=>go(url)}
 >
-<div className={`transition-all duration-300 flex items-center justify-center rounded-full
-${active
-? "w-14 h-14 bg-gradient-to-r from-indigo-500 to-purple-500 text-white -mt-6 scale-110 shadow-xl"
-: "w-11 h-11 bg-gray-200"
-}`}>
+
 {icon}
+
+<span>{label}</span>
+
 </div>
 
-{active && <span className="text-xs mt-1">{label}</span>}
-</div>
-);
-};
+)
+
+}
 
 return(
+
 <>
 
-{/* LOADER */}
-{pageLoading && (
-<div className="fixed inset-0 z-[9999] bg-white flex items-center justify-center">
-<div className="flex flex-col items-center">
-<img src="/logo.png" className="w-16 h-16 mb-4 animate-bounce"/>
-<p className="text-sm text-gray-500">Loading...</p>
-</div>
-</div>
-)}
 
-{/* DESKTOP */}
-<header className="hidden md:block sticky top-0 z-50 bg-white border-b shadow-sm">
-<div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
 
-<Link href="/" className="flex gap-2 items-center">
-<img src="/logo.png" className="w-12 h-12"/>
-<span className="font-bold text-xl">05Mart</span>
-</Link>
 
-<div className="flex-1">
-<SearchBar />
+<header className="topNav">
+
+{/* LEFT SIDE */}
+
+<div className="leftNav">
+
+<div className="brand" onClick={()=>go("/")}>
+
+<div className="logoCircle">
+<img src="/logo.png"/>
 </div>
 
-<div className="flex items-center gap-6 text-xl">
+<span className="logoText">05Mart</span>
 
-<Link href="/wishlist" className="relative">
-❤️
-{wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
-</Link>
-
-<Link href="/cart" className="relative">
-🛒
-{cartCount>0 && <span className="badge">{cartCount}</span>}
-</Link>
-
-<div ref={notifRef} className="relative">
-<button onClick={()=>setShowNotif(!showNotif)}>🔔</button>
-
-{notifCount>0 && <span className="badge">{notifCount}</span>}
-
-{showNotif && (
-<div className="dropdown">
-<p>Notifications</p>
-<Link href="/notifications">View all</Link>
 </div>
+
+</div>
+
+{/* RIGHT SIDE */}
+
+<div className="rightNav">
+
+<div className="iconBox" onClick={()=>go("/wishlist")}>
+
+<Heart size={24}/>
+
+{mounted && wishlistCount>0 && (
+<span className="badge">{limitBadge(wishlistCount)}</span>
 )}
 
 </div>
 
-<div ref={profileRef} className="relative">
-<button onClick={()=>setShowProfile(!showProfile)}>
-{user?.name?.charAt(0)||"U"}
+<div className="iconBox" onClick={()=>go("/notifications")}>
+
+<Bell size={24}/>
+
+{mounted && alertCount>0 && (
+<span className="badge">{limitBadge(alertCount)}</span>
+)}
+
+</div>
+
+<div className="iconBox" onClick={()=>go("/cart")}>
+
+<ShoppingCart size={24}/>
+
+{mounted && cartCount>0 && (
+<span className="badge">{limitBadge(cartCount)}</span>
+)}
+
+</div>
+
+<button
+className="menuBtn"
+onClick={()=>setMenuOpen(true)}
+>
+<Menu size={30}/>
 </button>
 
-{showProfile && (
-<div className="dropdown">
-
-{user ? (
-<>
-<Link href="/profile">Profile</Link>
-<Link href="/orders">Orders</Link>
-
-{isAdmin && (
-<>
-<Link href="/admin">Admin Panel</Link>
-<Link href="/admin/orders">Manage Orders</Link>
-</>
-)}
-
-</>
-):(
-<>
-<Link href="/login">Login</Link>
-<Link href="/register">Register</Link>
-</>
-)}
-
-</div>
-)}
-
-</div>
-
-</div>
-</div>
-</header>
-
-{/* MOBILE */}
-<header className="md:hidden sticky top-0 z-50 bg-white border-b px-4 py-3 flex items-center justify-between shadow-sm">
-
-<div className="flex items-center gap-3">
-<button onClick={()=>setMenuOpen(true)} className="text-2xl">☰</button>
-
-<Link href="/" className="flex items-center gap-2">
-<img src="/logo.png" className="w-8 h-8 rounded-full"/>
-<span className="font-bold text-lg tracking-wide">05Mart</span>
-</Link>
-</div>
-
-<div className="flex items-center gap-4 text-xl">
-
-<Link href="/wishlist" className="relative">
-❤️
-{wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
-</Link>
-
-<Link href="/cart" className="relative">
-🛒
-{cartCount>0 && <span className="badge">{cartCount}</span>}
-</Link>
-
 </div>
 
 </header>
 
-{/* MOBILE SEARCH */}
-<div className="md:hidden py-3">
-<SearchBar />
+{/* MOBILE SEARCH BAR */}
+
+<div className="mobileSearch">
+<SearchBar/>
 </div>
 
-{/* SIDE MENU */}
-{menuOpen && (
+{/* SIDEBAR */}
+
+{menuOpen &&(
+
 <>
-<div className="fixed inset-0 bg-black/40 z-[9998]" onClick={()=>setMenuOpen(false)}></div>
 
-<div className="fixed top-0 left-0 h-full w-72 bg-white z-[9999] shadow-xl p-5 flex flex-col gap-4 animate-slideIn">
+<div
+className="overlay"
+onClick={()=>setMenuOpen(false)}
+/>
 
-<div className="font-semibold border-b pb-3">
-{user?.name || "Guest"}
-</div>
+<div className="sidebar">
 
-<div onClick={()=>{router.push("/");setMenuOpen(false)}} className="menuItem">🏠 Home</div>
+<button
+className="closeBtn"
+onClick={()=>setMenuOpen(false)}
+>
+✕
+</button>
 
-{user && <>
-<div onClick={()=>{router.push("/orders");setMenuOpen(false)}} className="menuItem">📦 Orders</div>
-<div onClick={()=>{router.push("/wishlist");setMenuOpen(false)}} className="menuItem">❤️ Wishlist</div>
-</>}
+{/* PROFILE SECTION */}
 
-{isAdmin && <>
-<div onClick={()=>{router.push("/admin");setMenuOpen(false)}} className="menuItem">🛠 Dashboard</div>
-<div onClick={()=>{router.push("/admin/orders");setMenuOpen(false)}} className="menuItem">📦 Manage Orders</div>
-</>}
+<div className="profileSection">
 
-{!user ? (
-<>
-<div onClick={()=>{router.push("/login");setMenuOpen(false)}} className="menuItem">Login</div>
-<div onClick={()=>{router.push("/register");setMenuOpen(false)}} className="menuItem">Register</div>
-</>
+<div
+className="avatar"
+onClick={(e)=>{
+e.stopPropagation()
+setViewImage(true)
+}}
+>
+
+{profileImage ? (
+<img src={profileImage}/>
 ):(
-<div onClick={()=>{
-localStorage.clear();
+<User size={26}/>
+)}
 
-/* 🔥 INSTANT UPDATE */
-window.dispatchEvent(new Event("userChanged"));
+</div>
 
-router.push("/");
-}} className="menuItem text-red-500">
+<div className="profileInfo">
+
+<p>{user?.name || "Guest"}</p>
+
+<label className="uploadBtn">
+
+Upload Photo
+
+<input
+type="file"
+hidden
+onChange={uploadProfile}
+/>
+
+</label>
+
+</div>
+
+</div>
+
+<div className="menu">
+
+<p className="menuTitle">User</p>
+
+<div className="menuItem" onClick={(e)=>{ripple(e);go("/")}}>
+<Home size={18}/> Home
+</div>
+
+<div className="menuItem" onClick={(e)=>{ripple(e);go("/wishlist")}}>
+<Heart size={18}/> Wishlist
+</div>
+
+<div className="menuItem" onClick={(e)=>{ripple(e);go("/cart")}}>
+<ShoppingCart size={18}/> Cart
+</div>
+
+<div className="menuItem" onClick={(e)=>{ripple(e);go("/orders")}}>
+<RotateCcw size={18}/> Returns
+</div>
+
+<div className="menuItem" onClick={(e)=>{ripple(e);go("/orders")}}>
+<RefreshCcw size={18}/> Exchange
+</div>
+
+
+{/* LOGIN / REGISTER */}
+
+{!user &&(
+
+<>
+
+<div className="menuItem" onClick={()=>go("/login")}>
+Login
+</div>
+
+<div className="menuItem" onClick={()=>go("/register")}>
+Register
+</div>
+
+</>
+
+)}
+
+{user &&(
+
+<div className="menuItem logout" onClick={logout}>
 Logout
 </div>
+
+)}
+
+
+{/* ADMIN PANEL */}
+
+{user?.role==="admin" &&(
+
+<>
+
+<p className="menuTitle">Admin Panel</p>
+
+<div
+className={`menuItem ${pathname==="/admin"?"activeMenu":""}`}
+onClick={(e)=>{ripple(e);go("/admin")}}
+>
+<LayoutDashboard size={18}/> Dashboard
+</div>
+
+<div
+className={`menuItem ${pathname==="/admin/orders"?"activeMenu":""}`}
+onClick={(e)=>{ripple(e);go("/admin/orders")}}
+>
+<Package size={18}/> Orders
+</div>
+
+<div
+className={`menuItem ${pathname==="/admin/returns"?"activeMenu":""}`}
+onClick={(e)=>{ripple(e);go("/admin/returns")}}
+>
+<RotateCcw size={18}/> Returns
+</div>
+
+<div
+className={`menuItem ${pathname==="/admin/exchange"?"activeMenu":""}`}
+onClick={(e)=>{ripple(e);go("/admin/exchanges")}}
+>
+<RefreshCcw size={18}/> Exchange
+</div>
+
+{/* PRODUCTS */}
+
+<div
+className="menuItem dropdown"
+onClick={()=>toggleSection("products")}
+>
+<ImagePlus size={18}/> Products
+<span className={`arrow ${openSection==="products"?"rotate":""}`}>›</span>
+</div>
+
+{openSection==="products" &&(
+
+<div className="subMenu">
+
+<div className="subItem" onClick={()=>go("/admin/products/add")}>
+Add Product
+</div>
+
+<div className="subItem" onClick={()=>go("/admin/products")}>
+Edit Products
+</div>
+
+</div>
+
+)}
+
+{/* BANNERS */}
+
+<div
+className="menuItem dropdown"
+onClick={()=>toggleSection("banners")}
+>
+<ImagePlus size={18}/> Banners
+<span className={`arrow ${openSection==="banners"?"rotate":""}`}>›</span>
+</div>
+
+{openSection==="banners" &&(
+
+<div className="subMenu">
+
+<div className="subItem" onClick={()=>go("/admin/banner")}>
+Add Banner
+</div>
+
+<div className="subItem" onClick={()=>go("/admin/banner/edit")}>
+Edit Banner
+</div>
+
+</div>
+
+)}
+
+{/* CATEGORIES */}
+
+<div
+className="menuItem dropdown"
+onClick={()=>toggleSection("categories")}
+>
+<Tag size={18}/> Categories
+<span className={`arrow ${openSection==="categories"?"rotate":""}`}>›</span>
+</div>
+
+{openSection==="categories" &&(
+
+<div className="subMenu">
+
+<div className="subItem" onClick={()=>go("/admin/categories")}>
+Add Category
+</div>
+
+<div className="subItem" onClick={()=>go("/admin/categories/edit")}>
+Edit Category
+</div>
+
+</div>
+
+)}
+
+<div className="menuSpacer"></div>
+
+</>
+
 )}
 
 </div>
+
+</div>
+
 </>
+
 )}
+
+
+{viewImage && profileImage && (
+
+<div
+className="imageViewer"
+onClick={()=>setViewImage(false)}
+>
+
+<div
+className="viewerBox"
+onClick={(e)=>e.stopPropagation()}
+>
+
+<img src={profileImage} className="viewerImage"/>
+
+
+
+<button
+className="closeViewer"
+onClick={()=>setViewImage(false)}
+>
+✕
+</button>
+
+</div>
+
+</div>
+
+)}
+
+{/* PAGE CONTENT */}
+
+<main
+className="content"
+onTouchStart={handleTouchStart}
+onTouchMove={handleTouchMove}
+onTouchEnd={handleTouchEnd}
+>
+{children}
+</main>
 
 {/* BOTTOM NAV */}
-<div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex z-50">
-<NavItem href="/" icon="🏠" label="Home"/>
-<NavItem href={isAdmin ? "/admin/orders" : "/orders"} icon="📦" label="Orders"/>
-<NavItem href="/wishlist" icon="❤️" label="Wishlist"/>
-<NavItem href="/notifications" icon="🔔" label="Alerts"/>
-<NavItem href="/profile" icon="👤" label="Profile"/>
-</div>
+
+<footer className="bottomNav">
+
+<NavItem icon={<Home size={22}/>} label="Home" url="/"/>
+
+<NavItem icon={<Package size={22}/>} label="Orders" url="/orders"/>
+
+<NavItem icon={<Heart size={22}/>} label="Wishlist" url="/wishlist"/>
+
+<NavItem icon={<Bell size={22}/>} label="Alerts" url="/notifications"/>
+
+<NavItem icon={<User size={22}/>} label="Profile" url="/profile"/>
+
+</footer>
 
 <style jsx>{`
-.badge{
-position:absolute;
-top:-6px;
-right:-6px;
-background:red;
-color:white;
-font-size:10px;
-padding:2px 6px;
-border-radius:50%;
+
+body{
+margin:0;
+font-family:system-ui;
 }
 
-.dropdown{
-position:absolute;
+/* TOP NAVBAR */
+
+.topNav{
+position:fixed;
+top:0;
+left:0;
 right:0;
-top:35px;
-background:white;
-padding:10px;
-border-radius:10px;
-box-shadow:0 10px 25px rgba(0,0,0,0.1);
+height:70px;
+
 display:flex;
-flex-direction:column;
-gap:6px;
+justify-content:space-between;
+align-items:center;
+
+padding:0 3px;
+
+background:white;
+border-bottom:1px solid #eee;
+z-index:1000;
 }
 
-.menuItem{
-padding:10px;
-border-radius:8px;
-cursor:pointer;
+/* LEFT SIDE */
+
+.leftNav{
+display:flex;
+align-items:center;
+gap:0px;
 }
-.menuItem:hover{
+
+/* MENU BUTTON */
+
+.menuBtn{
+display:flex;
+align-items:center;
+justify-content:center;
+
+width:35px;
+height:35px;
+
+border-radius:10px;
+cursor:pointer;
+
+transition:.2s;
+}
+
+.menuBtn:hover{
 background:#f3f4f6;
 }
 
-@keyframes slideIn{
-from{transform:translateX(-100%)}
-to{transform:translateX(0)}
+/* BRAND */
+
+.brand{
+display:flex;
+align-items:center;
+gap:7px;
+cursor:pointer;
 }
-.animate-slideIn{
-animation:slideIn 0.3s ease;
+
+/* LOGO */
+
+.logoCircle{
+width:50px;
+height:50px;
+
+border-radius:50%;
+background:#f3f4f6;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+overflow:hidden;
 }
+
+.logoCircle img{
+width:55px;
+}
+
+/* TEXT */
+
+.logoText{
+font-size:25px;
+font-weight:700;
+letter-spacing:.3px;
+}
+
+/* RIGHT SIDE */
+
+.rightNav{
+display:flex;
+align-items:center;
+gap:2px;
+}
+
+/* ICONS */
+
+.iconBox{
+position:relative;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+width:40px;
+height:40px;
+
+border-radius:10px;
+cursor:pointer;
+
+transition:.2s;
+}
+
+.iconBox:hover{
+background:#f3f4f6;
+}
+
+
+/* BADGE */
+
+.badge{
+position:absolute;
+top:-5px;
+right:-5px;
+background:#ef4444;
+color:white;
+font-size:9px;
+font-weight:600;
+padding:2px 5px;
+border-radius:20px;
+}
+
+/* SIDEBAR */
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.3);
+z-index:999;
+}
+
+.sidebar{
+position:fixed;
+top:0;
+right:0;
+width:240px;
+
+/* leave space for bottom navbar */
+height:calc(100vh - 65px);
+
+background:white;
+padding:18px;
+
+z-index:1000;
+
+overflow-y:auto;
+
+transform:translateX(0);
+animation:slideInRight .25s ease;
+
+/* space at bottom */
+padding-bottom:80px;
+}
+
+.profileSection{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:20px;
+cursor:pointer;
+}
+
+.avatar{
+width:44px;
+height:44px;
+border-radius:50%;
+background:#eee;
+display:flex;
+align-items:center;
+justify-content:center;
+overflow:hidden;
+}
+
+.avatar img{
+width:100%;
+}
+
+.profileInfo p{
+font-weight:600;
+margin:0;
+}
+
+.uploadBtn{
+font-size:12px;
+color:#0070f3;
+cursor:pointer;
+}
+
+.menu{
+display:flex;
+flex-direction:column;
+gap:5px;
+}
+
+.menuItem{
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+transition:.2s;
+}
+
+.menuItem:hover{
+background:#f3f3f3;
+transform:translateX(4px);
+}
+
+.logout{
+color:red;
+}
+
+/* PAGE */
+
+.content{
+padding-top:40px;
+padding-bottom:70px;
+padding-left:16px;
+padding-right:16px;
+}
+
+/* BOTTOM NAV */
+
+.bottomNav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+height:60px;
+background:white;
+border-top:1px solid #eee;
+display:flex;
+justify-content:space-around;
+align-items:center;
+z-index:1000;
+}
+
+.closeBtn{
+position:absolute;
+top:15px;
+right:15px;
+width:32px;
+height:32px;
+
+border:none;
+background:#f3f4f6;
+border-radius:8px;
+
+font-size:18px;
+cursor:pointer;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+transition:.2s;
+}
+
+.closeBtn:hover{
+background:#e5e7eb;
+transform:scale(1.05);
+}
+
+.navItem{
+display:flex;
+flex-direction:column;
+align-items:center;
+font-size:12px;
+opacity:.6;
+cursor:pointer;
+transition:.2s;
+}
+
+.navItem:hover{
+opacity:1;
+transform:translateY(-2px);
+}
+
+.navItem.active{
+opacity:1;
+font-weight:bold;
+}
+
+/* PROFILE IMAGE VIEWER */
+
+.imageViewer{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:2000;
+}
+
+.viewerBox{
+position:relative;
+}
+
+.viewerImage{
+width:200px;
+height:200px;
+border-radius:50%;
+object-fit:cover;
+border:4px solid white;
+box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+
+.closeViewer{
+position:absolute;
+top:-10px;
+right:-10px;
+width:30px;
+height:30px;
+border-radius:50%;
+border:none;
+background:white;
+cursor:pointer;
+font-size:16px;
+}
+
+.editPhoto{
+position:absolute;
+bottom:-12px;
+left:50%;
+transform:translateX(-50%);
+background:#2563eb;
+color:white;
+font-size:12px;
+padding:5px 10px;
+border-radius:20px;
+cursor:pointer;
+}
+@keyframes slideInRight{
+from{
+transform:translateX(100%);
+}
+to{
+transform:translateX(0);
+}
+}
+
+/* MENU TITLE */
+
+.menuTitle{
+font-size:12px;
+font-weight:600;
+color:#9ca3af;
+margin-top:12px;
+margin-bottom:4px;
+padding-left:6px;
+}
+
+/* SCROLLABLE SIDEBAR */
+
+.sidebar{
+position:fixed;
+top:0;
+right:0;
+width:240px;
+height:100vh;
+background:white;
+padding:18px;
+z-index:1000;
+
+overflow-y:auto;
+
+transform:translateX(0);
+animation:slideInRight .25s ease;
+}
+
+/* HIDE SCROLLBAR */
+
+.sidebar::-webkit-scrollbar{
+display:none;
+}
+
+/* MENU ITEM */
+
+.menuItem{
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px;
+border-radius:8px;
+cursor:pointer;
+transition:.2s;
+position:relative;
+overflow:hidden;
+}
+
+/* DROPDOWN STYLE */
+
+.dropdown{
+font-weight:500;
+}
+
+/* RIPPLE EFFECT */
+
+.ripple{
+position:absolute;
+border-radius:50%;
+transform:scale(0);
+animation:rippleAnim .6s linear;
+background:rgba(0,0,0,.2);
+}
+
+@keyframes rippleAnim{
+to{
+transform:scale(4);
+opacity:0;
+}
+}
+.mobileSearch{
+position:fixed;
+top:70px;
+left:0;
+right:0;
+
+background:white;
+padding:10px 14px;
+
+border-bottom:1px solid #eee;
+
+z-index:999;
+}
+
+/* SUBMENU */
+
+.subMenu{
+display:flex;
+flex-direction:column;
+margin-left:28px;
+gap:6px;
+animation:fadeDown .25s ease;
+}
+
+/* SUB ITEMS */
+
+.subItem{
+padding:8px 10px;
+font-size:14px;
+border-radius:6px;
+cursor:pointer;
+color:#444;
+transition:.2s;
+}
+
+.subItem:hover{
+background:#f3f3f3;
+transform:translateX(3px);
+}
+
+/* ACTIVE MENU */
+
+.activeMenu{
+background:#f1f5f9;
+font-weight:600;
+}
+
+/* DROPDOWN ARROW */
+
+.arrow{
+margin-left:auto;
+transition:.25s;
+font-size:18px;
+}
+
+.rotate{
+transform:rotate(90deg);
+}
+
+.menuSpacer{
+height:50px;
+}
+
 `}</style>
 
 </>
-);
+
+)
+
 }
-
-
-
-
-
-
-// "use client";
-
-// import Link from "next/link";
-// import { useEffect, useState, useRef } from "react";
-// import { usePathname, useRouter } from "next/navigation";
-
-// import { useCart } from "@/app/context/CartContext";
-// import { useWishlist } from "@/app/context/WishlistContext";
-// import SearchBar from "@/components/SearchBar";
-
-// export default function Navbar(){
-
-// const pathname = usePathname();
-// const router = useRouter();
-
-// /* ========================= */
-// /* STATES */
-// /* ========================= */
-
-// // const [showSearch,setShowSearch] = useState(false);
-// const [showProfile,setShowProfile] = useState(false);
-// const [showNotif,setShowNotif] = useState(false);
-// const [notifCount,setNotifCount] = useState(0);
-// const [user,setUser] = useState<any>(null);
-
-// /* CONTEXT */
-// const { cart } = useCart();
-// const { wishlist } = useWishlist();
-
-// const cartCount = cart?.length || 0;
-// const wishlistCount = wishlist?.length || 0;
-
-// /* refs */
-// const profileRef = useRef<any>(null);
-// const notifRef = useRef<any>(null);
-// const cartRef = useRef<any>(null);
-
-// /* ========================= */
-// /* USER */
-// /* ========================= */
-
-// useEffect(()=>{
-// const u = JSON.parse(localStorage.getItem("user") || "null");
-// setUser(u);
-// },[]);
-
-// /* ========================= */
-// /* NOTIFICATIONS */
-// /* ========================= */
-
-// useEffect(()=>{
-
-// const load = async()=>{
-
-// const u = JSON.parse(localStorage.getItem("user") || "null");
-// if(!u?._id) return;
-
-// try{
-// const res = await fetch(`/api/notifications?userId=${u._id}`);
-// const data = await res.json();
-// setNotifCount(Array.isArray(data)?data.filter((n:any)=>!n.read).length:0);
-// }catch{
-// setNotifCount(0);
-// }
-
-// };
-
-// load();
-// const interval = setInterval(load,5000);
-// return ()=>clearInterval(interval);
-
-// },[]);
-
-// /* ========================= */
-// /* CART FLY */
-// /* ========================= */
-
-// useEffect(()=>{
-
-// const fly = (e:any)=>{
-
-// const img = document.createElement("img");
-// img.src = e.detail?.image || "/logo.png";
-
-// img.style.position = "fixed";
-// img.style.width = "40px";
-// img.style.height = "40px";
-// img.style.left = "50%";
-// img.style.top = "60%";
-// img.style.zIndex = "9999";
-// img.style.transition = "all 0.8s ease";
-
-// document.body.appendChild(img);
-
-// const rect = cartRef.current?.getBoundingClientRect();
-
-// if(rect){
-// setTimeout(()=>{
-// img.style.left = rect.left + "px";
-// img.style.top = rect.top + "px";
-// img.style.transform = "scale(0.2)";
-// img.style.opacity = "0.5";
-// },50);
-// }
-
-// setTimeout(()=>img.remove(),800);
-
-// };
-
-// window.addEventListener("addToCartAnimation",fly);
-// return ()=>window.removeEventListener("addToCartAnimation",fly);
-
-// },[]);
-
-// /* ========================= */
-// /* OUTSIDE CLICK */
-// /* ========================= */
-
-// useEffect(()=>{
-
-// const handle = (e:any)=>{
-
-// if(profileRef.current && !profileRef.current.contains(e.target)){
-// setShowProfile(false);
-// }
-
-// if(notifRef.current && !notifRef.current.contains(e.target)){
-// setShowNotif(false);
-// }
-
-// };
-
-// document.addEventListener("mousedown",handle);
-// return ()=>document.removeEventListener("mousedown",handle);
-
-// },[]);
-
-// /* ========================= */
-// /* NAV ITEM */
-// /* ========================= */
-
-// const NavItem = ({href,icon,label}:any)=>{
-
-// const active = pathname === href;
-
-// return(
-// <div
-// onClick={()=>router.push(href)}
-// className="flex flex-col items-center flex-1 cursor-pointer"
-// >
-
-// <div className={`transition-all duration-300 flex items-center justify-center rounded-full
-// ${active
-// ? "w-14 h-14 bg-gradient-to-r from-indigo-500 to-purple-500 text-white -mt-6 scale-110 shadow-xl"
-// : "w-11 h-11 bg-gray-200"
-// }`}
-// >
-// {icon}
-// </div>
-
-// {active && <span className="text-xs mt-1">{label}</span>}
-
-// </div>
-// );
-// };
-
-// /* ========================= */
-// /* UI */
-// /* ========================= */
-
-// return(
-// <>
-
-// {/* ========================= */}
-// {/* DESKTOP NAVBAR */}
-// {/* ========================= */}
-
-// <header className="hidden md:block sticky top-0 z-50 bg-white border-b shadow-sm">
-
-// <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
-
-// <Link href="/" className="flex gap-2 items-center">
-// <img src="/logo.png" className="w-12 h-12"/>
-// <span className="font-bold text-xl">05Mart</span>
-// </Link>
-
-// <div className="flex-1">
-// <SearchBar />
-// </div>
-
-// <div className="flex items-center gap-6 text-xl">
-
-// <Link href="/wishlist" className="relative">
-// ❤️
-// {wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
-// </Link>
-
-// <Link ref={cartRef} href="/cart" className="relative">
-// 🛒
-// {cartCount>0 && <span className="badge">{cartCount}</span>}
-// </Link>
-
-// {/* 🔔 */}
-// <div ref={notifRef} className="relative">
-// <button onClick={()=>setShowNotif(!showNotif)}>🔔</button>
-
-// {notifCount>0 && <span className="badge">{notifCount}</span>}
-
-// {showNotif && (
-// <div className="dropdown">
-// <p>Notifications</p>
-// <Link href="/notifications">View all</Link>
-// </div>
-// )}
-
-// </div>
-
-// {/* 👤 */}
-// <div ref={profileRef} className="relative">
-// <button onClick={()=>setShowProfile(!showProfile)}>
-// {user?.name?.charAt(0)||"U"}
-// </button>
-
-// {showProfile && (
-// <div className="dropdown">
-// {user ? (
-// <>
-// <Link href="/profile">Profile</Link>
-// <Link href="/orders">Orders</Link>
-// </>
-// ):(
-// <>
-// <Link href="/login">Login</Link>
-// <Link href="/register">Register</Link>
-// </>
-// )}
-// </div>
-// )}
-
-// </div>
-
-// </div>
-
-// </div>
-
-// </header>
-
-// {/* ========================= */}
-// {/* MOBILE NAVBAR */}
-// {/* ========================= */}
-
-// <header className="md:hidden sticky top-0 z-50 bg-white border-b px-4 py-3 flex justify-between items-center shadow-sm">
-
-// <Link href="/" className="flex items-center gap-2">
-// <img src="/logo.png" className="w-9 h-9"/>
-// <span className="font-bold text-lg">05Mart</span>
-// </Link>
-
-// <div className="flex items-center gap-4 text-xl">
-
-
-
-// <Link href="/wishlist" className="relative">
-// ❤️
-// {wishlistCount>0 && <span className="badge">{wishlistCount}</span>}
-// </Link>
-
-// <Link ref={cartRef} href="/cart" className="relative">
-// 🛒
-// {cartCount>0 && <span className="badge">{cartCount}</span>}
-// </Link>
-
-// {/* 🔔 */}
-// <div ref={notifRef} className="relative">
-// <button onClick={()=>setShowNotif(!showNotif)}>🔔</button>
-
-// {notifCount>0 && <span className="badge">{notifCount}</span>}
-
-// {showNotif && (
-// <div className="dropdown">
-// <p>Notifications</p>
-// <Link href="/notifications">View all</Link>
-// </div>
-// )}
-
-// </div>
-
-// {/* 👤 */}
-// <div ref={profileRef} className="relative">
-// <button onClick={()=>setShowProfile(!showProfile)}>
-// {user?.name?.charAt(0)||"U"}
-// </button>
-
-// {showProfile && (
-// <div className="dropdown">
-// {user ? (
-// <>
-// <Link href="/profile">Profile</Link>
-// <Link href="/orders">Orders</Link>
-// </>
-// ):(
-// <>
-// <Link href="/login">Login</Link>
-// <Link href="/register">Register</Link>
-// </>
-// )}
-// </div>
-// )}
-
-// </div>
-
-// </div>
-
-// </header>
-
-// {/* ========================= */}
-// {/* MOBILE SEARCH (FIXED) */}
-// {/* ========================= */}
-
-// <div className="md:hidden py-3">
-// <SearchBar />
-// </div>
-// {/* ========================= */}
-// {/* BOTTOM NAVBAR */}
-// {/* ========================= */}
-
-// <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t flex z-50 animate-slideUp">
-
-// <NavItem href="/" icon="🏠" label="Home"/>
-// <NavItem href="/orders" icon="📦" label="Orders"/>
-// <NavItem href="/wishlist" icon="❤️" label="Wishlist"/>
-// <NavItem href="/notifications" icon="🔔" label="Alerts"/>
-// <NavItem href="/profile" icon="👤" label="Profile"/>
-
-// </div>
-
-// <style jsx>{`
-
-// .badge{
-// position:absolute;
-// top:-6px;
-// right:-6px;
-// background:red;
-// color:white;
-// font-size:10px;
-// padding:2px 6px;
-// border-radius:50%;
-// }
-
-// .dropdown{
-// position:absolute;
-// right:0;
-// top:35px;
-// background:white;
-// padding:10px;
-// border-radius:10px;
-// box-shadow:0 10px 25px rgba(0,0,0,0.1);
-// display:flex;
-// flex-direction:column;
-// gap:6px;
-// z-index:9999;
-// }
-
-// .animate-slideUp{
-// animation: slideUp 0.3s ease;
-// }
-
-// @keyframes slideUp{
-// 0%{transform:translateY(100%)}
-// 100%{transform:translateY(0)}
-// }
-
-// `}</style>
-
-// </>
-// );
-// }

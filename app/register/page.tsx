@@ -25,14 +25,27 @@ setForm({...form,[e.target.name]:e.target.value});
 
 const register = async()=>{
 
-if(!form.name || !form.email || !form.password || !form.confirmPassword){
+const name = form.name.trim();
+const email = form.email.trim().toLowerCase();
+const password = form.password.trim();
+const confirmPassword = form.confirmPassword.trim();
+
+/* VALIDATION */
+
+if(!name || !email || !password || !confirmPassword){
 alert("Please fill all fields");
 return;
 }
 
-/* PASSWORD MATCH CHECK */
-if(form.password !== form.confirmPassword){
+/* PASSWORD MATCH */
+
+if(password !== confirmPassword){
 alert("Passwords do not match");
+return;
+}
+
+if(password.length < 6){
+alert("Password must be at least 6 characters");
 return;
 }
 
@@ -46,13 +59,15 @@ headers:{
 "Content-Type":"application/json"
 },
 body:JSON.stringify({
-name:form.name,
-email:form.email,
-password:form.password
+name,
+email,
+password
 })
 });
 
 const data = await res.json();
+
+/* ERROR */
 
 if(!res.ok){
 alert(data.error || "Registration failed");
@@ -60,16 +75,33 @@ setLoading(false);
 return;
 }
 
+/* SAFETY CHECK */
+
+if(!data.user || !data.user._id){
+alert("Registration error. Please try again.");
+setLoading(false);
+return;
+}
+
 /* SAVE USER */
+
+localStorage.removeItem("user");
+
 localStorage.setItem("user", JSON.stringify(data.user));
 
+/* REFRESH NAVBAR */
+
 window.dispatchEvent(new Event("userChanged"));
+
+/* REDIRECT */
 
 router.push("/auth-success");
 
 }catch(err){
-console.log(err);
+
+console.log("REGISTER ERROR:",err);
 alert("Something went wrong");
+
 }
 finally{
 setLoading(false);
@@ -88,6 +120,7 @@ Create 05Mart Account
 <div className="space-y-4">
 
 {/* NAME */}
+
 <input
 name="name"
 placeholder="Full Name"
@@ -96,6 +129,7 @@ onChange={handleChange}
 />
 
 {/* EMAIL */}
+
 <input
 name="email"
 placeholder="Email"
@@ -104,6 +138,7 @@ onChange={handleChange}
 />
 
 {/* PASSWORD */}
+
 <div className="relative">
 
 <input
@@ -125,6 +160,7 @@ className="absolute right-3 top-3 text-sm text-gray-500"
 </div>
 
 {/* CONFIRM PASSWORD */}
+
 <div className="relative">
 
 <input
@@ -146,6 +182,7 @@ className="absolute right-3 top-3 text-sm text-gray-500"
 </div>
 
 {/* REGISTER BUTTON */}
+
 <button
 onClick={register}
 disabled={loading}
@@ -163,6 +200,7 @@ Creating account...
 </button>
 
 {/* LOGIN LINK */}
+
 <p className="text-center text-sm">
 
 Already have an account?{" "}
@@ -175,7 +213,6 @@ Login
 
 </div>
 
-{/* LOADER STYLE */}
 <style jsx>{`
 .loader{
 width:16px;
