@@ -80,53 +80,98 @@ setForm({
 
 }
 
+/* IMAGE COMPRESSION FUNCTION */
+
+const compressImage = (file:any) => {
+
+return new Promise((resolve)=>{
+
+const img = new Image()
+const reader = new FileReader()
+
+reader.onload = (e:any)=>{
+img.src = e.target.result
+}
+
+img.onload = ()=>{
+
+const canvas = document.createElement("canvas")
+
+const maxWidth = 1200
+const scale = maxWidth / img.width
+
+canvas.width = maxWidth
+canvas.height = img.height * scale
+
+const ctx = canvas.getContext("2d")
+ctx?.drawImage(img,0,0,canvas.width,canvas.height)
+
+canvas.toBlob((blob:any)=>{
+resolve(blob)
+},"image/webp",0.8)
+
+}
+
+reader.readAsDataURL(file)
+
+})
+
+}
+
 /* IMAGE UPLOAD */
 
-const uploadImage = async(file:any,index?:number)=>{
+const uploadImage = async (file:any,index?:number)=>{
 
 if(!file) return
 
 setUploading(true)
 setProgress(0)
 
-const formData=new FormData()
+const formData = new FormData()
 formData.append("file",file)
 
-const xhr=new XMLHttpRequest()
+try{
 
-xhr.upload.onprogress=(e)=>{
+const res = await fetch("/api/upload",{
+method:"POST",
+body:formData
+})
 
-if(e.lengthComputable){
+const data = await res.json()
 
-setProgress(Math.round((e.loaded/e.total)*100))
+if(index === undefined){
 
-}
+/* MAIN IMAGE */
 
-}
-
-xhr.onload=()=>{
-
-const data=JSON.parse(xhr.response)
-
-if(index===undefined){
-
-setForm(prev=>({...prev,image:data.url}))
+setForm(prev=>({
+...prev,
+image:data.url
+}))
 
 }else{
 
-const updated=[...form.images]
-updated[index]=data.url
+/* GALLERY IMAGE */
 
-setForm(prev=>({...prev,images:updated}))
+setForm(prev=>{
 
+const updated = [...prev.images]
+
+updated[index] = data.url
+
+return {
+...prev,
+images:updated
+}
+
+})
+
+}
+
+}catch(err){
+console.log("UPLOAD ERROR",err)
 }
 
 setUploading(false)
-
-}
-
-xhr.open("POST","/api/upload")
-xhr.send(formData)
 
 }
 
@@ -134,10 +179,14 @@ xhr.send(formData)
 
 const removeImage=(index:number)=>{
 
-const updated=[...form.images]
+setForm(prev=>{
+
+const updated=[...prev.images]
 updated[index]=""
 
-setForm(prev=>({...prev,images:updated}))
+return {...prev,images:updated}
+
+})
 
 }
 
@@ -147,13 +196,17 @@ const handleDrop=(index:number)=>{
 
 if(dragIndex===null) return
 
-const updated=[...form.images]
+setForm(prev=>{
+
+const updated=[...prev.images]
 
 const temp=updated[dragIndex]
 updated[dragIndex]=updated[index]
 updated[index]=temp
 
-setForm(prev=>({...prev,images:updated}))
+return {...prev,images:updated}
+
+})
 setDragIndex(null)
 
 }
