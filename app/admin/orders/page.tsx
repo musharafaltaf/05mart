@@ -1068,6 +1068,47 @@ className="bg-red-600 text-white px-3 py-2 rounded text-sm"
 buttonState[`cancel-${order._id}`]==="done" ? "✓ Sent" : "Cancel"}
 </button>
 
+{order.status === "delivered" && (
+
+<button
+className="bg-indigo-600 text-white px-3 py-2 rounded text-sm"
+onClick={() => {
+
+const item = order.items?.[0]
+if(!item) return
+
+const phone = order.customer?.phone
+
+const message = `Hello ${order.customer?.name},
+
+Thank you for shopping with 05Mart ❤️
+
+Your order for *${item.name}* has been successfully delivered.
+
+We would love to hear your feedback!
+
+Please leave your review here:
+https://05mart.in/orders
+
+Once you open the page, click *Leave Review* on your delivered order.
+
+Your feedback helps other customers and improves our service.
+
+Thank you 🙏
+— Team 05Mart`
+
+const whatsappUrl =
+`https://wa.me/91${phone}?text=${encodeURIComponent(message)}`
+
+window.open(whatsappUrl,"_blank")
+
+}}
+>
+Send Review Request
+</button>
+
+)}
+
 </div>
 
 {/* PDF */}

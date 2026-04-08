@@ -35,36 +35,71 @@ useEffect(()=>{
 
 const load = async()=>{
 
-const productId = localStorage.getItem("reviewProduct");
+/* GET PRODUCT ID FROM URL FIRST */
+
+const params = new URLSearchParams(window.location.search)
+let productId = params.get("productId")
+
+/* FALLBACK TO LOCAL STORAGE */
 
 if(!productId){
-setProduct(null);
-return;
+productId = localStorage.getItem("reviewProduct")
 }
+
+if(!productId){
+setProduct(null)
+return
+}
+
+/* CHECK IF USER ALREADY REVIEWED */
+
+const user = JSON.parse(localStorage.getItem("user") || "{}")
+
+if(user?._id){
 
 try{
 
-const res = await fetch(`/api/products/${productId}`);
+const check = await fetch(
+`/api/reviews/check?productId=${productId}&userId=${user._id}`
+)
 
-if(!res.ok){
-setProduct(null);
-return;
+const result = await check.json()
+
+if(result.exists){
+setProduct(null)
+return
 }
-
-const data = await res.json();
-setProduct(data);
 
 }catch(err){
-console.log(err);
-setProduct(null);
+console.log("Review check error",err)
 }
 
-};
+}
 
-load();
+/* LOAD PRODUCT */
 
-},[]);
+try{
 
+const res = await fetch(`/api/products/${productId}`)
+
+if(!res.ok){
+setProduct(null)
+return
+}
+
+const data = await res.json()
+setProduct(data)
+
+}catch(err){
+console.log(err)
+setProduct(null)
+}
+
+}
+
+load()
+
+},[])
 /* ========================= */
 /* IMAGE PROCESS */
 /* ========================= */
@@ -141,7 +176,7 @@ headers:{
 
 body:JSON.stringify({
 
-productId:product._id,
+productId:product?._id,
 userId:user._id,
 userName:user.name,
 rating,
@@ -166,18 +201,18 @@ router.push("/review/success");
 /* ALREADY REVIEWED UI */
 /* ========================= */
 
-if(!product){
+if(product === null){
 
 return(
 
 <main className="p-10 text-center">
 
 <h2 className="text-xl font-semibold">
-You already reviewed this product ⭐
+Product not found
 </h2>
 
 <p className="text-gray-500 mt-2">
-Thank you for your valuable feedback!
+This review link may be invalid.
 </p>
 
 <button
