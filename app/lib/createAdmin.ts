@@ -7,7 +7,7 @@ export async function createAdmin() {
   await connectDB();
 
   const existing = await (User as any).findOne({
-  email: "admin@05mart.com"
+  email: "05mart.support@gmail.com"
 });
 
   if (!existing) {
@@ -16,7 +16,7 @@ export async function createAdmin() {
 
     await User.create({
       name: "Admin",
-      email: "admin@05mart.com",
+      email: "05mart.support@gmail.com",
       password: hashedPassword,
       role: "admin"
     });
