@@ -26,7 +26,7 @@ flashSale:false,
 flashPrice:""
 })
 
-/* LOAD PRODUCT */
+/* ================= LOAD PRODUCT ================= */
 
 useEffect(()=>{
 
@@ -37,7 +37,19 @@ const data = await res.json()
 
 setForm({
 ...data,
-images:data.images || ["","","","",""]
+images: data.images || ["","","","",""],
+
+/* ✅ FIX SIZES */
+sizes: Array.isArray(data.sizes)
+? data.sizes.join(",")
+: "",
+
+/* ✅ FIX SIZE STOCK */
+sizeStock: data.sizeStock
+? Object.entries(data.sizeStock)
+.map(([k,v])=>`${k}:${v}`)
+.join(",")
+: ""
 })
 
 setLoading(false)
@@ -48,7 +60,7 @@ load()
 
 },[params.id])
 
-/* CHANGE INPUT */
+/* ================= CHANGE INPUT ================= */
 
 const handleChange=(e:any)=>{
 
@@ -61,20 +73,34 @@ setForm({
 
 }
 
-/* UPDATE PRODUCT */
+/* ================= UPDATE PRODUCT ================= */
 
 const updateProduct = async()=>{
 
+/* ✅ CONVERT SIZES */
+const sizesArray = form.sizes
+.split(",")
+.map((s:any)=>s.trim())
+.filter(Boolean)
+
+/* ✅ CONVERT SIZE STOCK */
+const sizeStockObject:any = {}
+
+form.sizeStock.split(",").forEach((pair:any)=>{
+const [size,qty] = pair.split(":")
+if(size && qty){
+sizeStockObject[size.trim()] = Number(qty)
+}
+})
+
 await fetch(`/api/products/${params.id}`,{
-
 method:"PUT",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify(form)
-
+headers:{ "Content-Type":"application/json" },
+body:JSON.stringify({
+...form,
+sizes: sizesArray,
+sizeStock: sizeStockObject
+})
 })
 
 alert("Product updated")
@@ -83,7 +109,7 @@ router.push("/admin/products")
 
 }
 
-/* IMAGE UPLOAD */
+/* ================= IMAGE UPLOAD ================= */
 
 const uploadImage = async(file:any,index?:number)=>{
 
@@ -110,7 +136,7 @@ setForm(prev=>({...prev,images:updated}))
 
 }
 
-/* REMOVE IMAGE */
+/* ================= REMOVE IMAGE ================= */
 
 const removeImage=(index:number)=>{
 
