@@ -34,9 +34,9 @@ if(!body.id){
 return NextResponse.json({ error:"Invalid id" },{ status:400 });
 }
 
-await Notification.findByIdAndUpdate(
+await (Notification as any).findByIdAndUpdate(
 body.id,
-{ read:true, Read:true } // 🔥 handle both cases
+{ read:true, Read:true }  // 🔥 handle both cases
 );
 
 return NextResponse.json({ success:true });

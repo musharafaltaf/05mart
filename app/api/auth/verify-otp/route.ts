@@ -77,7 +77,7 @@ export async function POST(req: Request){
 
     /* ================= DEVICE LOCK ================= */
 
-    const existingDevice = await User.findOne({ deviceId });
+    const existingDevice = await User.findOne({ deviceId } as any);
 
     if(existingDevice){
       return NextResponse.json(
@@ -88,7 +88,7 @@ export async function POST(req: Request){
 
     /* ================= USER CHECK ================= */
 
-    const exist = await User.findOne({ email });
+    const exist = await User.findOne({ email } as any );
 
     if(exist){
       return NextResponse.json(

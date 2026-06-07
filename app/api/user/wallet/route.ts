@@ -14,7 +14,7 @@ export async function GET(req: Request){
     return NextResponse.json({ balance: 0 });
   }
 
-  const user = await User.findById(userId) ;
+  const user = await (User as any).findById(userId) ;
 
   return NextResponse.json({
     balance: user?.wallet || 0

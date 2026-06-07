@@ -236,7 +236,7 @@ date:new Date()
 /* ========================= */
 for(const item of body.items){
 
-  const product = await Product.findById(item._id);
+  const product = await (Product as any).findById(item._id);
 
   if(!product){
     return NextResponse.json({ error:"Product not found" },{ status:404 });
@@ -261,7 +261,7 @@ for(const item of body.items){
   }
 
   /* UPDATE */
-  await Product.findByIdAndUpdate(item._id,{
+  await (Product as any).findByIdAndUpdate(item._id,{
     $inc:{
       stock:-item.quantity,
       ...(item.size && {

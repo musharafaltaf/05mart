@@ -27,7 +27,7 @@ try{
     );
   }
 
-  const user = await User.findOne({ email: cleanEmail });
+  const user = await User.findOne({ email: cleanEmail } as any);
 
   if(!user){
     return NextResponse.json(

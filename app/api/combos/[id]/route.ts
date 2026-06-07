@@ -16,15 +16,13 @@ await connectDB()
 
 try{
 
-const combo = await Combo.findById(
-new mongoose.Types.ObjectId(params.id)
-)
+const combo = await Combo.findOne({ _id: params.id } as any)
 
 if(!combo){
 return NextResponse.json(
 { error:"Combo not found" },
 { status:404 }
-)
+) 
 }
 
 return NextResponse.json(combo)
@@ -51,10 +49,8 @@ req:Request,
 
 await connectDB()
 
-await Combo.findByIdAndDelete(
-new mongoose.Types.ObjectId(params.id)
-)
+await (Combo as any).findByIdAndDelete(params.id)
 
-return NextResponse.json({ success:true })
+return NextResponse.json({ success:true } as any ) 
 
 }

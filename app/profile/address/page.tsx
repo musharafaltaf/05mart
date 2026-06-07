@@ -95,7 +95,7 @@ if(data[0].Status === "Success"){
 
 const offices = data[0].PostOffice;
 
-setCityOptions([...new Set(offices.map((p:any)=>p.District))]);
+setCityOptions([...new Set(offices.map((p:any)=>p.District))]as any);
 
 setForm((prev:any)=>({
 ...prev,

@@ -22,9 +22,11 @@ try{
   }
 
   /* CASE-INSENSITIVE SEARCH */
-  const user = await User.findOne({
-    email: { $regex: `^${cleanEmail}$`, $options: "i" }
-  });
+  const query = {
+    email: { $regex: new RegExp(`^${cleanEmail}$`, "i") }
+  } as any;
+
+  const user = await User.findOne(query);
 
   if(!user){
     return NextResponse.json(
