@@ -47,6 +47,9 @@ const [thumbsSwiper,setThumbsSwiper] = useState<any>(null);
 
 const [sizeError,setSizeError] = useState("");
 
+const [showSizeModal,setShowSizeModal] = useState(false)
+const [pendingAction,setPendingAction] = useState<"cart"|"buy"|null>(null)
+
 /* sticky bar */
 
 const [showSticky,setShowSticky] = useState(false);
@@ -130,7 +133,63 @@ return ()=>window.removeEventListener("scroll",onScroll);
 },[]);
 
 if(loading){
-return <p className="p-10 text-center">Loading product...</p>
+return(
+
+<div className="p-4 animate-fadeIn">
+
+<div className="grid md:grid-cols-2 gap-6">
+
+<div className="aspect-square rounded-xl shimmer"/>
+
+<div>
+
+<div className="h-6 w-3/4 shimmer mb-3"/>
+<div className="h-4 w-1/2 shimmer mb-3"/>
+<div className="h-6 w-1/3 shimmer mb-4"/>
+
+<div className="h-10 shimmer mb-3"/>
+<div className="h-10 shimmer"/>
+
+</div>
+
+</div>
+
+<style jsx>{`
+.shimmer{
+position:relative;
+overflow:hidden;
+background:#e5e7eb;
+border-radius:12px;
+}
+.shimmer::after{
+content:"";
+position:absolute;
+top:0;
+left:-150%;
+width:150%;
+height:100%;
+background:linear-gradient(
+90deg,
+transparent,
+rgba(255,255,255,0.6),
+transparent
+);
+animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{
+100%{left:150%}
+}
+@keyframes fadeIn{
+from{opacity:0}
+to{opacity:1}
+}
+.animate-fadeIn{
+animation:fadeIn .3s ease;
+}
+`}</style>
+
+</div>
+)
 }
 
 if(!product){
@@ -146,9 +205,6 @@ const sizes = product.sizes
     ? product.sizes
     : product.sizes.split(","))
       .map((s:string)=>s.trim())
-      .filter((s:string)=>{
-        return product.sizeStock?.[s] === undefined || product.sizeStock?.[s] > 0;
-      })
 : ["S","M","L","XL"];
 /* IMAGES */
 
@@ -290,17 +346,30 @@ isOutOfStock ? "text-red-500":"text-green-600"
 
 <div className="flex gap-2 flex-wrap">
 
-{sizes.map((size:any)=>(
+{sizes.map((size:any)=>{
+
+const isOut = product.sizeStock && product.sizeStock[size] <= 0;
+
+return(
+
 <button
 key={size}
-onClick={()=>setSelectedSize(size)}
-className={`border px-4 py-1 rounded transition hover:bg-black hover:text-white ${
-selectedSize===size ? "bg-black text-white":""
-}`}
+disabled={isOut}
+onClick={()=>!isOut && setSelectedSize(size)}
+className={`
+border px-4 py-1 rounded transition
+${isOut 
+  ? "opacity-40 cursor-not-allowed" 
+  : "hover:bg-black hover:text-white"}
+${selectedSize===size ? "bg-black text-white" : ""}
+`}
 >
 {size}
 </button>
-))}
+
+)
+
+})}
 
 </div>
 
@@ -330,10 +399,10 @@ View Size Chart
 <button
 disabled={isOutOfStock}
 onClick={()=>{
-
 if(sizes.length && !selectedSize){
-setSizeError("Please select size");
-return;
+setPendingAction("cart")
+setShowSizeModal(true)
+return
 }
 
 if(cartState==="added"){
@@ -363,8 +432,9 @@ disabled={isOutOfStock}
 onClick={()=>{
 
 if(sizes.length && !selectedSize){
-setSizeError("Please select size");
-return;
+setPendingAction("buy")
+setShowSizeModal(true)
+return
 }
 
 setBuyLoading(true);
@@ -382,11 +452,16 @@ window.location.href="/checkout/address";
 },500);
 
 }}
-className="border px-6 py-3 rounded-xl hover:bg-gray-100 transition shadow-sm"
+className="px-6 py-3 rounded-xl text-white font-semibold shadow-md
+bg-gradient-to-r from-orange-500 via-orange-600 to-yellow-500
+hover:scale-105 active:scale-95 transition"
 >
 
-{buyLoading ? "Processing..." : "Buy Now"}
-
+{buyLoading ? (
+<span className="flex items-center gap-2">
+<span className="loader"/> Processing
+</span>
+) : "Buy Now"}
 </button>
 
 <button
@@ -659,7 +734,9 @@ Add to Cart
 </button>
 
 <button
-className="border px-4 py-2 rounded-lg"
+className="px-6 py-3 rounded-xl text-white font-semibold shadow-md
+bg-gradient-to-r from-orange-500 via-orange-600 to-yellow-500
+hover:scale-105 active:scale-95 transition"
 onClick={()=>window.location.href="/checkout/address"}
 >
 Buy Now
@@ -744,6 +821,85 @@ className="text-xl hover:scale-110"
 </table>
 
 </div>
+
+</div>
+
+)}
+
+{showSizeModal && (
+
+<div
+className="fixed inset-0 bg-black/50 z-[9999] flex items-end md:items-center justify-center"
+onClick={()=>setShowSizeModal(false)}
+>
+
+<div
+className="bg-white w-full md:max-w-md rounded-t-2xl md:rounded-2xl p-6 animate-slideUp"
+onClick={(e)=>e.stopPropagation()}
+>
+
+<h3 className="text-lg font-semibold mb-4">
+Select Size
+</h3>
+
+<div className="flex gap-2 flex-wrap">
+
+{sizes.map((size:any)=>(
+
+<button
+key={size}
+onClick={()=>{
+
+setSelectedSize(size)
+setShowSizeModal(false)
+
+/* CONTINUE ACTION */
+
+setTimeout(()=>{
+
+if(pendingAction==="cart"){
+addToCart({...product,size,quantity:1})
+}
+
+if(pendingAction==="buy"){
+localStorage.setItem("buyNow",JSON.stringify({
+...product,
+size,
+quantity:1
+}))
+router.push("/checkout/address")
+}
+
+},200)
+
+}}
+className="border px-4 py-2 rounded-lg hover:bg-black hover:text-white transition"
+>
+{size}
+</button>
+
+))}
+
+</div>
+
+<button
+onClick={()=>setShowSizeModal(false)}
+className="mt-5 w-full border py-2 rounded-lg"
+>
+Cancel
+</button>
+
+</div>
+
+<style jsx>{`
+@keyframes slideUp{
+from{transform:translateY(100%)}
+to{transform:translateY(0)}
+}
+.animate-slideUp{
+animation:slideUp .3s ease;
+}
+`}</style>
 
 </div>
 

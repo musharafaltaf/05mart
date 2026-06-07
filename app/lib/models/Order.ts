@@ -102,7 +102,7 @@
 import mongoose, { Schema, Model } from "mongoose";
 
 interface IOrder {
-  userId?: string;
+  userId?: mongoose.Types.ObjectId;
   items?: any[];
   total?: number;
   status?: string;
@@ -223,7 +223,10 @@ interface IOrder {
 
 const OrderSchema = new Schema<IOrder>(
 {
-  userId: String,
+  userId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Users"
+},
   items: Array,
   total: Number,
   status: String,

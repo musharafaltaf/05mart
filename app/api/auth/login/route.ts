@@ -3,83 +3,91 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/lib/models/Users";
-import { createAdmin } from "@/app/lib/createAdmin";
 
-export const dynamic = "force-dynamic";
+export async function POST(req:Request){
 
-const JWT_SECRET = process.env.JWT_SECRET || "mysecretkey";
+try{
 
-export async function POST(req: Request) {
+  await connectDB();
 
-  try {
+  const { email, password } = await req.json();
 
-    await connectDB();
+  const cleanEmail = email?.toLowerCase().trim();
 
-    /* CREATE DEFAULT ADMIN IF NOT EXISTS */
-    await createAdmin();
-
-    const { email, password } = await req.json();
-
-    if (!email || !password) {
-
-      return NextResponse.json(
-        { error: "Email and password required" },
-        { status: 400 }
-      );
-
-    }
-
-    const user = await User.findOne({ email } as any);
-
-    if (!user) {
-
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-
-    }
-
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match) {
-
-      return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
-      );
-
-    }
-
-    /* TOKEN */
-
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    /* IMPORTANT: RETURN _id NOT id */
-
-    return NextResponse.json({
-      token,
-      user: {
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-
-  } catch (error) {
-
-    console.log("LOGIN ERROR:", error);
-
+  if(!cleanEmail || !password){
     return NextResponse.json(
-      { error: "Server error during login" },
-      { status: 500 }
+      { error:"Email and password required" },
+      { status:400 }
     );
-
   }
+
+  /* CASE-INSENSITIVE SEARCH */
+  const user = await User.findOne({
+    email: { $regex: `^${cleanEmail}$`, $options: "i" }
+  });
+
+  if(!user){
+    return NextResponse.json(
+      { error:"User not found" },
+      { status:400 }
+    );
+  }
+
+  /* PASSWORD CHECK */
+  let match = false;
+
+  try{
+    match = await bcrypt.compare(password, user.password);
+  }catch{
+    match = false;
+  }
+
+  /* fallback for old users */
+  if(!match && user.password === password){
+    match = true;
+
+    const hashed = await bcrypt.hash(password,10);
+    user.password = hashed;
+    await user.save();
+  }
+
+  if(!match){
+  return NextResponse.json(
+    {
+      error:"Incorrect password or outdated account. Please reset your password.",
+      suggestReset:true
+    },
+    { status:400 }
+  );
+}
+
+  /* TOKEN */
+  const token = jwt.sign(
+    { userId:user._id },
+    process.env.JWT_SECRET!,
+    { expiresIn:"7d" }
+  );
+
+  return NextResponse.json({
+    success:true,
+    token,
+    user:{
+  _id:user._id.toString(),
+  name:user.name,
+  email:user.email,
+  referralCode: user.referralCode   // ⭐ ADD THIS
+}
+  });
+
+}catch(err){
+
+  console.log("LOGIN ERROR:",err);
+
+  return NextResponse.json(
+    { error:"Server error" },
+    { status:500 }
+  );
+
+}
 
 }

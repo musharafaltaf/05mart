@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import  { connectDB }   from "@/app/lib/mongodb";
+import { connectDB } from "@/app/lib/mongodb";
 import Wishlist from "@/app/lib/models/Wishlist";
 
 export async function POST(req: Request) {
@@ -8,17 +8,17 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
-  const { productId, name, price, image } = body;
+  const { productId, name, price, image, userId } = body;
 
-  let wishlist = await (Wishlist as any).findOne({ userId: "guest" });
+  const uid = userId || "guest";
+
+  let wishlist = await (Wishlist as any).findOne({ userId: uid });
 
   if (!wishlist) {
-
     wishlist = await Wishlist.create({
-      userId: "guest",
+      userId: uid,
       items: []
     });
-
   }
 
   const exists = wishlist.items.find(
@@ -26,18 +26,19 @@ export async function POST(req: Request) {
   );
 
   if (!exists) {
-
     wishlist.items.push({
       productId,
       name,
       price,
       image
     });
-
   }
 
   await wishlist.save();
 
-  return NextResponse.json(wishlist);
+  return NextResponse.json({
+    success: true,
+    items: wishlist.items
+  });
 
 }

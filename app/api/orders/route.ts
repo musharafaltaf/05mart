@@ -234,26 +234,41 @@ date:new Date()
 /* ========================= */
 /* UPDATE STOCK */
 /* ========================= */
-
 for(const item of body.items){
 
-try{
+  const product = await Product.findById(item._id);
 
-await (Product as any).findByIdAndUpdate(
-item._id,
-{
-$inc:{
-stock:-item.quantity,
-...(item.size && {
-[`sizeStock.${item.size}`]: -item.quantity
-})
-}
-}
-);
+  if(!product){
+    return NextResponse.json({ error:"Product not found" },{ status:404 });
+  }
 
-}catch(err){
-console.log("STOCK ERROR:",err);
-}
+  /* CHECK TOTAL STOCK */
+  if(product.stock < item.quantity){
+    return NextResponse.json({
+      error:`${product.name} out of stock`
+    },{ status:400 });
+  }
+
+  /* CHECK SIZE STOCK */
+  if(item.size){
+    const sizeQty = product.sizeStock?.[item.size] || 0;
+
+    if(sizeQty < item.quantity){
+      return NextResponse.json({
+        error:`${product.name} (${item.size}) out of stock`
+      },{ status:400 });
+    }
+  }
+
+  /* UPDATE */
+  await Product.findByIdAndUpdate(item._id,{
+    $inc:{
+      stock:-item.quantity,
+      ...(item.size && {
+        [`sizeStock.${item.size}`]: -item.quantity
+      })
+    }
+  });
 
 }
 

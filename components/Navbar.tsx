@@ -5,6 +5,7 @@ import { useRouter,usePathname } from "next/navigation"
 import { useCart } from "@/app/context/CartContext"
 import { useWishlist } from "@/app/context/WishlistContext"
 import SearchBar from "./SearchBar"
+import { useSearch } from "@/app/context/SearchContext"
 
 import {
 Menu,
@@ -18,7 +19,9 @@ RotateCcw,
 RefreshCcw,
 LayoutDashboard,
 ImagePlus,
-Tag
+Tag,
+Search,
+UserPlus
 } from "lucide-react"
 
 export default function Layout({children}:{children:React.ReactNode}){
@@ -36,6 +39,8 @@ const cartCount = cart?.length || 0
 const wishlistCount = wishlist?.length || 0
 
 const [alertCount,setAlertCount] = useState(0)
+const {open,setOpen} = useSearch()
+
 const [profileImage,setProfileImage] = useState<string | null>(null)
 const [viewImage,setViewImage] = useState(false)
 
@@ -46,6 +51,7 @@ const [openProducts,setOpenProducts] = useState(false)
 const [openBanners,setOpenBanners] = useState(false)
 const [openCategories,setOpenCategories] = useState(false)
 const [openSection,setOpenSection] = useState<string | null>(null)
+const [searchOpen,setSearchOpen] = useState(false)
 
 useEffect(()=>{
 
@@ -358,11 +364,6 @@ onClick={()=>setMenuOpen(true)}
 
 </header>
 
-{/* MOBILE SEARCH BAR */}
-
-<div className="mobileSearch">
-<SearchBar/>
-</div>
 
 {/* SIDEBAR */}
 
@@ -431,6 +432,9 @@ onChange={uploadProfile}
 <div className="menuItem" onClick={(e)=>{ripple(e);go("/")}}>
 <Home size={18}/> Home
 </div>
+{/* <div className="menuItem" onClick={(e)=>{ripple(e);go("/invite")}}>
+<UserPlus size={18}/> Invite & Earn
+</div> */}
 
 <div className="menuItem" onClick={(e)=>{ripple(e);go("/wishlist")}}>
 <Heart size={18}/> Wishlist
@@ -447,6 +451,7 @@ onChange={uploadProfile}
 <div className="menuItem" onClick={(e)=>{ripple(e);go("/orders")}}>
 <RefreshCcw size={18}/> Exchange
 </div>
+
 
 
 {/* LOGIN / REGISTER */}
@@ -647,19 +652,33 @@ onTouchEnd={handleTouchEnd}
 
 {/* BOTTOM NAV */}
 
-<footer className="bottomNav">
+{/* <footer className="bottomWrapper">
 
-<NavItem icon={<Home size={22}/>} label="Home" url="/"/>
+<div className="bottomNav"> */}
 
-<NavItem icon={<Package size={22}/>} label="Orders" url="/orders"/>
+{/* INDICATOR
+<div
+className="indicator"
+style={{
+transform: `translateX(${
+pathname === "/" ? 0 :
+pathname === "/orders" ? 100 :
+pathname === "/search" ? 200 :
+pathname === "/notifications" ? 300 :
+400
+}%)`
+}}
+/>
 
-<NavItem icon={<Heart size={22}/>} label="Wishlist" url="/wishlist"/>
+<NavItem icon={<Home size={20}/>} label="Home" url="/"/>
+<NavItem icon={<Package size={20}/>} label="Orders" url="/orders"/>
+<NavItem icon={<Search size={20}/>} label="Search" url="/search"/>
+<NavItem icon={<Bell size={20}/>} label="Alerts" url="/notifications"/>
+<NavItem icon={<User size={20}/>} label="Profile" url="/profile"/>
 
-<NavItem icon={<Bell size={22}/>} label="Alerts" url="/notifications"/>
+</div>
 
-<NavItem icon={<User size={22}/>} label="Profile" url="/profile"/>
-
-</footer>
+</footer> */}
 
 <style jsx>{`
 
@@ -675,7 +694,7 @@ position:fixed;
 top:0;
 left:0;
 right:0;
-height:70px;
+height:60px;
 
 display:flex;
 justify-content:space-between;
@@ -683,8 +702,8 @@ align-items:center;
 
 padding:0 3px;
 
-background:white;
-border-bottom:1px solid #eee;
+background:#ffffff;
+border-bottom:1px solid  #dbdbdb;
 z-index:1000;
 }
 
@@ -892,73 +911,14 @@ color:red;
 /* PAGE */
 
 .content{
-padding-top:40px;
-padding-bottom:70px;
+padding-top:0px;
+padding-bottom:100px;
 padding-left:16px;
 padding-right:16px;
 }
-
 /* BOTTOM NAV */
 
-.bottomNav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:60px;
-background:white;
-border-top:1px solid #eee;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:1000;
-}
 
-.closeBtn{
-position:absolute;
-top:15px;
-right:15px;
-width:32px;
-height:32px;
-
-border:none;
-background:#f3f4f6;
-border-radius:8px;
-
-font-size:18px;
-cursor:pointer;
-
-display:flex;
-align-items:center;
-justify-content:center;
-
-transition:.2s;
-}
-
-.closeBtn:hover{
-background:#e5e7eb;
-transform:scale(1.05);
-}
-
-.navItem{
-display:flex;
-flex-direction:column;
-align-items:center;
-font-size:12px;
-opacity:.6;
-cursor:pointer;
-transition:.2s;
-}
-
-.navItem:hover{
-opacity:1;
-transform:translateY(-2px);
-}
-
-.navItem.active{
-opacity:1;
-font-weight:bold;
-}
 
 /* PROFILE IMAGE VIEWER */
 
@@ -1090,19 +1050,7 @@ transform:scale(4);
 opacity:0;
 }
 }
-.mobileSearch{
-position:fixed;
-top:70px;
-left:0;
-right:0;
 
-background:white;
-padding:10px 14px;
-
-border-bottom:1px solid #eee;
-
-z-index:999;
-}
 
 /* SUBMENU */
 
@@ -1151,6 +1099,14 @@ transform:rotate(90deg);
 
 .menuSpacer{
 height:50px;
+}
+
+
+
+.showSearch{
+transform:translateY(0);
+opacity:1;
+pointer-events:auto;
 }
 
 `}</style>

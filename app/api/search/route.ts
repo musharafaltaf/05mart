@@ -1,39 +1,30 @@
-export const dynamic = "force-dynamic";
-
 import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
-import Product from "@/app/lib/models/Product";
+import ScratchCard from "@/app/lib/models/ScratchCard";
 
 export async function GET(req: Request){
 
-try{
+  await connectDB();
 
-await connectDB();
+  const { searchParams } = new URL(req.url);
+  const userId = searchParams.get("userId");
 
-const { searchParams } = new URL(req.url);
-const q = searchParams.get("q");
+  /* ❗ VALIDATION */
+  if(!userId){
+    return NextResponse.json([]);
+  }
 
-if(!q){
-return NextResponse.json([]);
-}
+  const cards = await ScratchCard.find({
+    user: userId,
+    isScratched: false
+  } as any).sort({ createdAt: -1 });
 
-const products = await Product.find({
+  /* CLEAN RESPONSE */
+  const formatted = cards.map((c:any)=>({
+    _id: c._id.toString(),
+    amount: c.amount,
+    isScratched: c.isScratched
+  }));
 
-name:{
-$regex:q,
-$options:"i"
-}
-
-}as any).limit(8);
-
-return NextResponse.json(products);
-
-}catch(err){
-
-console.log("Search error:",err);
-
-return NextResponse.json([]);
-
-}
-
+  return NextResponse.json(formatted);
 }

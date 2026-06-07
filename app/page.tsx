@@ -179,61 +179,102 @@
 // }
 
 
-import HeroSlider from "@/components/HeroSlider";
-import StoreBenefits from "@/components/StoreBenefits";
-import TrendingProducts from "@/components/TrendingProducts";
-import FlashSale from "@/components/FlashSale";
-import RecentlyViewed from "@/components/RecentlyViewed";
-import FeaturedProducts from "@/components/FeaturedProducts";
-import ShopByCategory from "@/components/ShopByCategory";
+// "use client"
+
+// import { useState } from "react"
+
+// import HeroSlider from "@/components/HeroSlider"
+// import StoreBenefits from "@/components/StoreBenefits"
+// import TrendingProducts from "@/components/TrendingProducts"
+// import FlashSale from "@/components/FlashSale"
+// import RecentlyViewed from "@/components/RecentlyViewed"
+// import FeaturedProducts from "@/components/FeaturedProducts"
+// import ShopByCategory from "@/components/ShopByCategory"
+
+// import HomeSectionsNav from "@/components/HomeSectionsNav"
+
+// export default function Home(){
+
+// const [mode,setMode] = useState<"products"|"combos">("products")
+
+// return(
+
+// <main className="relative z-10">
+
+// {/* HERO */}
+
+// <HeroSlider/>
+
+// {/* CATEGORIES */}
+
+// <ShopByCategory/>
+// <HomeSectionsNav/>
+
+
+
+
+// {/* PRODUCTS MODE */}
+
+// {mode==="products" && (
+
+// <>
+
+// <FeaturedProducts/>
+
+// <TrendingProducts/>
+
+// <FlashSale/>
+
+// <RecentlyViewed/>
+
+// </>
+
+// )}
+
+// {/* COMBO MODE */}
+
+
+// {/* BENEFITS */}
+
+// <StoreBenefits/>
+
+
+// </main>
+
+// )
+
+// }
+
+
+
+
+
+"use client"
+
+import { useState } from "react"
+
+import HomeSectionsNav from "@/components/HomeSectionsNav"
+import HomeSectionsContainer from "@/components/HomeSectionsContainer"
 
 export default function Home(){
 
+const [index,setIndex] = useState(0)
+
 return(
 
-<main className="relative z-10">
+<main className="pageWrapper">
 
-{/* HERO BANNER */}
+{/* FIXED NAV */}
+<HomeSectionsNav
+index={index}
+setIndex={setIndex}
+/>
 
-<HeroSlider/>
-
-{/* CATEGORIES */}
-
-{/* <Categories/> */}
-<ShopByCategory/>
-
-{/* FLASH SALE */}
-<FeaturedProducts/>
-<TrendingProducts/>
-
-<FlashSale/>
-
-{/* TRENDING PRODUCTS */}
-
-
-
-{/* PROMO BANNER */}
-
-{/* <PromoBanner/> */}
-
-{/* FEATURED PRODUCTS */}
-
-
-
-{/* RECENTLY VIEWED */}
-
-<RecentlyViewed/>
-
-{/* SHOP BY CATEGORY */}
-
-
-{/* FINAL HERO / PROMOTION */}
-
-{/* <Hero/> */}
-
-{/* STORE BENEFITS */}
-
-<StoreBenefits/>
+{/* PAGES */}
+<HomeSectionsContainer
+index={index}
+setIndex={setIndex}
+/>
 
 </main>
 

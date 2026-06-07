@@ -12,10 +12,12 @@ import "swiper/css/pagination";
 export default function HeroSlider(){
 
 const [banners,setBanners] = useState<any[]>([]);
+const [loading,setLoading] = useState(true);
+
 const router = useRouter();
 
 /* ========================= */
-/* LOAD FROM ADMIN (API) */
+/* LOAD FROM ADMIN */
 /* ========================= */
 
 useEffect(()=>{
@@ -38,11 +40,47 @@ setBanners(data);
 console.log("Banner error:",err);
 }
 
+setLoading(false);
+
 };
 
 loadBanners();
 
 },[]);
+
+/* ========================= */
+/* 🔥 PREMIUM HERO SKELETON */
+/* ========================= */
+
+if(loading){
+
+return(
+
+<div className="max-w-7xl mx-auto px-4 py-6">
+
+<div className="relative rounded-xl overflow-hidden">
+
+{/* IMAGE SKELETON */}
+<div className="w-full h-[220px] md:h-[420px] bg-gray-200 shimmer"/>
+
+{/* OVERLAY CONTENT SKELETON */}
+<div className="absolute inset-0 flex flex-col justify-center px-6 md:px-16">
+
+<div className="h-6 md:h-10 w-2/3 rounded shimmer mb-3"/>
+
+<div className="h-4 md:h-6 w-1/2 rounded shimmer mb-4"/>
+
+<div className="h-10 w-[140px] rounded-md shimmer"/>
+
+</div>
+
+</div>
+
+</div>
+
+);
+
+}
 
 /* ========================= */
 

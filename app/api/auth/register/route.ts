@@ -2,8 +2,22 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/lib/models/Users";
+import Referral from "@/app/lib/models/Referral";
+import Notification from "@/app/lib/models/Notification";
 
 export const dynamic = "force-dynamic";
+
+/* ================= REFERRAL CODE GENERATOR ================= */
+function generateReferralCode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return code;
+}
 
 export async function POST(req: Request) {
 
@@ -11,9 +25,11 @@ export async function POST(req: Request) {
 
     await connectDB();
 
-    const { name, email, password } = await req.json();
 
-    /* VALIDATION */
+    /* GET DATA */
+    const { name, email, password, referralCode } = await req.json();
+
+    /* ================= VALIDATION ================= */
 
     if (!name || !email || !password) {
       return NextResponse.json(
@@ -29,11 +45,11 @@ export async function POST(req: Request) {
       );
     }
 
-    /* LOWERCASE EMAIL */
+    /* ================= CLEAN EMAIL ================= */
 
     const cleanEmail = email.toLowerCase().trim();
 
-    /* CHECK EXISTING USER */
+    /* ================= CHECK EXIST ================= */
 
     const existingUser = await User.findOne({ email: cleanEmail } as any);
 
@@ -44,22 +60,77 @@ export async function POST(req: Request) {
       );
     }
 
-    /* HASH PASSWORD */
+    /* ================= HASH PASSWORD ================= */
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    /* CREATE USER */
+    /* ================= GENERATE REF CODE ================= */
+
+    let newReferralCode = generateReferralCode();
+
+    let codeExists = await User.findOne({ referralCode: newReferralCode } as any);
+
+    while (codeExists) {
+      newReferralCode = generateReferralCode();
+      codeExists = await User.findOne({ referralCode: newReferralCode } as any);
+    }
+
+    /* ================= FIND REFERRER ================= */
+
+    // 🔥 ALWAYS READ FROM URL
+const url = new URL(req.url);
+const refFromUrl = url.searchParams.get("ref");
+
+const refUser = refFromUrl ? await User.findOne({ referralCode: refFromUrl } as any) : null;
+
+    /* ================= CREATE USER ================= */
 
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
+      role: "user",
 
-      /* IMPORTANT */
-      role: "user"
+      referralCode: newReferralCode,
+      referredBy: refUser ? refUser.referralCode : null
     });
 
-    /* RESPONSE */
+    /* ================= CREATE REFERRAL RECORD ================= */
+
+    if (refUser) {
+
+  const existingReferral = await Referral.findOne({
+    referredUser: user._id
+  } as any);
+  if (!existingReferral) {
+    await Referral.create({
+      referrer: refUser._id,
+      referredUser: user._id
+    });
+  }
+}
+
+  if (refUser) {
+
+  await Referral.create({
+    referrer: refUser._id,
+    referredUser: user._id,
+    status: {
+      registered: true,
+      ordered: false,
+      delivered: false,
+      rewardGiven: false
+    }
+  });
+
+  await Notification.create({
+    userId: refUser._id.toString(),
+    message: `${user.name} joined using your referral 🎉`
+  });
+
+}
+
+    /* ================= RESPONSE ================= */
 
     return NextResponse.json({
       message: "Registration successful",
@@ -67,7 +138,8 @@ export async function POST(req: Request) {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        referralCode: user.referralCode
       }
     });
 

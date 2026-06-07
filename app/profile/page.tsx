@@ -2,143 +2,331 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { User, MapPin, LogOut, Pencil, ImageIcon, UserPlus } from "lucide-react";
 
-export default function ProfilePage() {
+export default function ProfilePage(){
 
-  const router = useRouter();
-  const [user,setUser] = useState<any>(null);
+const router = useRouter();
 
-  useEffect(()=>{
+const [user,setUser] = useState<any>(null);
+const [loading,setLoading] = useState(true);
 
-    const storedUser = localStorage.getItem("user");
+/* MODALS */
+const [showProfile,setShowProfile] = useState(false);
+const [showLogout,setShowLogout] = useState(false);
+const [showAvatar,setShowAvatar] = useState(false);
 
-    if(!storedUser){
-      router.push("/login");
-      return;
-    }
+/* UPLOAD STATE */
+const [uploading,setUploading] = useState(false);
 
-    setUser(JSON.parse(storedUser));
+/* ================= LOAD ================= */
 
-  },[]);
+useEffect(()=>{
 
-  const logout = ()=>{
+const u = JSON.parse(localStorage.getItem("user") || "null");
 
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+if(!u){
+router.push("/login");
+return;
+}
 
-    router.push("/");
+setUser(u);
+setLoading(false);
 
-  };
+},[]);
 
-  if(!user){
-    return(
-      <p className="p-10 text-center">
-        Loading...
-      </p>
-    )
-  }
+/* ================= IMAGE UPLOAD ================= */
 
-  return(
+const uploadImage = (e:any,type:"avatar"|"cover")=>{
 
-    <main className="max-w-6xl mx-auto px-4 py-10">
+const file = e.target.files[0];
+if(!file) return;
 
-      {/* TOP NAVIGATION */}
+setUploading(true);
 
-      <div className="flex items-center justify-between mb-8">
+const reader = new FileReader();
 
-        <button
-          onClick={()=>router.back()}
-          className="border px-4 py-2 rounded hover:bg-gray-100"
-        >
-          ← Back
-        </button>
+reader.onload = ()=>{
+const updated = {
+...user,
+[type === "avatar" ? "image" : "cover"]: reader.result
+};
 
-        <Link
-          href="/"
-          className="border px-4 py-2 rounded hover:bg-gray-100"
-        >
-          Home
-        </Link>
+localStorage.setItem("user",JSON.stringify(updated));
+setUser(updated);
 
-      </div>
+setTimeout(()=>setUploading(false),600);
+};
 
+reader.readAsDataURL(file);
 
-      {/* PAGE TITLE */}
+};
 
-      <h1 className="text-2xl md:text-3xl font-bold mb-8">
-        My Profile
-      </h1>
+/* ================= LOGOUT ================= */
 
+const logout = ()=>{
+localStorage.clear();
+router.push("/");
+};
 
-      {/* PROFILE GRID */}
+/* ================= LOADING ================= */
 
-      <div className="grid md:grid-cols-3 gap-8">
+if(loading){
+return <div className="p-10 animate-pulse">Loading...</div>
+}
 
-        {/* ACCOUNT DETAILS */}
+/* ================= UI ================= */
 
-        <div className="border rounded p-6">
+return(
 
-          <h2 className="font-semibold mb-4">
-            Account Details
-          </h2>
+<main className="pb-24">
 
-          <p className="mb-2">
-            <strong>Name:</strong> {user.name}
-          </p>
+{/* ================= COVER ================= */}
 
-          <p className="mb-4">
-            <strong>Email:</strong> {user.email}
-          </p>
+<div className="relative h-44 w-full">
 
-          <button
-            onClick={logout}
-            className="bg-red-500 text-white px-4 py-2 rounded"
-          >
-            Logout
-          </button>
+<img
+src={user.cover || "/default-cover.jpg"}
+className="w-full h-full object-cover"
+/>
 
-        </div>
+{/* EDIT COVER */}
+<label className="absolute top-3 right-3 bg-black/60 text-white p-2 rounded-full cursor-pointer">
+<ImageIcon size={16}/>
+<input type="file" hidden onChange={(e)=>uploadImage(e,"cover")}/>
+</label>
 
+</div>
 
-        {/* QUICK ACTIONS */}
+{/* ================= AVATAR ================= */}
 
-        <div className="md:col-span-2 grid gap-4">
+<div className="relative flex justify-center">
 
-          <button
-            onClick={()=>router.push("/orders")}
-            className="border p-4 rounded hover:bg-gray-50 text-left"
-          >
-            📦 My Orders
-          </button>
+<div className="relative -mt-16">
 
-          <button
-            onClick={()=>router.push("/wishlist")}
-            className="border p-4 rounded hover:bg-gray-50 text-left"
-          >
-            ❤️ My Wishlist
-          </button>
+<img
+onClick={()=>setShowAvatar(true)}
+src={user.image || "/avatar.png"}
+className="w-32 h-32 rounded-full border-4 border-white object-cover shadow-xl cursor-pointer"
+/>
 
-          <button
-            onClick={()=>router.push("/cart")}
-            className="border p-4 rounded hover:bg-gray-50 text-left"
-          >
-            🛒 My Cart
-          </button>
+{/* EDIT ICON */}
+<label className="absolute bottom-1 right-1 bg-black text-white p-2 rounded-full cursor-pointer">
+<Pencil size={14}/>
+<input type="file" hidden onChange={(e)=>uploadImage(e,"avatar")}/>
+</label>
 
-          <button
-            onClick={()=>router.push("/checkout/address")}
-            className="border p-4 rounded hover:bg-gray-50 text-left"
-          >
-            🏠 Saved Address
-          </button>
+</div>
 
-        </div>
+</div>
 
-      </div>
+{/* ================= NAME ================= */}
 
-    </main>
+<div className="text-center mt-4">
 
-  );
+<h2 className="text-xl font-bold">
+{user.name}
+</h2>
 
+</div>
+
+{/* ================= BUTTONS ================= */}
+
+<div className="mt-8 px-4 space-y-3">
+
+<button onClick={()=>setShowProfile(true)} className="btn">
+<User size={16}/> Profile Details
+</button>
+
+{/* ✅ REDIRECT TO ADDRESS PAGE */}
+<button
+onClick={()=>router.push("/profile/address")}
+className="btn"
+>
+<MapPin size={16}/> Saved Address
+</button>
+
+{/* <button
+onClick={()=>router.push("/invite")}
+className="btn"
+>
+<UserPlus size={16}/> Invite & Earn
+</button> */}
+
+<button onClick={()=>setShowLogout(true)} className="btn logout">
+<LogOut size={16}/> Logout
+</button>
+
+</div>
+
+{/* ================= PROFILE MODAL ================= */}
+
+{showProfile && (
+
+<div className="modal" onClick={()=>setShowProfile(false)}>
+
+<div className="modalBox" onClick={(e)=>e.stopPropagation()}>
+
+<h2 className="font-semibold mb-4">Profile Details</h2>
+
+<p><b>Name:</b> {user.name}</p>
+<p><b>Email:</b> {user.email}</p>
+<p><b>Phone:</b> {user.phone || "Not added"}</p>
+<p><b>Password:</b> ••••••••</p>
+
+<button className="close" onClick={()=>setShowProfile(false)}>
+Close
+</button>
+
+</div>
+
+</div>
+
+)}
+
+{/* ================= AVATAR VIEW ================= */}
+
+{showAvatar && (
+
+<div className="modal" onClick={()=>setShowAvatar(false)}>
+
+<div className="modalBox center" onClick={(e)=>e.stopPropagation()}>
+
+<img
+src={user.image}
+className="w-64 h-64 rounded-full object-cover"
+/>
+
+<button className="close" onClick={()=>setShowAvatar(false)}>
+Close
+</button>
+
+</div>
+
+</div>
+
+)}
+
+{/* ================= LOGOUT MODAL ================= */}
+
+{showLogout && (
+
+<div className="modal" onClick={()=>setShowLogout(false)}>
+
+<div className="modalBox" onClick={(e)=>e.stopPropagation()}>
+
+<h2 className="font-semibold mb-3">
+Are you sure you want to logout?
+</h2>
+
+<div className="flex gap-3 mt-4">
+
+<button
+className="btnSmall"
+onClick={()=>setShowLogout(false)}
+>
+Cancel
+</button>
+
+<button
+className="btnDanger"
+onClick={logout}
+>
+Yes Logout
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)}
+
+{/* ================= STYLES ================= */}
+
+<style jsx>{`
+
+.btn{
+display:flex;
+align-items:center;
+gap:8px;
+padding:14px;
+border-radius:14px;
+background:white;
+border:1px solid #eee;
+transition:.2s;
+}
+
+.btn:hover{
+transform:translateY(-2px);
+box-shadow:0 10px 20px rgba(0,0,0,.08);
+}
+
+.btn:active{
+transform:scale(.96);
+}
+
+.logout{
+background:#ffe5e5;
+color:#d32f2f;
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.5);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:999;
+}
+
+.modalBox{
+background:white;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:350px;
+animation:pop .25s ease;
+}
+
+.center{
+display:flex;
+flex-direction:column;
+align-items:center;
+}
+
+@keyframes pop{
+from{transform:scale(.9);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}
+
+.close{
+margin-top:15px;
+width:100%;
+background:black;
+color:white;
+padding:10px;
+border-radius:10px;
+}
+
+.btnSmall{
+background:#f3f4f6;
+padding:10px;
+border-radius:10px;
+}
+
+.btnDanger{
+background:#ff4d4f;
+color:white;
+padding:10px;
+border-radius:10px;
+}
+
+`}</style>
+
+</main>
+
+);
 }

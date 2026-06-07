@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.38.0",
     "jsonwebtoken": "^9.0.3",
     "jspdf": "^4.2.1",
@@ -17,11 +19,13 @@
     "lucide-react": "^0.577.0",
     "mongoose": "^9.3.0",
     "next": "14.2.5",
+    "nodemailer": "^8.0.5",
     "qrcode": "^1.5.4",
     "razorpay": "^2.9.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-easy-crop": "^5.5.7",
+    "react-speech-recognition": "^4.0.1",
     "socket.io": "^4.8.3",
     "socket.io-client": "^4.8.3",
     "swiper": "^12.1.3"

@@ -23,6 +23,31 @@ type:String,
 default:"user"
 },
 
+/* ================= REFERRAL SYSTEM ================= */
+
+/* UNIQUE CODE FOR SHARING */
+referralCode:{
+type:String,
+unique:true
+},
+
+/* WHO REFERRED THIS USER */
+referredBy:{
+type:String,
+default:null
+},
+
+/* USER WALLET */
+wallet:{
+type:Number,
+default:0
+},
+
+/* DEVICE LIMIT (ANTI-FRAUD) */
+deviceId:{
+type:String
+},
+
 createdAt:{
 type:Date,
 default:Date.now

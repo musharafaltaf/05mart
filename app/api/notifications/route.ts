@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/app/lib/mongodb";
 import Notification from "@/app/lib/models/Notification";
 
-/* GET USER NOTIFICATIONS */
-
+/* ================= GET ================= */
 export async function GET(req: Request){
 
 await connectDB();
@@ -17,29 +16,27 @@ return NextResponse.json([]);
 
 const data = await Notification
 .find({ userId } as any)
-.sort({ createdAt:-1 });
+.sort({ createdAt:-1 })
+.limit(50); // 🔥 prevent overload
 
 return NextResponse.json(data);
 
 }
 
-
-/* MARK AS READ */
-
+/* ================= MARK AS READ ================= */
 export async function PUT(req: Request){
 
 await connectDB();
 
 const body = await req.json();
 
+if(!body.id){
+return NextResponse.json({ error:"Invalid id" },{ status:400 });
+}
+
 await Notification.findByIdAndUpdate(
 body.id,
-{ read:true },
-{
-  new: true,
-  lean: true,
-  includeResultMetadata: true
-}
+{ read:true, Read:true } // 🔥 handle both cases
 );
 
 return NextResponse.json({ success:true });
@@ -47,13 +44,16 @@ return NextResponse.json({ success:true });
 }
 
 
-/* DELETE */
-
+/* ================= DELETE ================= */
 export async function DELETE(req: Request){
 
 await connectDB();
 
 const body = await req.json();
+
+if(!body.id){
+return NextResponse.json({ error:"Invalid id" },{ status:400 });
+}
 
 await Notification.deleteOne({ _id: body.id });
 

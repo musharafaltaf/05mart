@@ -1,114 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export default function Loading(){
 
-const quotes = [
-  "Shop smarter, live better 🛍️",
-  "Your style, your store ✨",
-  "Best deals, everyday 🔥",
-  "Fast delivery, happy life 🚚",
-  "Everything you need, in one place 💎"
-];
-
-const [quote,setQuote] = useState(quotes[0]);
-
-/* AUTO CHANGE QUOTES */
-useEffect(()=>{
-
-let i = 0;
-
-const interval = setInterval(()=>{
-  i = (i + 1) % quotes.length;
-  setQuote(quotes[i]);
-},2000);
-
-return ()=>clearInterval(interval);
-
-},[]);
-
 return(
-<div className="h-screen flex flex-col items-center justify-center bg-white text-center px-4">
 
-{/* LOGO */}
-<img 
+<div className="h-screen flex flex-col justify-between bg-white">
+
+{/* CENTER */}
+<div className="flex flex-col items-center justify-center flex-1">
+
+  {/* CIRCLE */}
+  <div className="w-[100px] h-[100px] rounded-full flex items-center justify-center shadow-md mb-5 overflow-hidden">
+
+    <img 
   src="/logo.png" 
-  className="w-20 h-20 mb-6 animate-float"
+  className="w-[100px] h-[100px] rounded-full object-cover"
 />
 
-{/* TITLE */}
-<h1 className="text-2xl font-bold mb-2">
-  Welcome to 05Mart
-</h1>
+  </div>
 
-{/* QUOTE */}
-<p className="text-gray-500 text-sm animate-fadeIn">
-  {quote}
-</p>
+  {/* LINE LOADER */}
+  <div className="w-[140px] h-[4px] bg-gray-200 rounded-full overflow-hidden">
+    <div className="w-[40%] h-full bg-black animate-[loading_1.2s_infinite]" />
+  </div>
 
-{/* 🔥 PREMIUM LOADER */}
-<div className="flex gap-2 mt-6 items-center">
+</div>
 
-<span className="dot"></span>
-<span className="dot delay1"></span>
-<span className="dot delay2"></span>
-
+{/* BOTTOM TEXT */}
+<div className="text-center pb-6 text-sm text-gray-600">
+  ❤️ <span className="font-bold ml-1">05Mart</span>
 </div>
 
 <style jsx>{`
 
-/* FLOAT LOGO */
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-  100% { transform: translateY(0px); }
-}
-
-.animate-float {
-  animation: float 2s ease-in-out infinite;
-}
-
-/* TEXT FADE */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease;
-}
-
-/* 🔥 DOT ANIMATION (WAVE STYLE) */
-.dot{
-  width:10px;
-  height:10px;
-  background:black;
-  border-radius:50%;
-  animation: wave 1.4s infinite ease-in-out;
-}
-
-.delay1{ animation-delay:0.2s; }
-.delay2{ animation-delay:0.4s; }
-
-@keyframes wave{
-  0%, 80%, 100% {
-    transform: scale(0.5);
-    opacity: 0.5;
-  }
-  40% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
+@keyframes loading{
+  0%{transform:translateX(-100%)}
+  100%{transform:translateX(300%)}
 }
 
 `}</style>
 
 </div>
+
 );
+
 }
-
-
 
 // "use client";
 

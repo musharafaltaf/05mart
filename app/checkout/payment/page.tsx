@@ -1222,20 +1222,16 @@ const [cart, setCart] = useState<any[]>([]);
 const [payment, setPayment] = useState("cod");
 
 const [loading, setLoading] = useState(false);
-const [showModal, setShowModal] = useState(false); // ✅ NEW
+const [showModal, setShowModal] = useState(false);
 
-/* 🔥 TOAST */
 const [toast, setToast] = useState<string | null>(null);
 
-const [giftCard, setGiftCard] = useState("");
-const [giftPin, setGiftPin] = useState("");
-const [giftDiscount, setGiftDiscount] = useState(0);
+const [pageLoading,setPageLoading] = useState(true);
+const [confirmLoading,setConfirmLoading] = useState(false);
 
 const STORE_UPI = "daraamir369369@okhdfcbank";
 
-/* ========================= */
-/* LOAD CART */
-/* ========================= */
+/* ================= LOAD ================= */
 
 useEffect(() => {
 
@@ -1252,12 +1248,15 @@ const buyNow = localStorage.getItem("buyNow");
 
 if (buyNow) {
 setCart([JSON.parse(buyNow)]);
+setPageLoading(false);
 return;
 }
 
 const res = await fetch("/api/cart");
 const data = await res.json();
+
 setCart(data.items || []);
+setPageLoading(false);
 
 };
 
@@ -1265,9 +1264,7 @@ loadCart();
 
 }, []);
 
-/* ========================= */
-/* PRICE */
-/* ========================= */
+/* ================= PRICE ================= */
 
 const subtotal = cart.reduce(
 (sum, item) => sum + Number(item.price) * Number(item.quantity || 1),
@@ -1281,43 +1278,16 @@ const mrpTotal = cart.reduce(
 
 const discount = mrpTotal - subtotal;
 
-const gst = 0;
-const delivery = 0;
+const total = subtotal;
 
-const totalSavings = discount + giftDiscount;
-const savingsPercent = mrpTotal > 0 
-? Math.round((totalSavings / mrpTotal) * 100)
-: 0;
-
-const total = subtotal - giftDiscount;
-
-/* ========================= */
-/* TOAST FUNCTION */
-/* ========================= */
+/* ================= TOAST ================= */
 
 const showToast = (msg:string)=>{
 setToast(msg);
-setTimeout(()=>setToast(null),2500);
+setTimeout(()=>setToast(null),2000);
 };
 
-/* ========================= */
-/* GIFT CARD */
-/* ========================= */
-
-const applyGiftCard = () => {
-
-if (giftCard === "FREE100" && giftPin === "1234") {
-setGiftDiscount(100);
-showToast("Gift Card Applied 🎉");
-} else {
-showToast("Invalid Gift Card ❌");
-}
-
-};
-
-/* ========================= */
-/* UPI */
-/* ========================= */
+/* ================= UPI ================= */
 
 const handleUPIPayment = () => {
 
@@ -1326,32 +1296,23 @@ const link = `upi://pay?pa=${STORE_UPI}&pn=05Mart&am=${total}&cu=INR`;
 window.location.href = link;
 
 setTimeout(()=>{
-showToast("If UPI app didn't open, use QR or Copy UPI ID");
-},1500);
+showToast("If UPI didn't open, use QR");
+},1200);
 
 };
 
 const copyUPI = async () => {
-try{
 await navigator.clipboard.writeText(STORE_UPI);
-showToast("UPI ID Copied ✅");
-}catch{
-showToast("Copy failed");
-}
+showToast("UPI Copied");
 };
 
-/* ========================= */
-/* RAZORPAY */
-/* ========================= */
+/* ================= RAZORPAY ================= */
 
 useEffect(() => {
-
 if ((window as any).Razorpay) return;
-
 const script = document.createElement("script");
 script.src = "https://checkout.razorpay.com/v1/checkout.js";
 document.body.appendChild(script);
-
 }, []);
 
 const payWithRazorpay = async () => {
@@ -1376,15 +1337,17 @@ rzp.open();
 
 };
 
-/* ========================= */
-/* CONFIRM FLOW */
-/* ========================= */
+/* ================= CONFIRM ================= */
 
-const confirmOrder = () => {
+const confirmOrder = ()=>{
 setShowModal(true);
 };
 
-const proceedPayment = () => {
+const proceedPayment = ()=>{
+
+setConfirmLoading(true);
+
+setTimeout(()=>{
 
 setShowModal(false);
 
@@ -1392,76 +1355,96 @@ if (payment === "cod") return placeOrder();
 if (payment === "upi") return handleUPIPayment();
 if (payment === "razorpay") return payWithRazorpay();
 
+},800);
+
 };
 
-/* ========================= */
-/* ORDER */
-/* ========================= */
+/* ================= ORDER ================= */
 
 const placeOrder = async (statusParam = "pending") => {
 
-  if (loading) return;
+if (loading) return;
 
-  setLoading(true);
+setLoading(true);
 
-  try {
+try {
 
-    /* USER (OPTIONAL) */
-    const userData = localStorage.getItem("user");
-    const user = userData ? JSON.parse(userData) : null;
+const userData = localStorage.getItem("user");
+const user = userData ? JSON.parse(userData) : null;
 
-    /* ADDRESS */
-    const address = JSON.parse(localStorage.getItem("address") || "{}");
+const address = JSON.parse(localStorage.getItem("selectedAddress") || "{}");
 
-    /* CREATE ORDER */
-    const res = await fetch("/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        items: cart,
-        total,
-        customer: address,
-        paymentMethod: payment,
+const res = await fetch("/api/orders", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+items: cart,
+total,
+customer: address,
+paymentMethod: payment,
+userId: user?._id || "guest",
+status: statusParam
+})
+});
 
-        /* SAFE USER */
-        userId: user?._id || "guest",
+const order = await res.json();
 
-        status: statusParam
-      })
-    });
+if (!res.ok) {
+alert(order?.error || "Order failed");
+setLoading(false);
+return;
+}
 
-    const order = await res.json();
+router.push(`/success?orderId=${order._id}`);
 
-    if (!res.ok) {
-      alert(order?.error || "Order failed");
-      setLoading(false);
-      return;
-    }
+} catch (err) {
+console.log(err);
+alert("Something went wrong");
+}
 
-    /* SUCCESS REDIRECT */
-    router.push(`/success?orderId=${order._id}`);
-
-  } catch (err) {
-
-    console.log("ORDER ERROR:", err);
-    alert("Something went wrong");
-
-  }
-
-  setLoading(false);
+setLoading(false);
 
 };
-/* ========================= */
-/* UI */
-/* ========================= */
+
+/* ================= SKELETON ================= */
+
+if(pageLoading){
+return(
+<main className="max-w-7xl mx-auto px-4 py-8">
+
+<CheckoutSteps step={3} />
+
+<div className="h-6 w-40 bg-gray-200 rounded shimmer mb-6"></div>
+
+<div className="grid md:grid-cols-2 gap-6">
+
+{[1,2].map(i=>(
+<div key={i} className="p-6 border rounded-xl space-y-3">
+
+<div className="h-4 w-32 bg-gray-200 shimmer rounded"></div>
+<div className="h-3 w-24 bg-gray-200 shimmer rounded"></div>
+<div className="h-3 w-48 bg-gray-200 shimmer rounded"></div>
+
+</div>
+))}
+
+</div>
+
+</main>
+);
+}
+
+/* ================= UI ================= */
 
 return (
 
 <main className="max-w-7xl mx-auto px-4 py-8">
 
-<CheckoutSteps step={3} />
+<div className="fixed top-20 left-0 w-full z-[999] bg-white/90 backdrop-blur-md border-b shadow-sm">
+  <CheckoutSteps step={3} />
+</div>
+
+<div className="h-[80px]" /> {/* spacing */}
 
 <h1 className="text-2xl font-bold mb-6">Complete Payment</h1>
 
@@ -1472,60 +1455,45 @@ return (
 
 <div className="shadow-md rounded-xl p-4 space-y-3 bg-white">
 
-<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="cod"?"border-2 border-black":"border"}`}>
-<input type="radio" checked={payment==="cod"} onChange={()=>setPayment("cod")} />
-Cash on Delivery
+{["cod","razorpay","upi"].map(type=>(
+<label key={type}
+className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${
+payment===type?"border-2 border-black":"border"
+}`}>
+<input type="radio"
+checked={payment===type}
+onChange={()=>setPayment(type)}
+/>
+{type==="cod"?"Cash on Delivery":
+type==="razorpay"?"Online Payment":
+"UPI Payment"}
 </label>
-
-<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="razorpay"?"border-2 border-black":"border"}`}>
-<input type="radio" checked={payment==="razorpay"} onChange={()=>setPayment("razorpay")} />
-Gpay_Paytm_Phonepe_Card (Razorpay)
-</label>
-
-<label className={`flex gap-3 p-3 rounded-lg cursor-pointer transition ${payment==="upi"?"border-2 border-black":"border"}`}>
-<input type="radio" checked={payment==="upi"} onChange={()=>setPayment("upi")} />
-UPI Payment
-</label>
+))}
 
 </div>
 
 {payment==="upi" && (
 <div className="shadow-md rounded-xl p-4 bg-gray-50">
 
-<p className="font-semibold mb-2">Pay via UPI</p>
-
 <img src="/upi-qr.png" className="w-40 mx-auto mb-3" />
 
-<button onClick={handleUPIPayment} className="bg-green-600 text-white w-full py-2 rounded-lg">
-Open UPI App
+<button onClick={handleUPIPayment}
+className="bg-green-600 text-white w-full py-2 rounded-lg">
+Open UPI
 </button>
 
-<button onClick={copyUPI} className="border w-full py-2 rounded-lg mt-2">
-Copy UPI ID
+<button onClick={copyUPI}
+className="border w-full py-2 rounded-lg mt-2">
+Copy UPI
 </button>
 
 </div>
 )}
 
-{/* GIFT */}
-<div className="shadow-md rounded-xl p-4 bg-white">
-
-<input placeholder="Voucher Number" className="border p-2 w-full mb-2 rounded"
-value={giftCard} onChange={(e)=>setGiftCard(e.target.value)} />
-
-<input placeholder="PIN" className="border p-2 w-full mb-2 rounded"
-value={giftPin} onChange={(e)=>setGiftPin(e.target.value)} />
-
-<button onClick={applyGiftCard} className="bg-blue-600 text-white w-full py-2 rounded">
-Apply Gift Card
-</button>
-
-</div>
-
 </div>
 
 {/* RIGHT */}
-<div className="shadow-md rounded-xl p-5 bg-white">
+<div className="shadow-md rounded-xl p-5 bg-white sticky top-20">
 
 <h2 className="font-semibold mb-4">Price Details</h2>
 
@@ -1539,16 +1507,6 @@ Apply Gift Card
 <span>-₹{discount}</span>
 </div>
 
-<div className="flex justify-between mb-2">
-<span>GST</span>
-<span className="text-green-600">₹0</span>
-</div>
-
-<div className="flex justify-between mb-2">
-<span>Delivery</span>
-<span className="text-green-600">FREE</span>
-</div>
-
 <hr className="my-3"/>
 
 <div className="flex justify-between font-bold text-lg">
@@ -1556,11 +1514,23 @@ Apply Gift Card
 <span>₹{total}</span>
 </div>
 
+{/* BUTTON */}
+
 <button
 onClick={confirmOrder}
-className="bg-black text-white w-full mt-4 py-3 rounded-lg"
+disabled={loading}
+className={`w-full mt-4 py-3 rounded-xl text-white flex justify-center items-center gap-2 transition
+${loading ? "bg-gray-400" : "bg-black hover:scale-[1.02] active:scale-95"}
+`}
 >
-{loading?"Processing...":payment==="cod"?"Place Order":`Pay ₹${total}`}
+
+{loading ? (
+<>
+<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+Placing Order...
+</>
+) : payment==="cod"?"Place Order":`Pay ₹${total}`}
+
 </button>
 
 </div>
@@ -1568,25 +1538,38 @@ className="bg-black text-white w-full mt-4 py-3 rounded-lg"
 </div>
 
 {/* MODAL */}
+
 {showModal && (
-<div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+<div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
 <div className="bg-white rounded-xl p-6 w-[90%] max-w-md animate-scaleIn">
 
-<h2 className="text-lg font-bold mb-2">Confirm Payment</h2>
+<h2 className="font-bold mb-2">Confirm Payment</h2>
 
 <p className="text-gray-500 mb-4">
-Pay ₹{total} using <b>{payment.toUpperCase()}</b>
+Pay ₹{total} via {payment.toUpperCase()}
 </p>
 
 <div className="flex gap-3">
 
-<button onClick={()=>setShowModal(false)} className="border w-full py-2 rounded">
+<button
+onClick={()=>setShowModal(false)}
+className="border w-full py-2 rounded">
 Cancel
 </button>
 
-<button onClick={proceedPayment} className="bg-black text-white w-full py-2 rounded">
-Confirm
+<button
+onClick={proceedPayment}
+className="bg-black text-white w-full py-2 rounded flex justify-center items-center gap-2"
+>
+
+{confirmLoading ? (
+<>
+<div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+Processing
+</>
+) : "Confirm"}
+
 </button>
 
 </div>
@@ -1597,12 +1580,39 @@ Confirm
 )}
 
 {/* TOAST */}
+
 {toast && (
 <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded shadow-lg animate-bounce z-50">
 {toast}
 </div>
 )}
 
+<style jsx global>{`
+.shimmer{
+position:relative;
+overflow:hidden;
+}
+.shimmer::after{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);
+animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{100%{left:100%;}}
+@keyframes scaleIn{
+from{transform:scale(0.9);opacity:0}
+to{transform:scale(1);opacity:1}
+}
+.animate-scaleIn{
+animation:scaleIn 0.25s ease;
+}
+`}</style>
+
 </main>
+
 );
 }

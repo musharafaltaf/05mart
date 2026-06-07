@@ -91,11 +91,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function ShopByCategory(){
 
 const [categories,setCategories] = useState<any[]>([]);
+const [loading,setLoading] = useState(true);
+
+const router = useRouter();
 
 useEffect(()=>{
 
@@ -105,25 +108,58 @@ try{
 
 const res = await fetch("/api/categories");
 
-if(!res.ok){
-console.log("Categories API failed");
-return;
-}
-
+if(res.ok){
 const data = await res.json();
-
 setCategories(data || []);
+}
 
 }catch(err){
 console.log("Categories error:",err);
-setCategories([]);
 }
+
+setLoading(false);
 
 };
 
 loadCategories();
 
 },[]);
+
+/* ========================= */
+/* 🔥 PREMIUM SKELETON */
+/* ========================= */
+
+if(loading){
+
+return(
+
+<section className="max-w-7xl mx-auto px-4 py-10">
+
+<div className="h-6 w-40 mb-6 rounded shimmer"/>
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+
+{Array.from({length:6}).map((_,i)=>(
+
+<div key={i} className="rounded-xl overflow-hidden">
+
+<div className="w-full h-36 md:h-48 shimmer"/>
+
+<div className="absolute inset-0 flex items-center justify-center"/>
+
+</div>
+
+))}
+
+</div>
+
+</section>
+
+);
+
+}
+
+/* ========================= */
 
 return(
 
@@ -137,26 +173,28 @@ Shop by Category
 
 {categories.map((cat:any)=>(
 
-<Link
+<div
 key={cat._id}
-href={`/category/${cat.name?.toLowerCase()}`}  // ✅ FIX
-className="relative rounded-xl overflow-hidden group"
+onClick={()=>router.push(`/category/${cat.name?.toLowerCase()}`)}
+className="relative rounded-xl overflow-hidden cursor-pointer group active:scale-95 transition duration-150"
 >
 
+{/* IMAGE */}
 <img
 src={cat.image}
-className="w-full h-36 md:h-48 object-cover group-hover:scale-105 transition"
+className="w-full h-36 md:h-48 object-cover transition-transform duration-300 group-hover:scale-105"
 />
 
+{/* OVERLAY */}
 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
 
-<p className="text-white font-semibold text-lg">
+<p className="text-white font-semibold text-lg tracking-wide">
 {cat.name}
 </p>
 
 </div>
 
-</Link>
+</div>
 
 ))}
 

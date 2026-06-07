@@ -88,16 +88,140 @@ window.removeEventListener("focus",onFocus);
 },[]);
 
 if(loading){
-return <p className="p-10 text-center">Loading orders...</p>
+return(
+
+<main className="max-w-4xl mx-auto px-4 py-8">
+
+<div className="h-6 w-40 bg-gray-200 rounded shimmer mb-6"></div>
+
+{[1,2,3].map(i=>(
+<div key={i} className="border rounded-xl p-4 mb-4 flex gap-4">
+
+<div className="w-20 h-20 bg-gray-200 rounded shimmer"></div>
+
+<div className="flex-1 space-y-2">
+
+<div className="h-4 w-40 bg-gray-200 shimmer rounded"></div>
+<div className="h-3 w-24 bg-gray-200 shimmer rounded"></div>
+<div className="h-3 w-32 bg-gray-200 shimmer rounded"></div>
+
+</div>
+
+</div>
+))}
+
+<style jsx>{`
+.shimmer{
+position:relative;
+overflow:hidden;
+}
+.shimmer::after{
+content:"";
+position:absolute;
+top:0;
+left:-100%;
+width:100%;
+height:100%;
+background:linear-gradient(90deg,transparent,rgba(255,255,255,0.6),transparent);
+animation:shimmer 1.2s infinite;
+}
+@keyframes shimmer{
+100%{left:100%;}
+}
+`}</style>
+
+</main>
+
+)
 }
 
 if(!orders || orders.length === 0){
 return(
-<main className="container">
-<h1 className="title">My Orders</h1>
-<p className="text-gray-500">No orders found</p>
+
+<main className="max-w-4xl mx-auto px-4 py-12 text-center">
+
+<h1 className="text-2xl font-bold mb-6">
+My Orders
+</h1>
+
+{/* ANIMATED ICON */}
+<div className="text-7xl mb-4 animate-bounce-slow">
+📦
+</div>
+
+{/* MAIN MESSAGE */}
+<h2 className="text-lg font-semibold animate-fadeUp">
+Ohh... nothing here yet 👀
+</h2>
+
+<p className="text-gray-500 mt-2 text-sm animate-fadeUp delay-100">
+Looks like you haven’t ordered anything
+</p>
+
+<p className="text-gray-400 text-sm mt-1 animate-fadeUp delay-200">
+Let’s fix that 😉
+</p>
+
+{/* CTA */}
+<div className="mt-8 animate-fadeUp delay-300">
+
+<Link href="/">
+<button className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-medium shadow hover:scale-105 active:scale-95 transition">
+Start Shopping 🚀
+</button>
+</Link>
+
+</div>
+
+{/* EXTRA */}
+<div className="mt-6 text-sm text-gray-400 animate-fadeUp delay-500">
+
+<p>🔥 Trending deals are waiting</p>
+<p>💥 Flash sale ends soon</p>
+
+</div>
+
+<style jsx>{`
+
+/* FADE UP */
+
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translateY(15px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
+
+.animate-fadeUp{
+animation:fadeUp .6s ease forwards;
+opacity:0;
+}
+
+.delay-100{animation-delay:.1s}
+.delay-200{animation-delay:.2s}
+.delay-300{animation-delay:.3s}
+.delay-500{animation-delay:.5s}
+
+/* SLOW BOUNCE */
+
+@keyframes bounceSlow{
+0%,100%{transform:translateY(0)}
+50%{transform:translateY(-10px)}
+}
+
+.animate-bounce-slow{
+animation:bounceSlow 2s infinite;
+}
+
+`}</style>
+
 </main>
-);
+
+)
 }
 
 return(
