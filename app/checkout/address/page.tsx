@@ -252,52 +252,84 @@ loadAddresses(user._id);
 
 /* ================= SAVE ================= */
 
-const saveAddress = async()=>{
+const saveAddress = async () => {
 
-// ✅ PINCODE BLOCK (ADD THIS HERE)
-if(pincodeError){
-setErrorMsg("Fix pincode before saving");
-setShowError(true);
-return;
-}
+  if(pincodeError){
+    setErrorMsg("Fix pincode before saving");
+    setShowError(true);
+    return;
+  }
 
-// existing validation
-if(!validateName(form.name)){
-setErrorMsg("Enter valid name");
-setShowError(true);
-return;
-}
+  if(!validateName(form.name)){
+    setErrorMsg("Enter valid name");
+    setShowError(true);
+    return;
+  }
 
-if(!validatePhone(form.phone)){
-setErrorMsg("Invalid phone");
-setShowError(true);
-return;
-}
+  if(!validatePhone(form.phone)){
+    setErrorMsg("Invalid phone");
+    setShowError(true);
+    return;
+  }
 
-// continue normal save...
+  try{
 
-setLoading(true);
+    setLoading(true);
 
-if(form._id){
-await fetch(`/api/address/${form._id}`,{
-method:"PUT",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify(form)
-});
-}else{
-await fetch("/api/address",{
-method:"POST",
-headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({...form,userId:user._id})
-});
-}
+    console.log("Saving address...", form);
 
-await loadAddresses(user._id);
+    let res;
 
-setShowForm(false);
-setLoading(false);
+    if(form._id){
+
+      res = await fetch(`/api/address/${form._id}`,{
+        method:"PUT",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify(form)
+      });
+
+    }else{
+
+      res = await fetch("/api/address",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          ...form,
+          userId:user._id
+        })
+      });
+
+    }
+
+    const data = await res.json();
+
+    console.log("SAVE RESPONSE:", data);
+
+    if(!res.ok){
+      throw new Error(data.error || "Failed");
+    }
+
+    await loadAddresses(user._id);
+
+    setShowForm(false);
+
+  }catch(err:any){
+
+    console.log("SAVE ERROR:", err);
+
+    setErrorMsg(err.message || "Failed to save address");
+    setShowError(true);
+
+  }finally{
+
+    setLoading(false);
+
+  }
 };
-
 /* ================= CONTINUE ================= */
 
 const handleContinue = ()=>{
@@ -609,8 +641,10 @@ className={`px-3 py-1 rounded border ${form.tag===t ? "bg-black text-white":""}`
 
 {/* SAVE */}
 <button
+type="button"
+disabled={loading}
 onClick={saveAddress}
-className="bg-orange-500 text-white py-3 w-full mt-3 rounded-xl flex items-center justify-center gap-2"
+className="bg-orange-500 text-white py-3 w-full mt-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60"
 >
 {loading ? (
 <>
