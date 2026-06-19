@@ -13,8 +13,6 @@ const [categories,setCategories] = useState<any[]>([])
 const [categorySearch,setCategorySearch] = useState("")
 const [showCategory,setShowCategory] = useState(false)
 
-const [uploading,setUploading] = useState(false)
-const [progress,setProgress] = useState(0)
 
 const [dragIndex,setDragIndex] = useState<number|null>(null)
 
@@ -75,46 +73,48 @@ const uploadImage = async (file:any,index?:number)=>{
 
 if(!file) return
 
-setUploading(true)
-setProgress(0)
-
 const formData = new FormData()
 formData.append("file",file)
 
-const xhr = new XMLHttpRequest()
+try{
 
-xhr.open("POST","/api/upload")
+const res = await fetch("/api/upload",{
+method:"POST",
+body:formData
+})
 
-xhr.upload.onprogress = (e)=>{
-if(e.lengthComputable){
-const percent = Math.round((e.loaded/e.total)*100)
-setProgress(percent)
-}
-}
-
-xhr.onload = () => {
-const data = JSON.parse(xhr.response)
+const data = await res.json()
 
 if(index === undefined){
-setForm(prev=>({...prev,image:data.url}))
+
+setForm(prev=>({
+...prev,
+image:data.url
+}))
+
 }else{
+
 setForm(prev=>{
+
 const updated=[...prev.images]
 updated[index]=data.url
-return {...prev,images:updated}
+
+return {
+...prev,
+images:updated
+}
+
 })
+
 }
 
-setUploading(false)
-setProgress(0)
-}
+}catch(err){
 
-xhr.onerror = () => {
-setUploading(false)
+console.log("UPLOAD ERROR",err)
 alert("Upload failed")
+
 }
 
-xhr.send(formData)
 }
 
 /* ================= REMOVE IMAGE ================= */
@@ -254,12 +254,7 @@ onDrop={()=>handleDrop(index)}
 ))}
 </div>
 
-{/* PROGRESS BAR */}
-{uploading && (
-<div className="progress">
-<div style={{width:`${progress}%`}}/>
-</div>
-)}
+
 
 </div>
 
@@ -424,16 +419,6 @@ height:20px;
 border-radius:50%;
 }
 
-.progress{
-height:6px;
-background:#eee;
-margin-top:10px;
-}
-
-.progress div{
-height:100%;
-background:black;
-}
 
 input,textarea{
 border:1px solid #ddd;
@@ -510,16 +495,7 @@ color:white;
 padding:8px 20px;
 border-radius:6px;
 }
-.progress{
-height:6px;
-background:#eee;
-margin-top:10px;
-}
-.progress div{
-height:100%;
-background:black;
-transition:0.3s;
-}
+
 `}</style>
 
 </main>
