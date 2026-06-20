@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 
 import FeaturedProducts from "@/components/FeaturedProducts"
 import TrendingProducts from "@/components/TrendingProducts"
@@ -25,12 +25,29 @@ const dragging = useRef(false)
 
 const sliderRef = useRef<HTMLDivElement>(null)
 
+useEffect(()=>{
+
+const slider = sliderRef.current
+
+if(!slider) return
+
+slider.style.transition =
+"transform .35s cubic-bezier(.4,.8,.2,1)"
+
+slider.style.transform =
+`translate3d(-${index * 100}%,0,0)`
+
+},[index])
+
 /* TOUCH START */
 
 const handleStart=(e:any)=>{
 
 dragging.current = true
+
 startX.current = e.touches[0].clientX
+
+currentX.current = startX.current
 
 }
 
@@ -99,7 +116,6 @@ onTouchEnd={handleEnd}
 <div
 className="track"
 ref={sliderRef}
-style={{ transform:`translate3d(-${index*100}%,0,0)` }}
 >
 
 {/* PRODUCTS PAGE */}
@@ -145,11 +161,12 @@ style={{ transform:`translate3d(-${index*100}%,0,0)` }}
 .slider{
 position:absolute;
 top:0px;
-
 left:0;
 right:0;
 
 overflow:hidden;
+
+touch-action:pan-y;
 }
 
 /* TRACK */
@@ -163,8 +180,11 @@ transition:transform .35s cubic-bezier(.4,.8,.2,1);
 
 .page{
 flex:0 0 100%;
-height:100vh;
+min-height:100vh;
+
 overflow-y:auto;
+-webkit-overflow-scrolling:touch;
+
 padding:10px 14px;
 box-sizing:border-box;
 }

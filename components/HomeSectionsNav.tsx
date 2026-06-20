@@ -219,10 +219,15 @@ className={active ? "active" : ""}
 
 .wrapper{
 position:fixed;
-top:60px; /* match your navbar height */
+top:60px;
 left:0;
 right:0;
+
 z-index:1000;
+
+will-change:transform;
+transform:translateZ(0);
+}
 
 background:rgba(255,255,255,0.9);
 backdrop-filter:blur(18px);
