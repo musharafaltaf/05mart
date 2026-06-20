@@ -71,52 +71,135 @@ setForm({
 
 const uploadImage = async (file:any,index?:number)=>{
 
-if(!file) return
+  if(!file) return;
 
-const formData = new FormData()
-formData.append("file",file)
+  /* INSTANT PREVIEW */
 
-try{
+  const preview = URL.createObjectURL(file);
 
-const res = await fetch("/api/upload",{
-method:"POST",
-body:formData
-})
+  if(index === undefined){
 
-const data = await res.json()
+    setForm(prev=>({
+      ...prev,
+      image: preview
+    }));
 
-if(index === undefined){
+  }else{
 
-setForm(prev=>({
-...prev,
-image:data.url
-}))
+    setForm(prev=>{
 
-}else{
+      const updated = [...prev.images];
+      updated[index] = preview;
 
-setForm(prev=>{
+      return {
+        ...prev,
+        images: updated
+      };
 
-const updated=[...prev.images]
-updated[index]=data.url
+    });
 
-return {
-...prev,
-images:updated
-}
+  }
 
-})
+  try{
 
-}
+    /* COMPRESS IMAGE */
 
-}catch(err){
+    const compressed = await compressImage(file);
 
-console.log("UPLOAD ERROR",err)
-alert("Upload failed")
+    const formData = new FormData();
 
-}
+    formData.append(
+      "file",
+      compressed as Blob,
+      "image.webp"
+    );
 
-}
+    const res = await fetch("/api/upload",{
+      method:"POST",
+      body:formData
+    });
 
+    const data = await res.json();
+
+    if(index === undefined){
+
+      setForm(prev=>({
+        ...prev,
+        image:data.url
+      }));
+
+    }else{
+
+      setForm(prev=>{
+
+        const updated=[...prev.images];
+
+        updated[index]=data.url;
+
+        return {
+          ...prev,
+          images:updated
+        };
+
+      });
+
+    }
+
+  }catch(err){
+
+    console.log(err);
+    alert("Upload failed");
+
+  }
+
+};
+
+
+const compressImage = (file:any) => {
+
+  return new Promise((resolve)=>{
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e:any)=>{
+      img.src = e.target.result;
+    };
+
+    img.onload = ()=>{
+
+      const canvas = document.createElement("canvas");
+
+      const maxWidth = 1200;
+
+      const scale = maxWidth / img.width;
+
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+
+      const ctx = canvas.getContext("2d");
+
+      ctx?.drawImage(
+        img,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+
+      canvas.toBlob(
+        (blob:any)=>resolve(blob),
+        "image/webp",
+        0.8
+      );
+
+    };
+
+    reader.readAsDataURL(file);
+
+  });
+
+};
 /* ================= REMOVE IMAGE ================= */
 
 const removeImage=(index:number)=>{
