@@ -25,9 +25,11 @@ export async function POST(req: Request) {
 
     const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-    const result = await cloudinary.uploader.upload(base64, {
-      folder: "05mart-products",
-    });
+    const result = await cloudinary.uploader.upload(base64,{
+  folder:"05mart-products",
+  resource_type:"image",
+  timeout:120000
+});
 
     return NextResponse.json({
       url: result.secure_url,
