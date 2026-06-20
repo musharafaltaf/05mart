@@ -2,36 +2,55 @@ import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 import { setOtp } from "@/app/lib/otpStore";
 
-export async function POST(req:Request){
+export async function POST(req: Request){
 
-const { email } = await req.json();
+try{
 
-const otp = Math.floor(1000 + Math.random()*9000).toString();
+  const { email } = await req.json();
 
-setOtp(email,otp);
+  const otp = Math.floor(
+    1000 + Math.random() * 9000
+  ).toString();
 
-/* EMAIL SEND */
+  setOtp(email, otp);
 
-const transporter = nodemailer.createTransport({
-service:"gmail",
-auth:{
-user:process.env.EMAIL_USER,
-pass:process.env.EMAIL_PASS
+  const transporter = nodemailer.createTransport({
+    service:"gmail",
+    auth:{
+      user:process.env.EMAIL_USER,
+      pass:process.env.EMAIL_PASS
+    }
+  });
+
+  await transporter.sendMail({
+    from:`05Mart <${process.env.EMAIL_USER}>`,
+    to:email,
+    subject:"Your OTP Code",
+    html:`
+      <h2>05Mart Verification</h2>
+      <p>Your OTP is:</p>
+      <h1>${otp}</h1>
+      <p>This expires in 5 minutes</p>
+    `
+  });
+
+  return NextResponse.json({
+    success:true
+  });
+
+}catch(error){
+
+  console.log("OTP ERROR:", error);
+
+  return NextResponse.json(
+    {
+      error:"Failed to send OTP"
+    },
+    {
+      status:500
+    }
+  );
+
 }
-});
-
-await transporter.sendMail({
-from:`05Mart <${process.env.EMAIL_USER}>`,
-to:email,
-subject:"Your OTP Code",
-html:`
-<h2>05Mart Verification</h2>
-<p>Your OTP is:</p>
-<h1>${otp}</h1>
-<p>This expires in 5 minutes</p>
-`
-});
-
-return NextResponse.json({ success:true });
 
 }
