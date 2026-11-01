@@ -27,7 +27,7 @@
 
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error("Please add MONGODB_URI to .env.local");
@@ -36,18 +36,30 @@ if (!MONGODB_URI) {
 let cached = (global as any).mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = {
+    conn: null,
+    promise: null,
+  };
 }
 
 export async function connectDB() {
-
-  if (cached.conn) return cached.conn;
-
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI);
+  if (cached.conn && mongoose.connection.readyState === 1) {
+    return cached.conn;
   }
 
-  cached.conn = await cached.promise;
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
+    });
+  }
 
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    cached.promise = null;
+    cached.conn = null;
+    throw error;
+  }
 }

@@ -41,47 +41,57 @@ const getUserName = ()=>{
   }
 };
 
-/* 🧠 SMART MESSAGE */
-const getMessage = ()=>{
+/* 🧠 PROFESSIONAL SUPPORT MESSAGE */
 
-const name = getUserName();
+const getMessage = () => {
+  const name = getUserName();
 
-if(pathname?.includes("cart")){
-return `Hello 05Mart 👋
+  if (pathname?.includes("cart")) {
+    return `Hello Rewind Supply Support Team,
 
-I am ${name}
+My name is ${name}.
 
-I need help with my cart.
+I need assistance with my shopping cart. Could you please help me resolve my query?
 
-Please assist me.`;
-}
+Thank you for your support.
 
-if(pathname?.includes("product")){
-return `Hello 05Mart 👋
+Regards,
+${name}`;
+  }
 
-I am ${name}
+  if (pathname?.includes("product")) {
+    return `Hello Rewind Supply Support Team,
 
-I have a question about a product.
+My name is ${name}.
 
-Please help me.`;
-}
+I have a question regarding a product listed on your store. Could you please assist me with the details?
 
-return `Hello 05Mart 👋
+Thank you.
 
-I am ${name}
+Regards,
+${name}`;
+  }
 
-I need help.
+  return `Hello Rewind Supply Support Team,
 
-Thank you.`;
+My name is ${name}.
 
+I need assistance with my order or a general enquiry. Could someone from your support team please help me?
+
+Thank you for your time.
+
+Regards,
+${name}`;
 };
+
+
 
 /* TEXT ANIMATION */
 const messages = [
 "Hi 👋 Need help?",
 "Fast support available ⚡",
 "Chat with us anytime 💬",
-"05Mart Support 🤝"
+"RewindSupply Support 🤝"
 ];
 
 const [text,setText] = useState("");
@@ -177,7 +187,7 @@ setTimeout(()=>{
 const msg = encodeURIComponent(getMessage());
 
 window.open(
-`https://wa.me/919103316778?text=${msg}`,
+`https://wa.me/917006134273?text=${msg}`,
 "_blank"
 );
 

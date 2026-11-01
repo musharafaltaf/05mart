@@ -109,7 +109,7 @@ return(
 <div className="card">
 
 <h2 className="title">Login</h2>
-<p className="subtitle">Welcome back to 05mart👋</p>
+<p className="subtitle">Welcome to Rewind Supply 👋👋</p>
 
 {/* EMAIL */}
 <div className="inputBox">

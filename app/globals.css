@@ -134,3 +134,16 @@ animation:spin .6s linear infinite;
 @keyframes spin{
 to{transform:rotate(360deg)}
 }
+
+:root {
+  --primary: #b9e3f5;
+  --primary-light: #eaf6fc;
+  --background: #ffffff;
+  --surface: #f5f7f8;
+  --text: #000000;
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}

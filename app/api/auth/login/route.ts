@@ -70,17 +70,27 @@ try{
     { expiresIn:"7d" }
   );
 
-  return NextResponse.json({
-    success:true,
-    token,
-    user:{
-  _id:user._id.toString(),
-  name:user.name,
-  email:user.email,
-  role:user.role,
-  referralCode: user.referralCode   // ⭐ ADD THIS
-}
-  });
+  const response = NextResponse.json({
+  success: true,
+  token,
+  user: {
+    _id: user._id.toString(),
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    referralCode: user.referralCode
+  }
+});
+
+response.cookies.set("authToken", token, {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60
+});
+
+return response;
 
 }catch(err){
 

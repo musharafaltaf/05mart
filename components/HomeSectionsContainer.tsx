@@ -4,8 +4,6 @@ import { useEffect, useRef } from "react"
 
 import FeaturedProducts from "@/components/FeaturedProducts"
 import TrendingProducts from "@/components/TrendingProducts"
-import ComboSection from "@/components/ComboSection"
-import FlashSale from "@/components/FlashSale"
 import HeroSlider from "@/components/HeroSlider"
 import ShopByCategory from "@/components/ShopByCategory"
 import StoreBenefits from "@/components/StoreBenefits"
@@ -84,7 +82,7 @@ const diff = currentX.current - startX.current
 
 let newIndex = index
 
-if(diff < -80 && index < 2){
+if(diff < -80 && index < 0){
 newIndex = index + 1
 }
 
@@ -138,21 +136,7 @@ ref={sliderRef}
 <StoreBenefits/>
 
 </div>
-{/* COMBOS PAGE */}
 
-<div className="page">
-
-<ComboSection/>
-
-</div>
-
-{/* FLASH PAGE */}
-
-<div className="page">
-
-<FlashSale/>
-
-</div>
 
 </div>
 

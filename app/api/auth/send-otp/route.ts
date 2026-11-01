@@ -23,11 +23,11 @@ try{
   });
 
   await transporter.sendMail({
-    from:`05Mart <${process.env.EMAIL_USER}>`,
+    from:`Rewind Supply <${process.env.EMAIL_USER}>`,
     to:email,
     subject:"Your OTP Code",
     html:`
-      <h2>05Mart Verification</h2>
+      <h2>Rewind Supply Verification</h2>
       <p>Your OTP is:</p>
       <h1>${otp}</h1>
       <p>This expires in 5 minutes</p>

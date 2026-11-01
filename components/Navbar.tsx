@@ -313,7 +313,7 @@ return(
 <img src="/logo.png"/>
 </div>
 
-<span className="logoText">05Mart</span>
+<span className="logoText">Rewind Supply</span>
 
 </div>
 
@@ -694,7 +694,7 @@ position:fixed;
 top:0;
 left:0;
 right:0;
-height:60px;
+height:80px;
 
 display:flex;
 justify-content:space-between;
@@ -747,8 +747,8 @@ cursor:pointer;
 /* LOGO */
 
 .logoCircle{
-width:50px;
-height:50px;
+width:60px;
+height:60px;
 
 border-radius:50%;
 background:#f3f4f6;
@@ -767,9 +767,33 @@ width:55px;
 /* TEXT */
 
 .logoText{
-font-size:25px;
-font-weight:700;
-letter-spacing:.3px;
+  font-size:clamp(16px, 2vw, 25px);
+  font-weight:700;
+  letter-spacing:0.2px;
+  white-space:nowrap;
+  line-height:1;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+  flex-shrink:1;
+}
+
+.leftNav{
+  display:flex;
+  align-items:center;
+  min-width:0;
+  flex:1;
+}
+
+.rightNav{
+  display:flex;
+  align-items:center;
+  gap:2px;
+  flex-shrink:0;
 }
 
 /* RIGHT SIDE */
@@ -1107,6 +1131,50 @@ height:50px;
 transform:translateY(0);
 opacity:1;
 pointer-events:auto;
+}
+
+@media (max-width:480px){
+
+  .logoText{
+    font-size:17px;
+    letter-spacing:0;
+  }
+
+  .logoCircle{
+    width:38px;
+    height:38px;
+    flex-shrink:0;
+  }
+
+  .logoCircle img{
+    width:42px;
+  }
+
+  .iconBox{
+    width:34px;
+    height:36px;
+  }
+
+  .menuBtn{
+    width:32px;
+  }
+}
+
+@media (max-width:360px){
+
+  .logoText{
+    font-size:14px;
+  }
+
+  .logoCircle{
+    width:34px;
+    height:34px;
+  }
+
+  .logoCircle img{
+    width:38px;
+  }
+
 }
 
 `}</style>

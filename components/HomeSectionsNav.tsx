@@ -172,9 +172,7 @@ setIndex:(i:number)=>void
 }){
 
 const tabs = [
-"Products",
-"Combo Deals💥",
-"Flash Sale🔥"
+"Products"
 ]
 
 return(
@@ -298,9 +296,9 @@ top:4px;
 bottom:4px;
 left:4px;
 
-width:calc((100% - 8px)/3); /* 🔥 exact match like bottom nav */
+width: "calc(100% - 8px)",/* 🔥 exact match like bottom nav */
 
-background:linear-gradient(135deg,#ff7a00,#ffb300,#ff7a00);
+background: #b9e3f5;
 
 
 border-radius:999px;

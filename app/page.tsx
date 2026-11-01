@@ -249,35 +249,20 @@
 
 
 
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
+import HomeSectionsContainer from "@/components/HomeSectionsContainer";
 
-import HomeSectionsNav from "@/components/HomeSectionsNav"
-import HomeSectionsContainer from "@/components/HomeSectionsContainer"
+export default function Home() {
+  const [index, setIndex] = useState(0);
 
-export default function Home(){
-
-const [index,setIndex] = useState(0)
-
-return(
-
-<main className="pageWrapper">
-
-{/* FIXED NAV */}
-<HomeSectionsNav
-index={index}
-setIndex={setIndex}
-/>
-
-{/* PAGES */}
-<HomeSectionsContainer
-index={index}
-setIndex={setIndex}
-/>
-
-</main>
-
-)
-
+  return (
+    <main className="pageWrapper">
+      <HomeSectionsContainer
+        index={index}
+        setIndex={setIndex}
+      />
+    </main>
+  );
 }

@@ -174,8 +174,13 @@ const register=async()=>{
 if(!accept) return setToast("Please accept Terms & Conditions");
 
 if(!form.name) return setToast("Enter username");
-if(!/^[A-Za-z ]+$/.test(form.name))
-return setToast("Only alphabets allowed");
+if (!form.name || !form.name.trim()) {
+  return setToast("Please enter your name");
+}
+
+if (form.name.trim().length > 100) {
+  return setToast("Name must be under 100 characters");
+}
 
 if(!form.email.includes("@gmail.com"))
 return setToast("Invalid email");

@@ -232,7 +232,7 @@ const addProduct = async()=>{
 
 if(!form.name) return setPopup({show:true,message:"Product name required"})
 if(!form.description) return setPopup({show:true,message:"Description required"})
-if(!form.category) return setPopup({show:true,message:"Category required"})
+// if(!form.category) return setPopup({show:true,message:"Category required"})
 if(!form.mrp) return setPopup({show:true,message:"MRP required"})
 if(!form.price) return setPopup({show:true,message:"Price required"})
 if(!form.image) return setPopup({show:true,message:"Main image required"})

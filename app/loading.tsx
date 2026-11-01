@@ -28,7 +28,7 @@ return(
 
 {/* BOTTOM TEXT */}
 <div className="text-center pb-6 text-sm text-gray-600">
-  ❤️ <span className="font-bold ml-1">05Mart</span>
+  ❤️ <span className="font-bold ml-1">Rewind Supply</span>
 </div>
 
 <style jsx>{`

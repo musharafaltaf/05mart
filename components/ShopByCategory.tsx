@@ -133,7 +133,7 @@ if(loading){
 
 return(
 
-<section className="max-w-7xl mx-auto px-4 py-10">
+<section className="max-w-7xl mx-auto px-4 pt-3 pb-6 md:py-10">
 
 <div className="h-6 w-40 mb-6 rounded shimmer"/>
 
@@ -163,9 +163,9 @@ return(
 
 return(
 
-<section className="max-w-7xl mx-auto px-4 py-10">
+<section className="max-w-7xl mx-auto px-3 py-3">
 
-<h2 className="text-2xl font-bold mb-6">
+<h2 className="text-2xl font-bold mb-4 md:mb-6">
 Shop by Category
 </h2>
 
